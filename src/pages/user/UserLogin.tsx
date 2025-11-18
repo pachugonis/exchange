@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { LogIn, Mail, Lock } from 'lucide-react';
+import { LogIn, Mail, Lock, Shield } from 'lucide-react';
 import { Card } from '../../components/ui/Card';
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
@@ -10,9 +10,11 @@ import toast from 'react-hot-toast';
 
 export const UserLogin: React.FC = () => {
   const navigate = useNavigate();
-  const { login } = useUserStore();
+  const { login, requires2FA } = useUserStore();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [twoFactorCode, setTwoFactorCode] = useState('');
+  const [show2FA, setShow2FA] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -21,13 +23,15 @@ export const UserLogin: React.FC = () => {
     setError('');
     setLoading(true);
 
-    const result = await login({ email, password });
+    const result = await login({ email, password }, twoFactorCode || undefined);
 
     setLoading(false);
 
     if (result.success) {
       toast.success('Вход выполнен успешно!');
       navigate('/user/dashboard');
+    } else if (result.requires2FA) {
+      setShow2FA(true);
     } else {
       setError(result.error || 'Ошибка входа');
     }
@@ -83,6 +87,28 @@ export const UserLogin: React.FC = () => {
                 />
               </div>
             </div>
+
+            {show2FA && (
+              <div>
+                <label className="block text-sm font-medium mb-2">Код 2FA</label>
+                <div className="relative">
+                  <Shield className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-dark-400" />
+                  <Input
+                    type="text"
+                    value={twoFactorCode}
+                    onChange={(e) => setTwoFactorCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                    placeholder="000000"
+                    className="pl-10 text-center text-lg tracking-widest font-mono"
+                    maxLength={6}
+                    required
+                    autoFocus
+                  />
+                </div>
+                <p className="text-xs text-dark-500 mt-1">
+                  Введите 6-значный код из приложения-аутентификатора
+                </p>
+              </div>
+            )}
 
             <div className="flex items-center justify-between text-sm">
               <label className="flex items-center gap-2">

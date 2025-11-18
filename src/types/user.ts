@@ -8,6 +8,8 @@ export interface User {
   emailVerified: boolean;
   kycStatus?: 'none' | 'pending' | 'verified' | 'rejected';
   kycLevel?: number; // 0, 1, 2, 3
+  twoFactorEnabled?: boolean;
+  twoFactorSecret?: string;
 }
 
 export interface UserProfile extends User {

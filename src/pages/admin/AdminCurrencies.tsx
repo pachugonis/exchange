@@ -315,6 +315,26 @@ export const AdminCurrencies: React.FC = () => {
                     </div>
                   )}
                 </div>
+
+                {/* Payment Address */}
+                <div className="pt-4 border-t border-dark-200 dark:border-dark-700">
+                  <label className="block text-xs text-dark-500 mb-2">
+                    Адрес для оплаты / получения
+                  </label>
+                  {isEditing ? (
+                    <Input
+                      type="text"
+                      value={form.paymentAddress || ''}
+                      onChange={(e) => handleUpdateField('paymentAddress', e.target.value)}
+                      placeholder="Введите адрес"
+                      className="font-mono text-sm"
+                    />
+                  ) : (
+                    <p className="font-mono text-sm break-all">
+                      {currency.paymentAddress || 'Не указан'}
+                    </p>
+                  )}
+                </div>
               </div>
             </Card>
           );

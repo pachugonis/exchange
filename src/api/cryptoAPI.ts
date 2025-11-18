@@ -21,6 +21,22 @@ interface CryptoRates {
   USDT_RUB: number;
   USDC_USD: number;
   USDC_RUB: number;
+  XRP_USD: number;
+  XRP_RUB: number;
+  BNB_USD: number;
+  BNB_RUB: number;
+  SOL_USD: number;
+  SOL_RUB: number;
+  TRX_USD: number;
+  TRX_RUB: number;
+  DOGE_USD: number;
+  DOGE_RUB: number;
+  XMR_USD: number;
+  XMR_RUB: number;
+  LTC_USD: number;
+  LTC_RUB: number;
+  SUI_USD: number;
+  SUI_RUB: number;
   USD_RUB: number;  // USD to RUB rate
   EUR_USD: number;  // EUR to USD rate
   EUR_RUB: number;  // EUR to RUB rate
@@ -33,6 +49,14 @@ const COIN_GECKO_IDS: Record<string, string> = {
   ETH: 'ethereum',
   USDT: 'tether',
   USDC: 'usd-coin',
+  XRP: 'ripple',
+  BNB: 'binancecoin',
+  SOL: 'solana',
+  TRX: 'tron',
+  DOGE: 'dogecoin',
+  XMR: 'monero',
+  LTC: 'litecoin',
+  SUI: 'sui',
 };
 
 let cachedRates: CryptoRates | null = null;
@@ -65,6 +89,22 @@ function parseCoinGeckoData(data: CoinGeckoPrice): Partial<CryptoRates> {
     USDT_RUB: data.tether?.rub,
     USDC_USD: data['usd-coin']?.usd,
     USDC_RUB: data['usd-coin']?.rub,
+    XRP_USD: data.ripple?.usd,
+    XRP_RUB: data.ripple?.rub,
+    BNB_USD: data.binancecoin?.usd,
+    BNB_RUB: data.binancecoin?.rub,
+    SOL_USD: data.solana?.usd,
+    SOL_RUB: data.solana?.rub,
+    TRX_USD: data.tron?.usd,
+    TRX_RUB: data.tron?.rub,
+    DOGE_USD: data.dogecoin?.usd,
+    DOGE_RUB: data.dogecoin?.rub,
+    XMR_USD: data.monero?.usd,
+    XMR_RUB: data.monero?.rub,
+    LTC_USD: data.litecoin?.usd,
+    LTC_RUB: data.litecoin?.rub,
+    SUI_USD: data.sui?.usd,
+    SUI_RUB: data.sui?.rub,
     USD_RUB: usdRubRate,
     EUR_USD: eurUsdRate,
     EUR_RUB: eurRubRate,
@@ -115,6 +155,22 @@ export async function fetchCryptoRates(): Promise<CryptoRates> {
         USDT_RUB: parsedRates.USDT_RUB || 100,
         USDC_USD: parsedRates.USDC_USD || 1.0,
         USDC_RUB: parsedRates.USDC_RUB || 100,
+        XRP_USD: parsedRates.XRP_USD || 2.5,
+        XRP_RUB: parsedRates.XRP_RUB || 250,
+        BNB_USD: parsedRates.BNB_USD || 650,
+        BNB_RUB: parsedRates.BNB_RUB || 65000,
+        SOL_USD: parsedRates.SOL_USD || 200,
+        SOL_RUB: parsedRates.SOL_RUB || 20000,
+        TRX_USD: parsedRates.TRX_USD || 0.25,
+        TRX_RUB: parsedRates.TRX_RUB || 25,
+        DOGE_USD: parsedRates.DOGE_USD || 0.35,
+        DOGE_RUB: parsedRates.DOGE_RUB || 35,
+        XMR_USD: parsedRates.XMR_USD || 180,
+        XMR_RUB: parsedRates.XMR_RUB || 18000,
+        LTC_USD: parsedRates.LTC_USD || 110,
+        LTC_RUB: parsedRates.LTC_RUB || 11000,
+        SUI_USD: parsedRates.SUI_USD || 4.5,
+        SUI_RUB: parsedRates.SUI_RUB || 450,
         USD_RUB: parsedRates.USD_RUB || 100,
         EUR_USD: parsedRates.EUR_USD || 1.09,
         EUR_RUB: parsedRates.EUR_RUB || 109,
@@ -171,6 +227,22 @@ function generateFallbackRates(timestamp: number): CryptoRates {
     USDT_RUB: Math.round(usdRub * 100) / 100,
     USDC_USD: 1.0,
     USDC_RUB: Math.round(usdRub * 100) / 100,
+    XRP_USD: 2.5,
+    XRP_RUB: Math.round(2.5 * usdRub * 100) / 100,
+    BNB_USD: 650,
+    BNB_RUB: Math.round(650 * usdRub),
+    SOL_USD: 200,
+    SOL_RUB: Math.round(200 * usdRub),
+    TRX_USD: 0.25,
+    TRX_RUB: Math.round(0.25 * usdRub * 100) / 100,
+    DOGE_USD: 0.35,
+    DOGE_RUB: Math.round(0.35 * usdRub * 100) / 100,
+    XMR_USD: 180,
+    XMR_RUB: Math.round(180 * usdRub),
+    LTC_USD: 110,
+    LTC_RUB: Math.round(110 * usdRub),
+    SUI_USD: 4.5,
+    SUI_RUB: Math.round(4.5 * usdRub * 100) / 100,
     USD_RUB: Math.round(usdRub * 100) / 100,
     EUR_USD: eurUsd,
     EUR_RUB: Math.round(eurUsd * usdRub * 100) / 100,

@@ -652,24 +652,14 @@ export const Exchange: React.FC = () => {
       );
     }
     
-    // Get payment address from admin settings
+    // Get payment address from currency data
     const getPaymentAddress = () => {
       try {
         if (!fromCurrency) return 'Адрес не настроен';
         
-        const currencyCode = fromCurrency.code;
-        
-        // Direct mapping for exact matches
-        if (settings.paymentAddresses?.[currencyCode]) {
-          return settings.paymentAddresses[currencyCode];
-        }
-        
-        // Extract base currency code for suffixed codes (e.g., USDT_TRC20 -> USDT)
-        if (currencyCode.includes('_')) {
-          const baseCode = currencyCode.split('_')[0];
-          if (settings.paymentAddresses?.[baseCode]) {
-            return settings.paymentAddresses[baseCode];
-          }
+        // Check if currency has payment address
+        if (fromCurrency.paymentAddress) {
+          return fromCurrency.paymentAddress;
         }
         
         return 'Адрес не настроен';

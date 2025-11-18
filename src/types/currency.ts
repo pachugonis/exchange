@@ -1,6 +1,6 @@
 export type CurrencyType = 'crypto' | 'ewallet' | 'card' | 'cash';
 
-export type CryptoNetwork = 'TRC20' | 'ERC20' | 'BEP20' | 'BTC' | 'ETH';
+export type CryptoNetwork = 'TRC20' | 'ERC20' | 'BEP20' | 'BTC' | 'ETH' | 'XRP' | 'Solana' | 'DOGE' | 'XMR' | 'LTC' | 'Sui';
 
 export interface Currency {
   id: string;
@@ -16,6 +16,7 @@ export interface Currency {
   networks?: CryptoNetwork[];
   symbol?: string;
   decimals: number;
+  paymentAddress?: string; // Адрес для оплаты
 }
 
 export interface ExchangePair {

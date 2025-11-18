@@ -4,7 +4,7 @@ import { useAdminStore } from '../../store/adminStore';
 import { Card } from '../../components/ui/Card';
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
-import { Save, Wallet, Percent } from 'lucide-react';
+import { Save, Percent } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export const AdminSettings: React.FC = () => {
@@ -18,14 +18,6 @@ export const AdminSettings: React.FC = () => {
   const handleSaveCommission = () => {
     updateCommission(localSettings.commission);
     toast.success('Комиссия обновлена');
-  };
-
-  const handleSaveAddress = (currencyCode: string) => {
-    const address = localSettings.paymentAddresses[currencyCode];
-    if (address) {
-      updatePaymentAddress(currencyCode, address);
-      toast.success(`Адрес ${currencyCode} обновлен`);
-    }
   };
 
   const handleSaveAllSettings = () => {
@@ -110,59 +102,6 @@ export const AdminSettings: React.FC = () => {
         <Button onClick={handleSaveCommission} className="mt-4 gap-2">
           <Save className="w-4 h-4" /> Сохранить комиссию
         </Button>
-      </Card>
-
-      {/* Payment Addresses */}
-      <Card>
-        <div className="flex items-center gap-3 mb-6">
-          <Wallet className="w-6 h-6 text-primary-500" />
-          <h2 className="text-xl font-semibold">Адреса для оплаты</h2>
-        </div>
-
-        <div className="space-y-6">
-          {Object.entries(localSettings.paymentAddresses).map(([currencyCode, address]) => {
-            // Display names for better UX
-            const displayNames: Record<string, string> = {
-              BTC: 'Bitcoin (BTC)',
-              ETH: 'Ethereum (ETH)',
-              USDT_TRC20: 'USDT (TRC20)',
-              USDT_ERC20: 'USDT (ERC20)',
-              CARD_RUB: 'Visa/MC RUB (Номер карты)',
-            };
-            
-            return (
-              <div key={currencyCode}>
-                <label className="block text-sm font-medium mb-2">
-                  {displayNames[currencyCode] || currencyCode}
-                </label>
-                <div className="flex gap-2">
-                  <Input
-                    type="text"
-                    value={address}
-                    onChange={(e) =>
-                      setLocalSettings({
-                        ...localSettings,
-                        paymentAddresses: {
-                          ...localSettings.paymentAddresses,
-                          [currencyCode]: e.target.value,
-                        },
-                      })
-                    }
-                    placeholder={`Введите ${displayNames[currencyCode] || currencyCode}`}
-                    className="font-mono text-sm"
-                  />
-                  <Button
-                    onClick={() => handleSaveAddress(currencyCode)}
-                    variant="outline"
-                    className="gap-2 whitespace-nowrap"
-                  >
-                    <Save className="w-4 h-4" /> Сохранить
-                  </Button>
-                </div>
-              </div>
-            );
-          })}
-        </div>
       </Card>
 
       {/* General Settings */}
