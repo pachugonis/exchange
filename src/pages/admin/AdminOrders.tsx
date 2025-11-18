@@ -6,7 +6,7 @@ import { Card } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
 import type { Order, OrderStatus } from '../../types';
-import { Clock, CheckCircle, XCircle, Search, X } from 'lucide-react';
+import { Clock, CheckCircle, XCircle, Search, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export const AdminOrders: React.FC = () => {
@@ -16,6 +16,8 @@ export const AdminOrders: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<OrderStatus | 'all'>('all');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const ordersPerPage = 10;
 
   if (!isAuthenticated) {
     return <Navigate to="/admin/login" replace />;
@@ -27,7 +29,18 @@ export const AdminOrders: React.FC = () => {
       order.contactInfo.email.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus = statusFilter === 'all' || order.status === statusFilter;
     return matchesSearch && matchesStatus;
-  });
+  }).sort((a, b) => b.createdAt - a.createdAt); // Sort by newest first
+
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredOrders.length / ordersPerPage);
+  const startIndex = (currentPage - 1) * ordersPerPage;
+  const endIndex = startIndex + ordersPerPage;
+  const paginatedOrders = filteredOrders.slice(startIndex, endIndex);
+
+  // Reset to page 1 when filters change
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, statusFilter]);
 
   const getStatusColor = (status: OrderStatus): string => {
     const colors: Record<OrderStatus, string> = {
@@ -152,7 +165,7 @@ export const AdminOrders: React.FC = () => {
             </div>
           </Card>
         ) : (
-          filteredOrders.map((order) => (
+          paginatedOrders.map((order) => (
             <Card key={order.id}>
               <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
                 {/* Order Info */}
@@ -229,6 +242,64 @@ export const AdminOrders: React.FC = () => {
           ))
         )}
       </div>
+
+      {/* Pagination */}
+      {filteredOrders.length > 0 && totalPages > 1 && (
+        <Card>
+          <div className="flex items-center justify-between">
+            <div className="text-sm text-dark-600 dark:text-dark-400">
+              Показано {startIndex + 1}-{Math.min(endIndex, filteredOrders.length)} из {filteredOrders.length} записей
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                disabled={currentPage === 1}
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </Button>
+              
+              <div className="flex items-center gap-1">
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+                  // Show first page, last page, current page, and pages around current
+                  if (
+                    page === 1 ||
+                    page === totalPages ||
+                    (page >= currentPage - 1 && page <= currentPage + 1)
+                  ) {
+                    return (
+                      <button
+                        key={page}
+                        onClick={() => setCurrentPage(page)}
+                        className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
+                          page === currentPage
+                            ? 'bg-primary-500 text-white'
+                            : 'bg-dark-100 dark:bg-dark-700 text-dark-700 dark:text-dark-300 hover:bg-dark-200 dark:hover:bg-dark-600'
+                        }`}
+                      >
+                        {page}
+                      </button>
+                    );
+                  } else if (page === currentPage - 2 || page === currentPage + 2) {
+                    return <span key={page} className="text-dark-400">...</span>;
+                  }
+                  return null;
+                })}
+              </div>
+
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                disabled={currentPage === totalPages}
+              >
+                <ChevronRight className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
+        </Card>
+      )}
 
       {/* Summary */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
