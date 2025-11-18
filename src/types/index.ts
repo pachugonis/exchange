@@ -3,3 +3,6 @@ export * from './exchange';
 export * from './order';
 export * from './user';
 export * from './admin';
+export * from './promo';
+export * from './favorite';
+export * from './chart';

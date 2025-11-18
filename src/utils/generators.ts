@@ -2,6 +2,16 @@
 const generatedIds = new Set<string>();
 
 /**
+ * Generate unique ID with prefix
+ * Format: PREFIX-TIMESTAMP-RANDOM
+ */
+export function generateId(prefix: string = 'ID'): string {
+  const timestamp = Date.now().toString(36).toUpperCase();
+  const randomPart = Math.random().toString(36).substring(2, 8).toUpperCase();
+  return `${prefix}-${timestamp}${randomPart}`;
+}
+
+/**
  * Generate unique order ID
  * Format: EX-YYYYMMDD-XXXXXX-TTT
  * Where TTT is timestamp suffix for uniqueness

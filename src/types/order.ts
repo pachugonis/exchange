@@ -25,6 +25,7 @@ export interface PaymentDetails {
 
 export interface Order {
   id: string;
+  userId?: string; // ID of the user who created the order
   fromCurrency: Currency;
   toCurrency: Currency;
   fromAmount: number;

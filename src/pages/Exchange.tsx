@@ -3,9 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { useExchangeFlowStore } from '../store/exchangeFlowStore';
 import { useAdminStore } from '../store/adminStore';
 import { useOrderStore } from '../store/orderStore';
+import { useUserStore } from '../store/userStore';
+import { usePromoStore } from '../store/promoStore';
 import { Card } from '../components/ui/Card';
 import { Input } from '../components/ui/Input';
 import { Button } from '../components/ui/Button';
+import { PromoCodeInput } from '../components/exchange/PromoCodeInput';
 import { ArrowLeftRight, RefreshCw, ArrowRight, ArrowLeft, Check, Loader2, Copy } from 'lucide-react';
 import { formatCurrency } from '../utils/formatters';
 import toast from 'react-hot-toast';
@@ -15,6 +18,8 @@ import { createOrder } from '../api/mockAPI';
 export const Exchange: React.FC = () => {
   const navigate = useNavigate();
   const { addOrder } = useOrderStore();
+  const { user } = useUserStore();
+  const { incrementPromoUse, appliedPromo, removePromo } = usePromoStore();
   const { settings } = useAdminStore(); // Move hook to top level
   const [isCreatingOrder, setIsCreatingOrder] = React.useState(false);
   const [renderKey, setRenderKey] = React.useState(0);
@@ -63,6 +68,16 @@ export const Exchange: React.FC = () => {
     reloadCurrencies();
   }, [reloadCurrencies]);
 
+  // Auto-fill email from user account if logged in
+  useEffect(() => {
+    if (user?.email && !email) {
+      setEmail(user.email);
+    }
+    if (user?.telegram && !telegram) {
+      setTelegram(user.telegram);
+    }
+  }, [user, email, telegram, setEmail, setTelegram]);
+
   // Ensure we're on step 1 when mounting
   useEffect(() => {
     if (currentStep > 5 || currentStep < 1) {
@@ -79,6 +94,34 @@ export const Exchange: React.FC = () => {
     console.log('To currency:', toCurrency?.code);
     console.log('==================');
   }, [currentStep, orderId, fromCurrency, toCurrency]);
+
+  // Calculate commission with promo discount
+  const getEffectiveCommission = () => {
+    let effectiveCommission = commission;
+    
+    if (appliedPromo && appliedPromo.type === 'commission') {
+      // Apply percentage discount to commission
+      const discountMultiplier = (100 - appliedPromo.discount) / 100;
+      effectiveCommission = commission * discountMultiplier;
+    }
+    
+    return effectiveCommission;
+  };
+
+  // Get bonus amount from promo if applicable
+  const getBonusAmount = () => {
+    if (appliedPromo && appliedPromo.type === 'bonus' && appliedPromo.bonusAmount) {
+      return appliedPromo.bonusAmount;
+    }
+    return 0;
+  };
+
+  // Calculate final amount with promo
+  const getFinalToAmount = () => {
+    const baseAmount = parseFloat(toAmount) || 0;
+    const bonusAmount = getBonusAmount();
+    return baseAmount + bonusAmount;
+  };
 
   // Handle order creation
   const handleCreateOrder = async () => {
@@ -107,13 +150,13 @@ export const Exchange: React.FC = () => {
         fromCurrency: fromCurrency!,
         toCurrency: toCurrency!,
         fromAmount: parseFloat(fromAmount),
-        toAmount: parseFloat(toAmount),
+        toAmount: getFinalToAmount(),
         rate,
-        commission,
+        commission: getEffectiveCommission(),
         contactInfo: {
           email,
           telegram,
-          promoCode,
+          promoCode: appliedPromo?.code || '',
         },
         paymentDetails: {
           fromWallet,
@@ -121,10 +164,23 @@ export const Exchange: React.FC = () => {
         },
       });
 
+      // Add userId if user is authenticated
+      if (user?.id) {
+        order.userId = user.id;
+      }
+
       console.log('Order created:', order);
       
       // Save order to store
       addOrder(order);
+      
+      // Increment promo usage if promo was applied
+      if (appliedPromo?.code) {
+        incrementPromoUse(appliedPromo.code);
+      }
+      
+      // Clear promo after order creation
+      removePromo();
       
       console.log('Setting order ID:', order.id);
       setOrderId(order.id);
@@ -324,12 +380,24 @@ export const Exchange: React.FC = () => {
           </div>
           <div className="flex justify-between text-sm">
             <span>Комиссия:</span>
-            <span className="font-semibold">{(commission * 100).toFixed(1)}%</span>
+            <span className="font-semibold">
+              {appliedPromo && appliedPromo.type === 'commission' ? (
+                <>
+                  <span className="line-through text-dark-400 mr-2">{(commission * 100).toFixed(1)}%</span>
+                  <span className="text-green-600">{(getEffectiveCommission() * 100).toFixed(1)}%</span>
+                </>
+              ) : (
+                <>{(commission * 100).toFixed(1)}%</>
+              )}
+            </span>
           </div>
           <div className="flex justify-between text-lg font-bold text-primary-500">
             <span>Вы получите:</span>
             <span>
               {toAmount} {toCurrency?.symbol}
+              {appliedPromo && appliedPromo.type === 'bonus' && getBonusAmount() > 0 && (
+                <span className="text-green-600 text-sm ml-2">+{getBonusAmount()}</span>
+              )}
             </span>
           </div>
         </div>
@@ -350,11 +418,16 @@ export const Exchange: React.FC = () => {
           placeholder="example@email.com"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
+          disabled={!!user?.email}
         />
         {validationErrors.email && (
           <p className="text-red-500 text-sm mt-1">{validationErrors.email}</p>
         )}
-        <p className="text-sm text-dark-500 mt-1">На этот email будет отправлена информация о заявке</p>
+        {user?.email ? (
+          <p className="text-sm text-dark-500 mt-1">Электронная почта взята из вашего профиля</p>
+        ) : (
+          <p className="text-sm text-dark-500 mt-1">На этот email будет отправлена информация о заявке</p>
+        )}
       </div>
 
       <div>
@@ -364,18 +437,18 @@ export const Exchange: React.FC = () => {
           placeholder="@username"
           value={telegram}
           onChange={(e) => setTelegram(e.target.value)}
+          disabled={!!user?.telegram}
         />
-        <p className="text-sm text-dark-500 mt-1">Для быстрой связи с поддержкой</p>
+        {user?.telegram ? (
+          <p className="text-sm text-dark-500 mt-1">Telegram взят из вашего профиля</p>
+        ) : (
+          <p className="text-sm text-dark-500 mt-1">Для быстрой связи с поддержкой</p>
+        )}
       </div>
 
       <div>
         <label className="block text-sm font-medium mb-2">Промокод (опционально)</label>
-        <Input
-          type="text"
-          placeholder="Введите промокод"
-          value={promoCode}
-          onChange={(e) => setPromoCode(e.target.value)}
-        />
+        <PromoCodeInput amount={parseFloat(fromAmount) || 0} />
       </div>
     </div>
   );
@@ -435,6 +508,9 @@ export const Exchange: React.FC = () => {
               <span className="text-dark-600 dark:text-dark-400">Получаете:</span>
               <span className="font-semibold">
                 {toAmount} {toCurrency?.code}
+                {appliedPromo && appliedPromo.type === 'bonus' && getBonusAmount() > 0 && (
+                  <span className="text-green-600 ml-2">+{getBonusAmount()}</span>
+                )}
               </span>
             </div>
             <div className="flex justify-between">
@@ -445,8 +521,27 @@ export const Exchange: React.FC = () => {
             </div>
             <div className="flex justify-between">
               <span className="text-dark-600 dark:text-dark-400">Комиссия:</span>
-              <span>{(commission * 100).toFixed(1)}%</span>
+              <span>
+                {appliedPromo && appliedPromo.type === 'commission' ? (
+                  <>
+                    <span className="line-through text-dark-400 mr-2">{(commission * 100).toFixed(1)}%</span>
+                    <span className="text-green-600 font-semibold">{(getEffectiveCommission() * 100).toFixed(1)}%</span>
+                  </>
+                ) : (
+                  <>{(commission * 100).toFixed(1)}%</>
+                )}
+              </span>
             </div>
+            {appliedPromo && (
+              <div className="flex justify-between">
+                <span className="text-dark-600 dark:text-dark-400">Промокод:</span>
+                <span className="text-green-600 font-semibold">
+                  {appliedPromo.code}
+                  {appliedPromo.type === 'commission' && ` (-${appliedPromo.discount}%)`}
+                  {appliedPromo.type === 'bonus' && ` (+${appliedPromo.bonusAmount})`}
+                </span>
+              </div>
+            )}
           </div>
         </div>
 

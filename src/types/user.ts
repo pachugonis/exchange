@@ -1,25 +1,29 @@
-export interface Testimonial {
+export interface User {
   id: string;
-  userName: string;
-  rating: number; // 1-5
-  text: string;
-  exchangeType: string; // e.g., "BTC → Payeer USD"
-  date: string;
-  adminResponse?: string;
-}
-
-export interface FAQ {
-  id: string;
-  category: string;
-  question: string;
-  answer: string;
-  relatedQuestions?: string[];
-}
-
-export interface City {
-  id: string;
+  email: string;
   name: string;
-  nameEn: string;
-  country: string;
-  isActive: boolean;
+  phone?: string;
+  telegram?: string;
+  createdAt: number;
+  emailVerified: boolean;
+  kycStatus?: 'none' | 'pending' | 'verified' | 'rejected';
+  kycLevel?: number; // 0, 1, 2, 3
+}
+
+export interface UserProfile extends User {
+  totalOrders: number;
+  totalVolume: number;
+  favoriteCount: number;
+  registeredDays: number;
+}
+
+export interface AuthCredentials {
+  email: string;
+  password: string;
+}
+
+export interface RegisterData extends AuthCredentials {
+  name: string;
+  confirmPassword: string;
+  agreeToTerms: boolean;
 }

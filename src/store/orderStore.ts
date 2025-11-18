@@ -8,6 +8,7 @@ interface OrderState {
   addOrder: (order: Order) => void;
   updateOrderStatus: (id: string, status: OrderStatus) => void;
   getOrderById: (id: string) => Order | undefined;
+  getOrdersByUserId: (userId: string) => Order[];
 }
 
 export const useOrderStore = create<OrderState>()(
@@ -43,6 +44,10 @@ export const useOrderStore = create<OrderState>()(
       
       getOrderById: (id) => {
         return get().orders.find((order) => order.id === id);
+      },
+      
+      getOrdersByUserId: (userId) => {
+        return get().orders.filter((order) => order.userId === userId);
       },
     }),
     {
