@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import {
   User,
@@ -12,6 +12,8 @@ import {
   TrendingUp,
   Clock,
   Home,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
@@ -29,6 +31,8 @@ export const UserDashboard: React.FC = () => {
   const { user, isAuthenticated, logout } = useUserStore();
   const { orders } = useOrderStore();
   const { favorites } = useFavoriteStore();
+  const [currentPage, setCurrentPage] = useState(1);
+  const ordersPerPage = 10;
 
   useEffect(() => {
     if (!isAuthenticated || !user) {
@@ -47,8 +51,13 @@ export const UserDashboard: React.FC = () => {
 
   const userOrders = orders
     .filter(order => order.userId === user.id)
-    .slice(-10)
-    .reverse();
+    .sort((a, b) => b.createdAt - a.createdAt); // Sort by newest first
+  
+  // Pagination calculations
+  const totalPages = Math.ceil(userOrders.length / ordersPerPage);
+  const startIndex = (currentPage - 1) * ordersPerPage;
+  const endIndex = startIndex + ordersPerPage;
+  const paginatedOrders = userOrders.slice(startIndex, endIndex);
   const totalVolume = orders
     .filter(order => order.userId === user.id)
     .reduce((sum, order) => sum + order.fromAmount, 0);
@@ -220,10 +229,10 @@ export const UserDashboard: React.FC = () => {
           <div className="lg:col-span-2">
             <Card>
               <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-semibold">Последние заявки</h3>
+                <h3 className="text-xl font-semibold">Мои заявки</h3>
                 <Link to="/tracking">
                   <Button variant="outline" size="sm">
-                    Все заявки
+                    Отследить заявку
                   </Button>
                 </Link>
               </div>
@@ -240,8 +249,9 @@ export const UserDashboard: React.FC = () => {
                   </Link>
                 </div>
               ) : (
-                <div className="space-y-3">
-                  {userOrders.map((order) => (
+                <>
+                  <div className="space-y-3">
+                    {paginatedOrders.map((order) => (
                     <div
                       key={order.id}
                       className="p-4 border border-dark-200 dark:border-dark-700 rounded-lg hover:bg-dark-50 dark:hover:bg-dark-700 transition"
@@ -262,6 +272,65 @@ export const UserDashboard: React.FC = () => {
                     </div>
                   ))}
                 </div>
+
+                {/* Pagination */}
+                {totalPages > 1 && (
+                  <div className="mt-6 pt-6 border-t border-dark-200 dark:border-dark-700">
+                    <div className="flex items-center justify-between">
+                      <div className="text-sm text-dark-600 dark:text-dark-400">
+                        Показано {startIndex + 1}-{Math.min(endIndex, userOrders.length)} из {userOrders.length} записей
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                          disabled={currentPage === 1}
+                        >
+                          <ChevronLeft className="w-4 h-4" />
+                        </Button>
+                        
+                        <div className="flex items-center gap-1">
+                          {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+                            // Show first page, last page, current page, and pages around current
+                            if (
+                              page === 1 ||
+                              page === totalPages ||
+                              (page >= currentPage - 1 && page <= currentPage + 1)
+                            ) {
+                              return (
+                                <button
+                                  key={page}
+                                  onClick={() => setCurrentPage(page)}
+                                  className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
+                                    page === currentPage
+                                      ? 'bg-primary-500 text-white'
+                                      : 'bg-dark-100 dark:bg-dark-700 text-dark-700 dark:text-dark-300 hover:bg-dark-200 dark:hover:bg-dark-600'
+                                  }`}
+                                >
+                                  {page}
+                                </button>
+                              );
+                            } else if (page === currentPage - 2 || page === currentPage + 2) {
+                              return <span key={page} className="text-dark-400">...</span>;
+                            }
+                            return null;
+                          })}
+                        </div>
+
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                          disabled={currentPage === totalPages}
+                        >
+                          <ChevronRight className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </>
               )}
             </Card>
           </div>

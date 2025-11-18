@@ -93,6 +93,9 @@ export const Exchange: React.FC = () => {
     console.log('From currency:', fromCurrency?.code);
     console.log('To currency:', toCurrency?.code);
     console.log('==================');
+    
+    // Scroll to top when step changes
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [currentStep, orderId, fromCurrency, toCurrency]);
 
   // Calculate commission with promo discount
