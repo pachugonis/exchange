@@ -213,11 +213,13 @@ export const Exchange: React.FC = () => {
               }}
             >
               <option value="">Выберите валюту</option>
-              {currencyList.map((currency) => (
-                <option key={currency.id} value={currency.id}>
-                  {currency.name} ({currency.code})
-                </option>
-              ))}
+              {currencyList
+                .filter((currency) => !toCurrency || currency.id !== toCurrency.id)
+                .map((currency) => (
+                  <option key={currency.id} value={currency.id}>
+                    {currency.name} ({currency.code})
+                  </option>
+                ))}
             </select>
             {validationErrors.fromCurrency && (
               <p className="text-red-500 text-sm mt-1">{validationErrors.fromCurrency}</p>
@@ -251,10 +253,20 @@ export const Exchange: React.FC = () => {
           onClick={swapCurrencies}
           className="p-2 rounded-lg hover:bg-dark-100 dark:hover:bg-dark-700 transition"
           aria-label="Поменять валюты"
+          disabled={!fromCurrency || !toCurrency}
         >
           <ArrowLeftRight className="w-6 h-6" />
         </button>
       </div>
+
+      {/* Warning if same currency selected */}
+      {fromCurrency && toCurrency && fromCurrency.id === toCurrency.id && (
+        <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3">
+          <p className="text-sm text-yellow-800 dark:text-yellow-200">
+            ⚠️ <strong>Внимание:</strong> Нельзя обменять одинаковые валюты. Пожалуйста, выберите другую валюту.
+          </p>
+        </div>
+      )}
 
       {/* To Currency */}
       <div>
@@ -270,11 +282,13 @@ export const Exchange: React.FC = () => {
               }}
             >
               <option value="">Выберите валюту</option>
-              {currencyList.map((currency) => (
-                <option key={currency.id} value={currency.id}>
-                  {currency.name} ({currency.code})
-                </option>
-              ))}
+              {currencyList
+                .filter((currency) => !fromCurrency || currency.id !== fromCurrency.id)
+                .map((currency) => (
+                  <option key={currency.id} value={currency.id}>
+                    {currency.name} ({currency.code})
+                  </option>
+                ))}
             </select>
             {validationErrors.toCurrency && (
               <p className="text-red-500 text-sm mt-1">{validationErrors.toCurrency}</p>
@@ -548,12 +562,22 @@ export const Exchange: React.FC = () => {
       try {
         if (!fromCurrency) return 'Адрес не настроен';
         
-        // Extract base currency code for address lookup
-        const baseCode = fromCurrency.code.includes('_') 
-          ? fromCurrency.code.split('_')[0] 
-          : fromCurrency.code;
+        const currencyCode = fromCurrency.code;
         
-        return settings.paymentAddresses?.[baseCode] || settings.paymentAddresses?.[fromCurrency.code] || 'Адрес не настроен';
+        // Direct mapping for exact matches
+        if (settings.paymentAddresses?.[currencyCode]) {
+          return settings.paymentAddresses[currencyCode];
+        }
+        
+        // Extract base currency code for suffixed codes (e.g., USDT_TRC20 -> USDT)
+        if (currencyCode.includes('_')) {
+          const baseCode = currencyCode.split('_')[0];
+          if (settings.paymentAddresses?.[baseCode]) {
+            return settings.paymentAddresses[baseCode];
+          }
+        }
+        
+        return 'Адрес не настроен';
       } catch (error) {
         console.error('Error getting payment address:', error);
         return 'Ошибка получения адреса';

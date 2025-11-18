@@ -1,13 +1,26 @@
 import type { Order, OrderStatus, Currency } from '../types';
 import { currencies } from '../data/currencies';
 import { getExchangeRate, generateMockRates } from '../data/mockRates';
-import { generateOrderId, generateCryptoAddress } from '../utils/generators';
+import { generateOrderId, generateCryptoAddress, randomInRange } from '../utils/generators';
 import { delay } from '../utils/helpers';
-import { API_DELAY_MIN, API_DELAY_MAX, API_ERROR_PROBABILITY, RATE_RESERVE_TIME, DEFAULT_COMMISSION } from '../utils/constants';
+import { 
+  API_DELAY_MIN, 
+  API_DELAY_MAX, 
+  API_ERROR_PROBABILITY, 
+  RATE_RESERVE_TIME, 
+  DEFAULT_COMMISSION,
+  STATUS_PROGRESSION_DELAYS 
+} from '../utils/constants';
 
-// Simulate network delay
+// Store for simulating ongoing order progressions
+const progressingOrders = new Map<string, ReturnType<typeof setTimeout>>();
+
+/**
+ * Simulate network delay with random duration
+ * Also simulates occasional network errors
+ */
 async function simulateDelay() {
-  const delayTime = Math.random() * (API_DELAY_MAX - API_DELAY_MIN) + API_DELAY_MIN;
+  const delayTime = randomInRange(API_DELAY_MIN, API_DELAY_MAX);
   await delay(delayTime);
   
   // Simulate random errors
@@ -100,13 +113,21 @@ export async function fetchOrder(orderId: string): Promise<Order | null> {
   return null;
 }
 
-// PATCH /api/orders/:id/status
+/**
+ * PATCH /api/orders/:id/status
+ * Update order status with validation and history tracking
+ */
 export async function updateOrderStatus(orderId: string, newStatus: OrderStatus): Promise<Order> {
   await simulateDelay();
   
   const order = await fetchOrder(orderId);
   if (!order) {
     throw new Error('Order not found');
+  }
+  
+  // Validate status transition
+  if (!isValidStatusTransition(order.status, newStatus)) {
+    throw new Error(`Invalid status transition from ${order.status} to ${newStatus}`);
   }
   
   const now = Date.now();
@@ -118,9 +139,15 @@ export async function updateOrderStatus(orderId: string, newStatus: OrderStatus)
     message: getStatusMessage(newStatus),
   });
   
+  // Save to localStorage
+  saveOrderToStorage(order);
+  
   return order;
 }
 
+/**
+ * Get human-readable status message
+ */
 function getStatusMessage(status: OrderStatus): string {
   const messages: Record<OrderStatus, string> = {
     waiting_payment: 'Ожидание оплаты',
@@ -136,8 +163,47 @@ function getStatusMessage(status: OrderStatus): string {
   return messages[status] || status;
 }
 
-// Simulate status progression
+/**
+ * Validate if status transition is allowed
+ */
+function isValidStatusTransition(currentStatus: OrderStatus, newStatus: OrderStatus): boolean {
+  const validTransitions: Record<OrderStatus, OrderStatus[]> = {
+    waiting_payment: ['payment_pending', 'cancelled'],
+    payment_pending: ['payment_received', 'cancelled', 'waiting_payment'],
+    payment_received: ['verification', 'refund'],
+    verification: ['sending', 'refund'],
+    sending: ['completed', 'refund'],
+    completed: [],
+    cancelled: ['refund'],
+    refund: [],
+  };
+  
+  return validTransitions[currentStatus]?.includes(newStatus) ?? false;
+}
+
+/**
+ * Save order to localStorage
+ */
+function saveOrderToStorage(order: Order): void {
+  const storedOrders = localStorage.getItem('orders-storage');
+  if (storedOrders) {
+    const storage = JSON.parse(storedOrders);
+    const orderIndex = storage.state.orders.findIndex((o: Order) => o.id === order.id);
+    if (orderIndex !== -1) {
+      storage.state.orders[orderIndex] = order;
+      localStorage.setItem('orders-storage', JSON.stringify(storage));
+    }
+  }
+}
+
+/**
+ * Simulate automatic order status progression
+ * Mimics real backend processing with realistic delays
+ */
 export async function simulateOrderProgress(orderId: string): Promise<void> {
+  // Cancel any existing progression for this order
+  stopOrderProgress(orderId);
+  
   const statuses: OrderStatus[] = [
     'payment_pending',
     'payment_received',
@@ -147,7 +213,65 @@ export async function simulateOrderProgress(orderId: string): Promise<void> {
   ];
   
   for (const status of statuses) {
-    await delay(Math.random() * 30000 + 30000); // 30-60 seconds between status changes
-    await updateOrderStatus(orderId, status);
+    const config = STATUS_PROGRESSION_DELAYS[status as keyof typeof STATUS_PROGRESSION_DELAYS];
+    const delayTime = randomInRange(config.min, config.max);
+    
+    await delay(delayTime);
+    
+    // Check if progression was cancelled
+    if (!progressingOrders.has(orderId)) {
+      console.log(`Order ${orderId} progression cancelled`);
+      return;
+    }
+    
+    try {
+      await updateOrderStatus(orderId, status);
+      console.log(`Order ${orderId} status updated to ${status}`);
+    } catch (error) {
+      console.error(`Failed to update order ${orderId} to status ${status}:`, error);
+      // Continue to next status despite error
+    }
   }
+  
+  // Clean up
+  progressingOrders.delete(orderId);
+}
+
+/**
+ * Start automatic order progression simulation
+ */
+export function startOrderProgress(orderId: string): void {
+  if (progressingOrders.has(orderId)) {
+    console.warn(`Order ${orderId} progression already in progress`);
+    return;
+  }
+  
+  // Mark as progressing
+  const timeout = setTimeout(() => {
+    simulateOrderProgress(orderId).catch(err => {
+      console.error(`Order ${orderId} progression failed:`, err);
+      progressingOrders.delete(orderId);
+    });
+  }, 0);
+  
+  progressingOrders.set(orderId, timeout);
+}
+
+/**
+ * Stop automatic order progression
+ */
+export function stopOrderProgress(orderId: string): void {
+  const timeout = progressingOrders.get(orderId);
+  if (timeout) {
+    clearTimeout(timeout);
+    progressingOrders.delete(orderId);
+    console.log(`Order ${orderId} progression stopped`);
+  }
+}
+
+/**
+ * Check if order is currently progressing
+ */
+export function isOrderProgressing(orderId: string): boolean {
+  return progressingOrders.has(orderId);
 }

@@ -15,7 +15,33 @@ export const AdminCurrencies: React.FC = () => {
   const { isAuthenticated } = useAdminStore();
   const [currencies, setCurrencies] = useState<Currency[]>(() => {
     const stored = localStorage.getItem('currencies-data');
-    return stored ? JSON.parse(stored) : initialCurrencies;
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored);
+        
+        // Get valid currency codes from defaults
+        const validCodes = new Set(initialCurrencies.map(c => c.code));
+        
+        // Filter stored currencies to only include those still in defaults
+        const validStored = parsed.filter((c: Currency) => validCodes.has(c.code));
+        
+        // Merge: update existing currencies with stored values, add new ones from defaults
+        const storedMap = new Map(validStored.map((c: Currency) => [c.code, c]));
+        const merged = initialCurrencies.map(defaultCurrency => {
+          const stored = storedMap.get(defaultCurrency.code);
+          return stored ? { ...defaultCurrency, ...stored } : defaultCurrency;
+        });
+        
+        // Save cleaned list back to localStorage
+        localStorage.setItem('currencies-data', JSON.stringify(merged));
+        
+        return merged;
+      } catch (error) {
+        console.error('Error loading currencies:', error);
+        return initialCurrencies;
+      }
+    }
+    return initialCurrencies;
   });
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<Partial<Currency>>({});

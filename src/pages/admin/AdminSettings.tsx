@@ -120,37 +120,48 @@ export const AdminSettings: React.FC = () => {
         </div>
 
         <div className="space-y-6">
-          {Object.entries(localSettings.paymentAddresses).map(([currencyCode, address]) => (
-            <div key={currencyCode}>
-              <label className="block text-sm font-medium mb-2">
-                {currencyCode} Адрес
-              </label>
-              <div className="flex gap-2">
-                <Input
-                  type="text"
-                  value={address}
-                  onChange={(e) =>
-                    setLocalSettings({
-                      ...localSettings,
-                      paymentAddresses: {
-                        ...localSettings.paymentAddresses,
-                        [currencyCode]: e.target.value,
-                      },
-                    })
-                  }
-                  placeholder={`Введите ${currencyCode} адрес`}
-                  className="font-mono text-sm"
-                />
-                <Button
-                  onClick={() => handleSaveAddress(currencyCode)}
-                  variant="outline"
-                  className="gap-2 whitespace-nowrap"
-                >
-                  <Save className="w-4 h-4" /> Сохранить
-                </Button>
+          {Object.entries(localSettings.paymentAddresses).map(([currencyCode, address]) => {
+            // Display names for better UX
+            const displayNames: Record<string, string> = {
+              BTC: 'Bitcoin (BTC)',
+              ETH: 'Ethereum (ETH)',
+              USDT_TRC20: 'USDT (TRC20)',
+              USDT_ERC20: 'USDT (ERC20)',
+              CARD_RUB: 'Visa/MC RUB (Номер карты)',
+            };
+            
+            return (
+              <div key={currencyCode}>
+                <label className="block text-sm font-medium mb-2">
+                  {displayNames[currencyCode] || currencyCode}
+                </label>
+                <div className="flex gap-2">
+                  <Input
+                    type="text"
+                    value={address}
+                    onChange={(e) =>
+                      setLocalSettings({
+                        ...localSettings,
+                        paymentAddresses: {
+                          ...localSettings.paymentAddresses,
+                          [currencyCode]: e.target.value,
+                        },
+                      })
+                    }
+                    placeholder={`Введите ${displayNames[currencyCode] || currencyCode}`}
+                    className="font-mono text-sm"
+                  />
+                  <Button
+                    onClick={() => handleSaveAddress(currencyCode)}
+                    variant="outline"
+                    className="gap-2 whitespace-nowrap"
+                  >
+                    <Save className="w-4 h-4" /> Сохранить
+                  </Button>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </Card>
 

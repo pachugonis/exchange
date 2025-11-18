@@ -6,3 +6,6 @@ export { Badge } from './Badge';
 export { Modal } from './Modal';
 export { Skeleton, SkeletonText } from './Skeleton';
 export { Toggle } from './Toggle';
+export { Alert } from './Alert';
+export { Loader, Spinner } from './Loader';
+export { Tabs, TabPanel } from './Tabs';

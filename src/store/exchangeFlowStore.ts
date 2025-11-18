@@ -120,11 +120,21 @@ export const useExchangeFlowStore = create<ExchangeFlowState>()(
       
       setFromCurrency: (currency) => {
         set({ fromCurrency: currency });
+        const { toCurrency } = get();
+        // If trying to set same currency, clear toCurrency
+        if (currency && toCurrency && currency.id === toCurrency.id) {
+          set({ toCurrency: null, toAmount: '' });
+        }
         get().calculateToAmount();
       },
       
       setToCurrency: (currency) => {
         set({ toCurrency: currency });
+        const { fromCurrency } = get();
+        // If trying to set same currency, clear fromCurrency
+        if (currency && fromCurrency && currency.id === fromCurrency.id) {
+          set({ fromCurrency: null, fromAmount: '', toAmount: '' });
+        }
         get().calculateToAmount();
       },
       
@@ -211,6 +221,11 @@ export const useExchangeFlowStore = create<ExchangeFlowState>()(
             }
             if (!state.toCurrency) {
               errors.toCurrency = 'Выберите валюту для получения';
+            }
+            // Check if same currency
+            if (state.fromCurrency && state.toCurrency && state.fromCurrency.id === state.toCurrency.id) {
+              errors.fromCurrency = 'Нельзя обменять одинаковые валюты';
+              errors.toCurrency = 'Выберите другую валюту';
             }
             if (!state.fromAmount || parseFloat(state.fromAmount) <= 0) {
               errors.fromAmount = 'Введите корректную сумму';

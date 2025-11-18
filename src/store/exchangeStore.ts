@@ -10,11 +10,31 @@ const loadCurrencies = (): Currency[] => {
     const stored = localStorage.getItem('currencies-data');
     if (stored) {
       const parsed = JSON.parse(stored);
-      return parsed.filter((c: Currency) => c.isActive);
+      
+      // Get valid currency codes from defaults
+      const validCodes = new Set(defaultCurrencies.map(c => c.code));
+      
+      // Filter stored currencies to only include those still in defaults
+      const validStored = parsed.filter((c: Currency) => validCodes.has(c.code));
+      
+      // Merge: update existing currencies with stored values, add new ones from defaults
+      const storedMap = new Map(validStored.map((c: Currency) => [c.code, c]));
+      const merged = defaultCurrencies.map(defaultCurrency => {
+        const stored = storedMap.get(defaultCurrency.code);
+        return stored ? { ...defaultCurrency, ...stored } : defaultCurrency;
+      });
+      
+      // Save cleaned list back to localStorage
+      localStorage.setItem('currencies-data', JSON.stringify(merged));
+      
+      return merged.filter((c: Currency) => c.isActive);
     }
   } catch (error) {
     console.error('Error loading currencies:', error);
   }
+  
+  // First time or error - use defaults and save to localStorage
+  localStorage.setItem('currencies-data', JSON.stringify(defaultCurrencies));
   return defaultCurrencies.filter(c => c.isActive);
 };
 
@@ -102,7 +122,40 @@ export const useExchangeStore = create<ExchangeState>((set, get) => ({
   },
   
   reloadCurrencies: () => {
-    set({ currencies: loadCurrencies() });
+    // Reload from localStorage or defaults
+    const stored = localStorage.getItem('currencies-data');
+    let currencies: Currency[];
+    
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored);
+        
+        // Get valid currency codes from defaults
+        const validCodes = new Set(defaultCurrencies.map(c => c.code));
+        
+        // Filter stored currencies to only include those still in defaults
+        const validStored = parsed.filter((c: Currency) => validCodes.has(c.code));
+        
+        // Merge: update existing currencies with stored values, add new ones from defaults
+        const storedMap = new Map(validStored.map((c: Currency) => [c.code, c]));
+        currencies = defaultCurrencies.map(defaultCurrency => {
+          const stored = storedMap.get(defaultCurrency.code);
+          return stored ? { ...defaultCurrency, ...stored } : defaultCurrency;
+        });
+        
+        // Save cleaned list back to localStorage
+        localStorage.setItem('currencies-data', JSON.stringify(currencies));
+      } catch (error) {
+        console.error('Error reloading currencies:', error);
+        currencies = defaultCurrencies;
+      }
+    } else {
+      // First time - save defaults to localStorage
+      currencies = defaultCurrencies;
+      localStorage.setItem('currencies-data', JSON.stringify(currencies));
+    }
+    
+    set({ currencies: currencies.filter(c => c.isActive) });
   },
   
   swapCurrencies: () => {

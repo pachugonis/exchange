@@ -31,3 +31,12 @@ export const AVERAGE_RESPONSE_TIME = '2-5 минут';
 export const API_DELAY_MIN = 300;
 export const API_DELAY_MAX = 1000;
 export const API_ERROR_PROBABILITY = 0.05; // 5%
+
+// Status progression timing (in milliseconds)
+export const STATUS_PROGRESSION_DELAYS = {
+  payment_pending: { min: 5000, max: 15000 }, // 5-15 seconds
+  payment_received: { min: 10000, max: 20000 }, // 10-20 seconds
+  verification: { min: 15000, max: 30000 }, // 15-30 seconds
+  sending: { min: 20000, max: 40000 }, // 20-40 seconds
+  completed: { min: 5000, max: 10000 }, // 5-10 seconds
+} as const;

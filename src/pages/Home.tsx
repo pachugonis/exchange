@@ -4,6 +4,8 @@ import { ArrowRight, Zap, Shield, Clock, Award, TrendingUp, TrendingDown } from 
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { fetchCryptoRates } from '../api/cryptoAPI';
+import { Testimonials, FAQ, PopularDirections } from '../components/home';
+import { ExchangeSteps } from '../components/exchange';
 
 export const Home: React.FC = () => {
   const [cryptoRates, setCryptoRates] = useState<{
@@ -156,6 +158,18 @@ export const Home: React.FC = () => {
           </div>
         </div>
       </section>
+
+      {/* Popular Directions */}
+      <PopularDirections />
+
+      {/* Exchange Steps */}
+      <ExchangeSteps />
+
+      {/* Testimonials */}
+      <Testimonials />
+
+      {/* FAQ */}
+      <FAQ />
     </div>
   );
 };
