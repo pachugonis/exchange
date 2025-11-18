@@ -11,6 +11,7 @@ import {
   Shield,
   TrendingUp,
   Clock,
+  Home,
 } from 'lucide-react';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
@@ -102,6 +103,12 @@ export const UserDashboard: React.FC = () => {
               </p>
             </div>
             <div className="flex gap-3">
+              <Link to="/">
+                <Button variant="outline" className="gap-2">
+                  <Home className="w-4 h-4" />
+                  На главную
+                </Button>
+              </Link>
               <Link to="/user/settings">
                 <Button variant="outline" className="gap-2">
                   <Settings className="w-4 h-4" />

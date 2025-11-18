@@ -17,6 +17,7 @@ import { AdminOrders } from './pages/admin/AdminOrders';
 import { AdminSettings } from './pages/admin/AdminSettings';
 import { AdminCurrencies } from './pages/admin/AdminCurrencies';
 import { AdminPromos } from './pages/admin/AdminPromos';
+import { AdminContent } from './pages/admin/AdminContent';
 import { useThemeStore } from './store/themeStore';
 import { useAdminStore } from './store/adminStore';
 
@@ -55,6 +56,7 @@ function App() {
             <Route path="orders" element={<AdminOrders />} />
             <Route path="currencies" element={<AdminCurrencies />} />
             <Route path="promos" element={<AdminPromos />} />
+            <Route path="content" element={<AdminContent />} />
             <Route path="settings" element={<AdminSettings />} />
           </Route>
 
