@@ -6,13 +6,16 @@ import { Card } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
 import type { Order, OrderStatus } from '../../types';
-import { Clock, CheckCircle, XCircle, Search } from 'lucide-react';
+import { Clock, CheckCircle, XCircle, Search, X } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 export const AdminOrders: React.FC = () => {
   const { isAuthenticated } = useAdminStore();
-  const { orders } = useOrderStore();
+  const { orders, updateOrderStatus } = useOrderStore();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<OrderStatus | 'all'>('all');
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
 
   if (!isAuthenticated) {
     return <Navigate to="/admin/login" replace />;
@@ -40,6 +43,20 @@ export const AdminOrders: React.FC = () => {
     return colors[status] || 'gray';
   };
 
+  const getStatusBgColor = (status: OrderStatus): string => {
+    const colors: Record<OrderStatus, string> = {
+      waiting_payment: 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 border-yellow-300 dark:border-yellow-700',
+      payment_pending: 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 border-yellow-300 dark:border-yellow-700',
+      payment_received: 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 border-blue-300 dark:border-blue-700',
+      verification: 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 border-blue-300 dark:border-blue-700',
+      sending: 'bg-cyan-100 dark:bg-cyan-900/30 text-cyan-800 dark:text-cyan-300 border-cyan-300 dark:border-cyan-700',
+      completed: 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 border-green-300 dark:border-green-700',
+      cancelled: 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300 border-red-300 dark:border-red-700',
+      refund: 'bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-300 border-orange-300 dark:border-orange-700',
+    };
+    return colors[status] || 'bg-gray-100 dark:bg-gray-900/30 text-gray-800 dark:text-gray-300 border-gray-300 dark:border-gray-700';
+  };
+
   const getStatusText = (status: OrderStatus): string => {
     const texts: Record<OrderStatus, string> = {
       waiting_payment: 'Ожидание оплаты',
@@ -53,6 +70,31 @@ export const AdminOrders: React.FC = () => {
     };
     return texts[status] || status;
   };
+
+  const handleShowDetails = (order: Order) => {
+    setSelectedOrder(order);
+    setShowDetailsModal(true);
+  };
+
+  const handleCloseDetails = () => {
+    setShowDetailsModal(false);
+    setSelectedOrder(null);
+  };
+
+  const handleStatusChange = (orderId: string, newStatus: OrderStatus) => {
+    updateOrderStatus(orderId, newStatus);
+    toast.success(`Статус заявки обновлен на "${getStatusText(newStatus)}"`);
+  };
+
+  // Update selectedOrder when orders change
+  React.useEffect(() => {
+    if (selectedOrder) {
+      const updatedOrder = orders.find(o => o.id === selectedOrder.id);
+      if (updatedOrder) {
+        setSelectedOrder(updatedOrder);
+      }
+    }
+  }, [orders, selectedOrder]);
 
   return (
     <div className="space-y-6">
@@ -122,9 +164,9 @@ export const AdminOrders: React.FC = () => {
                         {new Date(order.createdAt).toLocaleString('ru-RU')}
                       </p>
                     </div>
-                    <Badge variant={getStatusColor(order.status) as any}>
+                    <div className={`px-3 py-1 rounded-full text-sm font-medium border ${getStatusBgColor(order.status)}`}>
                       {getStatusText(order.status)}
-                    </Badge>
+                    </div>
                   </div>
                   
                   <div className="space-y-1 text-sm">
@@ -158,15 +200,27 @@ export const AdminOrders: React.FC = () => {
                 <div className="flex flex-col gap-2">
                   {order.status !== 'completed' && order.status !== 'cancelled' && (
                     <>
-                      <Button size="sm" variant="outline">
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => handleStatusChange(order.id, 'completed')}
+                      >
                         Подтвердить
                       </Button>
-                      <Button size="sm" variant="outline">
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => handleStatusChange(order.id, 'cancelled')}
+                      >
                         Отменить
                       </Button>
                     </>
                   )}
-                  <Button size="sm" variant="ghost">
+                  <Button 
+                    size="sm" 
+                    variant="ghost"
+                    onClick={() => handleShowDetails(order)}
+                  >
                     Подробнее
                   </Button>
                 </div>
@@ -218,6 +272,162 @@ export const AdminOrders: React.FC = () => {
           </div>
         </Card>
       </div>
+
+      {/* Order Details Modal */}
+      {showDetailsModal && selectedOrder && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-dark-800 rounded-lg max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white dark:bg-dark-800 border-b border-dark-200 dark:border-dark-700 p-6 flex items-center justify-between">
+              <h2 className="text-2xl font-bold">Детали заявки #{selectedOrder.id}</h2>
+              <button
+                onClick={handleCloseDetails}
+                className="p-2 hover:bg-dark-100 dark:hover:bg-dark-700 rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-6">
+              {/* Status */}
+              <div>
+                <label className="block text-sm font-medium mb-2">Статус заявки</label>
+                <select
+                  value={selectedOrder.status}
+                  onChange={(e) => handleStatusChange(selectedOrder.id, e.target.value as OrderStatus)}
+                  className="w-full px-4 py-2 bg-white dark:bg-dark-700 border border-dark-300 dark:border-dark-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                >
+                  <option value="waiting_payment">Ожидание оплаты</option>
+                  <option value="payment_pending">Проверка оплаты</option>
+                  <option value="payment_received">Оплата получена</option>
+                  <option value="verification">Проверка</option>
+                  <option value="sending">Отправка</option>
+                  <option value="completed">Завершено</option>
+                  <option value="cancelled">Отменено</option>
+                  <option value="refund">Возврат</option>
+                </select>
+              </div>
+
+              {/* General Info */}
+              <Card>
+                <h3 className="font-semibold mb-4">Общая информация</h3>
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <p className="text-dark-500">ID заявки</p>
+                    <p className="font-mono font-medium">{selectedOrder.id}</p>
+                  </div>
+                  <div>
+                    <p className="text-dark-500">Дата создания</p>
+                    <p className="font-medium">
+                      {new Date(selectedOrder.createdAt).toLocaleString('ru-RU')}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-dark-500">Текущий статус</p>
+                    <div className={`inline-block px-3 py-1 rounded-full text-sm font-medium border mt-1 ${getStatusBgColor(selectedOrder.status)}`}>
+                      {getStatusText(selectedOrder.status)}
+                    </div>
+                  </div>
+                </div>
+              </Card>
+
+              {/* Exchange Details */}
+              <Card>
+                <h3 className="font-semibold mb-4">Детали обмена</h3>
+                <div className="space-y-3 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-dark-500">Отдаете:</span>
+                    <span className="font-medium">
+                      {selectedOrder.fromAmount} {selectedOrder.fromCurrency.code}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-dark-500">Получаете:</span>
+                    <span className="font-medium">
+                      {selectedOrder.toAmount} {selectedOrder.toCurrency.code}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-dark-500">Курс:</span>
+                    <span className="font-medium">{selectedOrder.rate.toFixed(6)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-dark-500">Комиссия:</span>
+                    <span className="font-medium">{(selectedOrder.commission * 100).toFixed(2)}%</span>
+                  </div>
+                </div>
+              </Card>
+
+              {/* Contact Info */}
+              <Card>
+                <h3 className="font-semibold mb-4">Контактная информация</h3>
+                <div className="space-y-3 text-sm">
+                  <div>
+                    <p className="text-dark-500">Email</p>
+                    <p className="font-medium">{selectedOrder.contactInfo.email}</p>
+                  </div>
+                  {selectedOrder.contactInfo.telegram && (
+                    <div>
+                      <p className="text-dark-500">Telegram</p>
+                      <p className="font-medium">{selectedOrder.contactInfo.telegram}</p>
+                    </div>
+                  )}
+                  {selectedOrder.contactInfo.promoCode && (
+                    <div>
+                      <p className="text-dark-500">Промокод</p>
+                      <p className="font-medium">{selectedOrder.contactInfo.promoCode}</p>
+                    </div>
+                  )}
+                </div>
+              </Card>
+
+              {/* Payment Details */}
+              <Card>
+                <h3 className="font-semibold mb-4">Платежные реквизиты</h3>
+                <div className="space-y-3 text-sm">
+                  <div>
+                    <p className="text-dark-500 mb-1">Кошелек отправителя ({selectedOrder.fromCurrency.code})</p>
+                    <p className="font-mono text-xs bg-dark-100 dark:bg-dark-700 p-2 rounded break-all">
+                      {selectedOrder.paymentDetails.fromWallet}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-dark-500 mb-1">Кошелек получателя ({selectedOrder.toCurrency.code})</p>
+                    <p className="font-mono text-xs bg-dark-100 dark:bg-dark-700 p-2 rounded break-all">
+                      {selectedOrder.paymentDetails.toWallet}
+                    </p>
+                  </div>
+                </div>
+              </Card>
+
+              {/* Actions */}
+              <div className="flex gap-3 justify-end">
+                <Button variant="outline" onClick={handleCloseDetails}>
+                  Закрыть
+                </Button>
+                {selectedOrder.status !== 'completed' && selectedOrder.status !== 'cancelled' && (
+                  <>
+                    <Button 
+                      variant="outline" 
+                      onClick={() => {
+                        handleStatusChange(selectedOrder.id, 'cancelled');
+                      }}
+                    >
+                      Отменить заявку
+                    </Button>
+                    <Button 
+                      onClick={() => {
+                        handleStatusChange(selectedOrder.id, 'completed');
+                      }}
+                    >
+                      Завершить заявку
+                    </Button>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

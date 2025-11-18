@@ -643,10 +643,12 @@ export const Exchange: React.FC = () => {
       <div className="container mx-auto max-w-4xl">
         <h1 className="text-4xl font-bold text-center mb-8">Обмен валют</h1>
         
-        {/* Debug info */}
+        {/* Debug info - remove in production */}
+        {/*
         <div className="text-xs text-gray-500 mb-2 text-center">
           Текущий шаг: {currentStep}
         </div>
+        */}
         
         <Card key={renderKey}>
           {renderStepIndicator()}
