@@ -12,6 +12,7 @@ import { AdminLogin } from './pages/admin/AdminLogin';
 import { AdminDashboard } from './pages/admin/AdminDashboard';
 import { AdminOrders } from './pages/admin/AdminOrders';
 import { AdminSettings } from './pages/admin/AdminSettings';
+import { AdminCurrencies } from './pages/admin/AdminCurrencies';
 import { useThemeStore } from './store/themeStore';
 
 function App() {
@@ -36,6 +37,7 @@ function App() {
           <Route path="dashboard" element={<AdminDashboard />} />
           <Route path="orders" element={<AdminOrders />} />
           <Route path="settings" element={<AdminSettings />} />
+          <Route path="currencies" element={<AdminCurrencies />} />
         </Route>
 
         {/* Public Routes */}

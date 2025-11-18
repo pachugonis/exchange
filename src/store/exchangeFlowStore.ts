@@ -282,6 +282,7 @@ export const useExchangeFlowStore = create<ExchangeFlowState>()(
         fromWallet: state.fromWallet,
         toWallet: state.toWallet,
         currentStep: state.currentStep,
+        orderId: state.orderId,
       }),
     }
   )

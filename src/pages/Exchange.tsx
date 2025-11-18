@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useExchangeFlowStore } from '../store/exchangeFlowStore';
 import { useAdminStore } from '../store/adminStore';
+import { useOrderStore } from '../store/orderStore';
 import { Card } from '../components/ui/Card';
 import { Input } from '../components/ui/Input';
 import { Button } from '../components/ui/Button';
@@ -13,6 +14,10 @@ import { createOrder } from '../api/mockAPI';
 
 export const Exchange: React.FC = () => {
   const navigate = useNavigate();
+  const { addOrder } = useOrderStore();
+  const { settings } = useAdminStore(); // Move hook to top level
+  const [isCreatingOrder, setIsCreatingOrder] = React.useState(false);
+  const [renderKey, setRenderKey] = React.useState(0);
   const {
     currentStep,
     fromCurrency,
@@ -31,6 +36,7 @@ export const Exchange: React.FC = () => {
     isLoadingRates,
     lastRateUpdate,
     validationErrors,
+    orderId,
     setFromCurrency,
     setToCurrency,
     setFromAmount,
@@ -47,15 +53,56 @@ export const Exchange: React.FC = () => {
     validateStep,
     setOrderId,
     resetFlow,
+    setCurrentStep,
   } = useExchangeFlowStore();
 
-  const { currencies: currencyList } = useExchangeStore();
+  const { currencies: currencyList, reloadCurrencies } = useExchangeStore();
+
+  // Reload currencies on mount to get latest from admin settings
+  useEffect(() => {
+    reloadCurrencies();
+  }, [reloadCurrencies]);
+
+  // Ensure we're on step 1 when mounting
+  useEffect(() => {
+    if (currentStep > 5 || currentStep < 1) {
+      resetFlow();
+    }
+  }, []);
+
+  // Log step changes for debugging
+  useEffect(() => {
+    console.log('=== STEP CHANGED ===');
+    console.log('Current step:', currentStep);
+    console.log('Order ID:', orderId);
+    console.log('From currency:', fromCurrency?.code);
+    console.log('To currency:', toCurrency?.code);
+    console.log('==================');
+  }, [currentStep, orderId, fromCurrency, toCurrency]);
 
   // Handle order creation
   const handleCreateOrder = async () => {
-    if (!validateStep(4)) return;
+    console.log('Creating order, validating step 4...');
+    const isValid = validateStep(4);
+    console.log('Validation result:', isValid);
+    console.log('Validation errors:', validationErrors);
+    
+    if (!isValid) {
+      toast.error('Пожалуйста, заполните все обязательные поля и согласитесь с условиями');
+      return;
+    }
 
+    setIsCreatingOrder(true);
     try {
+      console.log('Creating order with data:', {
+        fromCurrency,
+        toCurrency,
+        fromAmount,
+        toAmount,
+        rate,
+        commission,
+      });
+      
       const order = await createOrder({
         fromCurrency: fromCurrency!,
         toCurrency: toCurrency!,
@@ -74,12 +121,41 @@ export const Exchange: React.FC = () => {
         },
       });
 
+      console.log('Order created:', order);
+      
+      // Save order to store
+      addOrder(order);
+      
+      console.log('Setting order ID:', order.id);
       setOrderId(order.id);
+      
+      // Wait for state to update
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      console.log('Showing success toast');
       toast.success('Заявка успешно создана!');
-      goToNextStep();
+      
+      console.log('Moving to step 5, current step before:', currentStep);
+      // Use setCurrentStep from hook to trigger re-render
+      setCurrentStep(5);
+      
+      // Force re-render by updating key
+      setRenderKey(prev => prev + 1);
+      
+      // Force another update after a brief delay
+      setTimeout(() => {
+        console.log('Current step after timeout:', useExchangeFlowStore.getState().currentStep);
+        if (useExchangeFlowStore.getState().currentStep !== 5) {
+          console.log('Step not 5, forcing update');
+          setCurrentStep(5);
+          setRenderKey(prev => prev + 1);
+        }
+      }, 50);
     } catch (error) {
       toast.error('Ошибка при создании заявки');
-      console.error(error);
+      console.error('Order creation error:', error);
+    } finally {
+      setIsCreatingOrder(false);
     }
   };
 
@@ -433,26 +509,67 @@ export const Exchange: React.FC = () => {
   );
 
   const renderStep5 = () => {
-    const { orderId } = useExchangeFlowStore.getState();
-    const { settings } = useAdminStore();
+    // settings is now from component level, not a hook call here
+    
+    console.log('renderStep5 called');
+    console.log('fromCurrency:', fromCurrency);
+    console.log('toCurrency:', toCurrency);
+    console.log('fromAmount:', fromAmount);
+    console.log('toAmount:', toAmount);
+    console.log('orderId:', orderId);
+    
+    // Safety checks
+    if (!fromCurrency || !toCurrency) {
+      console.error('Missing currency data in step 5');
+      return (
+        <div className="text-center py-12">
+          <p className="text-red-500">Ошибка: данные о валютах потеряны</p>
+          <Button onClick={() => resetFlow()} className="mt-4">
+            Начать сначала
+          </Button>
+        </div>
+      );
+    }
+    
+    if (!orderId) {
+      console.error('Missing order ID in step 5');
+      return (
+        <div className="text-center py-12">
+          <p className="text-red-500">Ошибка: номер заявки не найден</p>
+          <Button onClick={() => resetFlow()} className="mt-4">
+            Начать сначала
+          </Button>
+        </div>
+      );
+    }
     
     // Get payment address from admin settings
     const getPaymentAddress = () => {
-      if (!fromCurrency) return '';
-      
-      // Extract base currency code for address lookup
-      const baseCode = fromCurrency.code.includes('_') 
-        ? fromCurrency.code.split('_')[0] 
-        : fromCurrency.code;
-      
-      return settings.paymentAddresses[baseCode] || settings.paymentAddresses[fromCurrency.code] || 'Адрес не настроен';
+      try {
+        if (!fromCurrency) return 'Адрес не настроен';
+        
+        // Extract base currency code for address lookup
+        const baseCode = fromCurrency.code.includes('_') 
+          ? fromCurrency.code.split('_')[0] 
+          : fromCurrency.code;
+        
+        return settings.paymentAddresses?.[baseCode] || settings.paymentAddresses?.[fromCurrency.code] || 'Адрес не настроен';
+      } catch (error) {
+        console.error('Error getting payment address:', error);
+        return 'Ошибка получения адреса';
+      }
     };
 
     const paymentAddress = getPaymentAddress();
 
     const copyToClipboard = (text: string) => {
-      navigator.clipboard.writeText(text);
-      toast.success('Скопировано в буфер обмена');
+      try {
+        navigator.clipboard.writeText(text);
+        toast.success('Скопировано в буфер обмена');
+      } catch (error) {
+        console.error('Error copying to clipboard:', error);
+        toast.error('Ошибка копирования');
+      }
     };
     
     return (
@@ -511,7 +628,7 @@ export const Exchange: React.FC = () => {
           <Button
             onClick={() => {
               resetFlow();
-              navigate('/exchange');
+              window.location.reload();
             }}
           >
             Новый обмен
@@ -526,15 +643,55 @@ export const Exchange: React.FC = () => {
       <div className="container mx-auto max-w-4xl">
         <h1 className="text-4xl font-bold text-center mb-8">Обмен валют</h1>
         
-        <Card>
+        {/* Debug info */}
+        <div className="text-xs text-gray-500 mb-2 text-center">
+          Текущий шаг: {currentStep}
+        </div>
+        
+        <Card key={renderKey}>
           {renderStepIndicator()}
           
           <div className="mt-8">
-            {currentStep === 1 && renderStep1()}
-            {currentStep === 2 && renderStep2()}
-            {currentStep === 3 && renderStep3()}
-            {currentStep === 4 && renderStep4()}
-            {currentStep === 5 && renderStep5()}
+            {(() => {
+              console.log('Rendering step:', currentStep);
+              switch (currentStep) {
+                case 1:
+                  console.log('Rendering step 1');
+                  return renderStep1();
+                case 2:
+                  console.log('Rendering step 2');
+                  return renderStep2();
+                case 3:
+                  console.log('Rendering step 3');
+                  return renderStep3();
+                case 4:
+                  console.log('Rendering step 4');
+                  return renderStep4();
+                case 5:
+                  console.log('Rendering step 5');
+                  return renderStep5();
+                default:
+                  console.log('Unknown step:', currentStep);
+                  return (
+                    <div className="text-center py-12">
+                      <p className="text-red-500">Ошибка: некорректный шаг ({currentStep})</p>
+                      <Button onClick={() => resetFlow()} className="mt-4">
+                        Начать сначала
+                      </Button>
+                    </div>
+                  );
+              }
+            })()}
+            
+            {/* Fallback if no step matches */}
+            {currentStep < 1 || currentStep > 5 ? (
+              <div className="text-center py-12">
+                <p className="text-red-500">Ошибка: некорректный шаг ({currentStep})</p>
+                <Button onClick={() => resetFlow()} className="mt-4">
+                  Начать сначала
+                </Button>
+              </div>
+            ) : null}
           </div>
 
           {/* Navigation Buttons */}
@@ -554,8 +711,20 @@ export const Exchange: React.FC = () => {
                   Далее <ArrowRight className="w-4 h-4" />
                 </Button>
               ) : (
-                <Button onClick={handleCreateOrder} className="gap-2">
-                  Создать заявку <Check className="w-4 h-4" />
+                <Button 
+                  onClick={handleCreateOrder} 
+                  className="gap-2"
+                  disabled={isCreatingOrder}
+                >
+                  {isCreatingOrder ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" /> Создание...
+                    </>
+                  ) : (
+                    <>
+                      Создать заявку <Check className="w-4 h-4" />
+                    </>
+                  )}
                 </Button>
               )}
             </div>

@@ -1,8 +1,22 @@
 import { create } from 'zustand';
 import type { Currency } from '../types';
-import { currencies } from '../data/currencies';
+import { currencies as defaultCurrencies } from '../data/currencies';
 import { fetchCryptoRates, calculateRate } from '../api/cryptoAPI';
 import { DEFAULT_COMMISSION } from '../utils/constants';
+
+// Load currencies from localStorage or use defaults
+const loadCurrencies = (): Currency[] => {
+  try {
+    const stored = localStorage.getItem('currencies-data');
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      return parsed.filter((c: Currency) => c.isActive);
+    }
+  } catch (error) {
+    console.error('Error loading currencies:', error);
+  }
+  return defaultCurrencies.filter(c => c.isActive);
+};
 
 interface ExchangeState {
   currencies: Currency[];
@@ -20,10 +34,11 @@ interface ExchangeState {
   calculateToAmount: () => Promise<void>;
   swapCurrencies: () => void;
   refreshRates: () => Promise<void>;
+  reloadCurrencies: () => void;
 }
 
 export const useExchangeStore = create<ExchangeState>((set, get) => ({
-  currencies,
+  currencies: loadCurrencies(),
   fromCurrency: null,
   toCurrency: null,
   fromAmount: '',
@@ -84,6 +99,10 @@ export const useExchangeStore = create<ExchangeState>((set, get) => ({
   
   refreshRates: async () => {
     await get().calculateToAmount();
+  },
+  
+  reloadCurrencies: () => {
+    set({ currencies: loadCurrencies() });
   },
   
   swapCurrencies: () => {
