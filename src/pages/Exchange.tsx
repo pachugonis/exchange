@@ -273,7 +273,7 @@ export const Exchange: React.FC = () => {
                 .filter((currency) => !toCurrency || currency.id !== toCurrency.id)
                 .map((currency) => (
                   <option key={currency.id} value={currency.id}>
-                    {currency.name} ({currency.code})
+                    {currency.icon} {currency.name} ({currency.code})
                   </option>
                 ))}
             </select>
@@ -342,7 +342,7 @@ export const Exchange: React.FC = () => {
                 .filter((currency) => !fromCurrency || currency.id !== fromCurrency.id)
                 .map((currency) => (
                   <option key={currency.id} value={currency.id}>
-                    {currency.name} ({currency.code})
+                    {currency.icon} {currency.name} ({currency.code})
                   </option>
                 ))}
             </select>
