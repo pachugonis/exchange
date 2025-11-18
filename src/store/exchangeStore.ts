@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import type { Currency } from '../types';
 import { currencies } from '../data/currencies';
-import { getExchangeRate } from '../data/mockRates';
+import { fetchCryptoRates, calculateRate } from '../api/cryptoAPI';
 import { DEFAULT_COMMISSION } from '../utils/constants';
 
 interface ExchangeState {
@@ -12,11 +12,14 @@ interface ExchangeState {
   toAmount: string;
   rate: number;
   commission: number;
+  isLoadingRates: boolean;
+  lastRateUpdate: number | null;
   setFromCurrency: (currency: Currency | null) => void;
   setToCurrency: (currency: Currency | null) => void;
   setFromAmount: (amount: string) => void;
-  calculateToAmount: () => void;
+  calculateToAmount: () => Promise<void>;
   swapCurrencies: () => void;
+  refreshRates: () => Promise<void>;
 }
 
 export const useExchangeStore = create<ExchangeState>((set, get) => ({
@@ -27,6 +30,8 @@ export const useExchangeStore = create<ExchangeState>((set, get) => ({
   toAmount: '',
   rate: 0,
   commission: DEFAULT_COMMISSION,
+  isLoadingRates: false,
+  lastRateUpdate: null,
   
   setFromCurrency: (currency) => {
     set({ fromCurrency: currency });
@@ -43,7 +48,7 @@ export const useExchangeStore = create<ExchangeState>((set, get) => ({
     get().calculateToAmount();
   },
   
-  calculateToAmount: () => {
+  calculateToAmount: async () => {
     const { fromCurrency, toCurrency, fromAmount, commission } = get();
     
     if (!fromCurrency || !toCurrency || !fromAmount) {
@@ -57,15 +62,28 @@ export const useExchangeStore = create<ExchangeState>((set, get) => ({
       return;
     }
     
-    const rate = getExchangeRate(fromCurrency.code, toCurrency.code);
-    const baseAmount = amount * rate;
-    const commissionAmount = baseAmount * commission;
-    const total = baseAmount - commissionAmount;
-    
-    set({ 
-      rate,
-      toAmount: total.toFixed(toCurrency.decimals),
-    });
+    try {
+      set({ isLoadingRates: true });
+      const rates = await fetchCryptoRates();
+      const rate = calculateRate(rates, fromCurrency.code, toCurrency.code);
+      const baseAmount = amount * rate;
+      const commissionAmount = baseAmount * commission;
+      const total = baseAmount - commissionAmount;
+      
+      set({ 
+        rate,
+        toAmount: total.toFixed(toCurrency.decimals),
+        lastRateUpdate: rates.lastUpdated,
+        isLoadingRates: false,
+      });
+    } catch (error) {
+      console.error('Error calculating exchange:', error);
+      set({ isLoadingRates: false });
+    }
+  },
+  
+  refreshRates: async () => {
+    await get().calculateToAmount();
   },
   
   swapCurrencies: () => {

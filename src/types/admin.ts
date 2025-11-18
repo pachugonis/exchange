@@ -1,0 +1,29 @@
+export interface AdminUser {
+  id: string;
+  username: string;
+  email: string;
+  role: 'admin' | 'operator';
+  createdAt: number;
+}
+
+export interface AdminSettings {
+  commission: number; // 0.02 = 2%
+  minCommission: number;
+  maxCommission: number;
+  paymentAddresses: {
+    [currencyCode: string]: string; // BTC: "bc1q...", ETH: "0x..."
+  };
+  autoConfirmThreshold: number; // Auto-confirm orders below this amount
+  maintenanceMode: boolean;
+  supportEmail: string;
+  supportTelegram: string;
+}
+
+export interface AdminStats {
+  totalOrders: number;
+  completedOrders: number;
+  pendingOrders: number;
+  totalVolume: number;
+  todayVolume: number;
+  activeUsers: number;
+}
