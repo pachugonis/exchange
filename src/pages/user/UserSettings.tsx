@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, Save, User, Mail, Phone, MessageSquare, Shield, QrCode, Key, CheckCircle, Clock, XCircle, AlertCircle, ArrowRight } from 'lucide-react';
+import { ArrowLeft, Save, User, Mail, Phone, MessageSquare, Shield, QrCode, Key, CheckCircle, Clock, XCircle, AlertCircle, ArrowRight, Lock } from 'lucide-react';
 import { Card } from '../../components/ui/Card';
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
@@ -24,6 +24,12 @@ export const UserSettings: React.FC = () => {
   const [twoFactorSecret, setTwoFactorSecret] = useState('');
   const [verificationCode, setVerificationCode] = useState('');
   const [disableCode, setDisableCode] = useState('');
+  const [passwordForm, setPasswordForm] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: '',
+  });
+  const [changingPassword, setChangingPassword] = useState(false);
 
   if (!isAuthenticated || !user) {
     navigate('/user/login');
@@ -69,6 +75,27 @@ export const UserSettings: React.FC = () => {
     } else {
       toast.error(result.error || 'Ошибка отключения');
     }
+  };
+
+  const handleChangePassword = () => {
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      toast.error('Пароли не совпадают');
+      return;
+    }
+
+    if (passwordForm.newPassword.length < 6) {
+      toast.error('Пароль должен содержать минимум 6 символов');
+      return;
+    }
+
+    // In a real app, this would verify the current password on the backend
+    // For now, we'll show a message to use the forgot password flow
+    toast.success('Для смены пароля используйте функцию восстановления пароля');
+    setPasswordForm({
+      currentPassword: '',
+      newPassword: '',
+      confirmPassword: '',
+    });
   };
 
   return (
@@ -178,6 +205,41 @@ export const UserSettings: React.FC = () => {
               <h3 className="text-xl font-semibold mb-4">Безопасность аккаунта</h3>
 
               <div className="space-y-4">
+                {/* Password Change Section */}
+                <div className="p-4 bg-dark-50 dark:bg-dark-700 rounded-lg">
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      <Lock className="w-6 h-6 text-primary-500" />
+                      <div>
+                        <h4 className="font-medium">Смена пароля</h4>
+                        <p className="text-sm text-dark-600 dark:text-dark-400">
+                          Измените пароль для входа в систему
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <Alert variant="info">
+                      Для безопасной смены пароля используйте функцию{' '}
+                      <Link 
+                        to="/user/forgot-password" 
+                        className="text-primary-500 hover:text-primary-600 font-medium underline"
+                      >
+                        восстановления пароля
+                      </Link>
+                      . Вам будет отправлена ссылка на email.
+                    </Alert>
+
+                    <Link to="/user/forgot-password">
+                      <Button variant="outline" className="gap-2 w-full sm:w-auto">
+                        <Lock className="w-4 h-4" />
+                        Изменить пароль
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
+
                 {/* 2FA Section */}
                 <div className="p-4 bg-dark-50 dark:bg-dark-700 rounded-lg">
                   <div className="flex items-start justify-between mb-4">

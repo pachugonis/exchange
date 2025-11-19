@@ -9,7 +9,7 @@ import { Exchange } from './pages/Exchange';
 import { About, FAQ } from './pages/Info';
 import { Rules, Reviews, Contact } from './pages/Additional';
 import { OrderTracking } from './pages/OrderTracking';
-import { UserLogin, UserRegister, UserDashboard, UserSettings, UserKYC } from './pages/user';
+import { UserLogin, UserRegister, UserDashboard, UserSettings, UserKYC, ForgotPassword, ResetPassword, VerifyEmail } from './pages/user';
 import { MaintenancePage } from './pages/MaintenancePage';
 import { AdminLogin } from './pages/admin/AdminLogin';
 import { AdminDashboard } from './pages/admin/AdminDashboard';
@@ -19,6 +19,7 @@ import { AdminCurrencies } from './pages/admin/AdminCurrencies';
 import { AdminPromos } from './pages/admin/AdminPromos';
 import { AdminContent } from './pages/admin/AdminContent';
 import { AdminKYC } from './pages/admin/AdminKYC';
+import { AdminNewsletter } from './pages/admin/AdminNewsletter';
 import { useThemeStore } from './store/themeStore';
 import { useAdminStore } from './store/adminStore';
 
@@ -59,12 +60,16 @@ function App() {
             <Route path="promos" element={<AdminPromos />} />
             <Route path="kyc" element={<AdminKYC />} />
             <Route path="content" element={<AdminContent />} />
+            <Route path="newsletter" element={<AdminNewsletter />} />
             <Route path="settings" element={<AdminSettings />} />
           </Route>
 
           {/* User Cabinet Routes */}
           <Route path="/user/login" element={<UserLogin />} />
           <Route path="/user/register" element={<UserRegister />} />
+          <Route path="/user/forgot-password" element={<ForgotPassword />} />
+          <Route path="/user/reset-password" element={<ResetPassword />} />
+          <Route path="/user/verify-email" element={<VerifyEmail />} />
           <Route path="/user/dashboard" element={<UserDashboard />} />
           <Route path="/user/settings" element={<UserSettings />} />
           <Route path="/user/kyc" element={<UserKYC />} />

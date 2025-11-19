@@ -1,8 +1,32 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Mail, MessageCircle, Shield } from 'lucide-react';
+import { Mail, MessageCircle, Shield, Send } from 'lucide-react';
+import { Input } from '../ui/Input';
+import { Button } from '../ui/Button';
+import { useNewsletterStore } from '../../store/newsletterStore';
+import toast from 'react-hot-toast';
 
 export const Footer: React.FC = () => {
+  const { addSubscriber } = useNewsletterStore();
+  const [email, setEmail] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleSubscribe = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email) return;
+
+    setLoading(true);
+    const result = await addSubscriber(email);
+    setLoading(false);
+
+    if (result.success) {
+      toast.success('Вы успешно подписались на рассылку!');
+      setEmail('');
+    } else {
+      toast.error(result.error || 'Ошибка подписки');
+    }
+  };
+
   return (
     <footer className="bg-dark-900 text-dark-100 mt-20">
       <div className="container mx-auto px-4 py-12">
@@ -51,6 +75,34 @@ export const Footer: React.FC = () => {
                 SSL Secure
               </li>
             </ul>
+          </div>
+        </div>
+        
+        {/* Newsletter Subscription */}
+        <div className="border-t border-dark-700 mt-8 pt-8">
+          <div className="max-w-md mx-auto text-center">
+            <h4 className="font-semibold mb-2">Подписывайтесь на рассылку</h4>
+            <p className="text-dark-400 text-sm mb-4">
+              Получайте новости и специальные предложения
+            </p>
+            <form onSubmit={handleSubscribe} className="flex gap-2">
+              <Input
+                type="email"
+                placeholder="Ваш email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="flex-1 bg-dark-800 border-dark-600"
+                required
+              />
+              <Button type="submit" disabled={loading} className="gap-2">
+                {loading ? 'Отправка...' : (
+                  <>
+                    <Send className="w-4 h-4" />
+                    Подписаться
+                  </>
+                )}
+              </Button>
+            </form>
           </div>
         </div>
         

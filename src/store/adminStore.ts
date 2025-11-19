@@ -32,6 +32,15 @@ const defaultSettings: AdminSettings = {
   maintenanceMode: false,
   supportEmail: 'support@4ex.com',
   supportTelegram: '@support4ex',
+  // SMTP Settings
+  smtpEnabled: false,
+  smtpHost: '',
+  smtpPort: 587,
+  smtpSecure: false,
+  smtpUser: '',
+  smtpPassword: '',
+  smtpFromEmail: 'noreply@4ex.com',
+  smtpFromName: '4EX',
 };
 
 const defaultStats: AdminStats = {

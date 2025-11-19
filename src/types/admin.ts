@@ -17,6 +17,15 @@ export interface AdminSettings {
   maintenanceMode: boolean;
   supportEmail: string;
   supportTelegram: string;
+  // SMTP Settings
+  smtpEnabled: boolean;
+  smtpHost: string;
+  smtpPort: number;
+  smtpSecure: boolean;
+  smtpUser: string;
+  smtpPassword: string;
+  smtpFromEmail: string;
+  smtpFromName: string;
 }
 
 export interface AdminStats {

@@ -28,10 +28,11 @@ import toast from 'react-hot-toast';
 
 export const UserDashboard: React.FC = () => {
   const navigate = useNavigate();
-  const { user, isAuthenticated, logout } = useUserStore();
+  const { user, isAuthenticated, logout, resendVerificationEmail } = useUserStore();
   const { orders } = useOrderStore();
   const { favorites } = useFavoriteStore();
   const [currentPage, setCurrentPage] = useState(1);
+  const [resendingEmail, setResendingEmail] = useState(false);
   const ordersPerPage = 10;
 
   useEffect(() => {
@@ -47,6 +48,18 @@ export const UserDashboard: React.FC = () => {
     toast.success('Вы вышли из аккаунта');
     // Use window.location for hard redirect to ensure clean state
     window.location.href = '/';
+  };
+
+  const handleResendEmail = async () => {
+    setResendingEmail(true);
+    const result = await resendVerificationEmail();
+    setResendingEmail(false);
+    
+    if (result.success) {
+      toast.success('Письмо отправлено на вашу почту!');
+    } else {
+      toast.error(result.error || 'Ошибка отправки письма');
+    }
   };
 
   const userOrders = orders
@@ -133,7 +146,18 @@ export const UserDashboard: React.FC = () => {
 
           {!user.emailVerified && (
             <Alert variant="warning">
-              Ваш email не подтвержден. Проверьте почту для подтверждения аккаунта.
+              <div className="flex items-center justify-between">
+                <span>Ваш email не подтвержден. Проверьте почту для подтверждения аккаунта.</span>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={handleResendEmail}
+                  disabled={resendingEmail}
+                  className="ml-4"
+                >
+                  {resendingEmail ? 'Отправка...' : 'Отправить снова'}
+                </Button>
+              </div>
             </Alert>
           )}
         </div>
