@@ -7,6 +7,7 @@ interface OrderState {
   currentOrder: Order | null;
   addOrder: (order: Order) => void;
   updateOrderStatus: (id: string, status: OrderStatus) => void;
+  cancelOrder: (id: string) => void;
   getOrderById: (id: string) => Order | undefined;
   getOrdersByUserId: (userId: string) => Order[];
 }
@@ -39,6 +40,25 @@ export const useOrderStore = create<OrderState>()(
                 }
               : order
           ),
+        }));
+      },
+      
+      cancelOrder: (id) => {
+        set((state) => ({
+          orders: state.orders.map((order) =>
+            order.id === id
+              ? {
+                  ...order,
+                  status: 'cancelled',
+                  updatedAt: Date.now(),
+                  statusHistory: [
+                    ...order.statusHistory,
+                    { status: 'cancelled', timestamp: Date.now(), message: 'Заявка отменена пользователем' },
+                  ],
+                }
+              : order
+          ),
+          currentOrder: state.currentOrder?.id === id ? null : state.currentOrder,
         }));
       },
       

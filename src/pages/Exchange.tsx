@@ -8,8 +8,9 @@ import { usePromoStore } from '../store/promoStore';
 import { Card } from '../components/ui/Card';
 import { Input } from '../components/ui/Input';
 import { Button } from '../components/ui/Button';
+import { Modal } from '../components/ui/Modal';
 import { PromoCodeInput } from '../components/exchange/PromoCodeInput';
-import { ArrowLeftRight, RefreshCw, ArrowRight, ArrowLeft, Check, Loader2, Copy } from 'lucide-react';
+import { ArrowLeftRight, RefreshCw, ArrowRight, ArrowLeft, Check, Loader2, Copy, XCircle } from 'lucide-react';
 import { formatCurrency } from '../utils/formatters';
 import toast from 'react-hot-toast';
 import { useExchangeStore } from '../store/exchangeStore';
@@ -17,11 +18,12 @@ import { createOrder } from '../api/mockAPI';
 
 export const Exchange: React.FC = () => {
   const navigate = useNavigate();
-  const { addOrder } = useOrderStore();
+  const { addOrder, cancelOrder } = useOrderStore();
   const { user } = useUserStore();
   const { incrementPromoUse, appliedPromo, removePromo } = usePromoStore();
   const { settings } = useAdminStore(); // Move hook to top level
   const [isCreatingOrder, setIsCreatingOrder] = React.useState(false);
+  const [showCancelModal, setShowCancelModal] = React.useState(false);
   const [renderKey, setRenderKey] = React.useState(0);
   const {
     currentStep,
@@ -216,6 +218,26 @@ export const Exchange: React.FC = () => {
     } finally {
       setIsCreatingOrder(false);
     }
+  };
+
+  // Handle order cancellation
+  const handleCancelOrder = () => {
+    console.log('handleCancelOrder called, orderId:', orderId);
+    if (!orderId) {
+      console.error('No orderId found');
+      toast.error('Ошибка: номер заявки не найден');
+      return;
+    }
+    
+    console.log('Cancelling order:', orderId);
+    cancelOrder(orderId);
+    toast.success('Заявка успешно отменена');
+    setShowCancelModal(false);
+    
+    // Redirect to home after a brief delay
+    setTimeout(() => {
+      navigate('/');
+    }, 1500);
   };
 
   const renderStepIndicator = () => (
@@ -745,6 +767,17 @@ export const Exchange: React.FC = () => {
           >
             Новый обмен
           </Button>
+          <Button
+            onClick={() => {
+              console.log('Cancel button clicked, opening modal');
+              setShowCancelModal(true);
+            }}
+            variant="outline"
+            className="gap-2 border-red-300 text-red-600 hover:bg-red-50 dark:border-red-700 dark:text-red-400 dark:hover:bg-red-900/20"
+          >
+            <XCircle className="w-4 h-4" />
+            Отменить заявку
+          </Button>
         </div>
       </div>
     );
@@ -845,6 +878,39 @@ export const Exchange: React.FC = () => {
           )}
         </Card>
       </div>
+
+      {/* Cancel Order Modal */}
+      <Modal
+        isOpen={showCancelModal}
+        onClose={() => setShowCancelModal(false)}
+        title="Подтвердите отмену"
+        size="sm"
+      >
+        <div className="space-y-4">
+          <p className="text-dark-600 dark:text-dark-400">
+            Вы уверены, что хотите отменить заявку <strong>{orderId}</strong>?
+          </p>
+          <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3">
+            <p className="text-sm text-yellow-800 dark:text-yellow-200">
+              ⚠️ <strong>Внимание:</strong> Отмена заявки необратима. Если вы уже отправили средства, обратитесь в поддержку.
+            </p>
+          </div>
+          <div className="flex gap-3 justify-end">
+            <Button
+              variant="outline"
+              onClick={() => setShowCancelModal(false)}
+            >
+              Нет, оставить
+            </Button>
+            <Button
+              onClick={handleCancelOrder}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              Да, отменить
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };
