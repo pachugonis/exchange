@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, Save, User, Mail, Phone, MessageSquare, Shield, QrCode, Key } from 'lucide-react';
+import { ArrowLeft, Save, User, Mail, Phone, MessageSquare, Shield, QrCode, Key, CheckCircle, Clock, XCircle, AlertCircle, ArrowRight } from 'lucide-react';
 import { Card } from '../../components/ui/Card';
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
@@ -302,13 +302,49 @@ export const UserSettings: React.FC = () => {
                 </div>
 
                 <div className="p-4 bg-dark-50 dark:bg-dark-700 rounded-lg">
-                  <h4 className="font-medium mb-2">KYC Верификация</h4>
-                  <p className="text-sm text-dark-600 dark:text-dark-400 mb-3">
-                    Пройдите верификацию для увеличения лимитов
-                  </p>
-                  <Button variant="outline" size="sm" disabled>
-                    Скоро доступно
-                  </Button>
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-center gap-3">
+                      <Shield className="w-6 h-6 text-primary-500" />
+                      <div>
+                        <h4 className="font-medium">KYC Верификация</h4>
+                        <p className="text-sm text-dark-600 dark:text-dark-400">
+                          Пройдите верификацию для увеличения лимитов
+                        </p>
+                      </div>
+                    </div>
+                    {user.kycStatus === 'verified' ? (
+                      <span className="px-3 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-sm rounded-full flex items-center gap-1">
+                        <CheckCircle className="w-3 h-3" />
+                        Уровень {user.kycLevel}
+                      </span>
+                    ) : user.kycStatus === 'pending' ? (
+                      <span className="px-3 py-1 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 text-sm rounded-full flex items-center gap-1">
+                        <Clock className="w-3 h-3" />
+                        На проверке
+                      </span>
+                    ) : user.kycStatus === 'rejected' ? (
+                      <span className="px-3 py-1 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 text-sm rounded-full flex items-center gap-1">
+                        <XCircle className="w-3 h-3" />
+                        Отклонена
+                      </span>
+                    ) : (
+                      <span className="px-3 py-1 bg-dark-200 dark:bg-dark-600 text-dark-600 dark:text-dark-300 text-sm rounded-full flex items-center gap-1">
+                        <AlertCircle className="w-3 h-3" />
+                        Не пройдена
+                      </span>
+                    )}
+                  </div>
+                  <Link to="/user/kyc">
+                    <Button variant="outline" size="sm" className="gap-2">
+                      <Shield className="w-4 h-4" />
+                      {user.kycStatus === 'verified' 
+                        ? 'Повысить уровень' 
+                        : user.kycStatus === 'pending'
+                        ? 'Просмотреть статус'
+                        : 'Пройти верификацию'}
+                      <ArrowRight className="w-4 h-4" />
+                    </Button>
+                  </Link>
                 </div>
               </div>
             </Card>

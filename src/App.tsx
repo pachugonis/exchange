@@ -9,7 +9,7 @@ import { Exchange } from './pages/Exchange';
 import { About, FAQ } from './pages/Info';
 import { Rules, Reviews, Contact } from './pages/Additional';
 import { OrderTracking } from './pages/OrderTracking';
-import { UserLogin, UserRegister, UserDashboard, UserSettings } from './pages/user';
+import { UserLogin, UserRegister, UserDashboard, UserSettings, UserKYC } from './pages/user';
 import { MaintenancePage } from './pages/MaintenancePage';
 import { AdminLogin } from './pages/admin/AdminLogin';
 import { AdminDashboard } from './pages/admin/AdminDashboard';
@@ -18,6 +18,7 @@ import { AdminSettings } from './pages/admin/AdminSettings';
 import { AdminCurrencies } from './pages/admin/AdminCurrencies';
 import { AdminPromos } from './pages/admin/AdminPromos';
 import { AdminContent } from './pages/admin/AdminContent';
+import { AdminKYC } from './pages/admin/AdminKYC';
 import { useThemeStore } from './store/themeStore';
 import { useAdminStore } from './store/adminStore';
 
@@ -56,6 +57,7 @@ function App() {
             <Route path="orders" element={<AdminOrders />} />
             <Route path="currencies" element={<AdminCurrencies />} />
             <Route path="promos" element={<AdminPromos />} />
+            <Route path="kyc" element={<AdminKYC />} />
             <Route path="content" element={<AdminContent />} />
             <Route path="settings" element={<AdminSettings />} />
           </Route>
@@ -65,6 +67,7 @@ function App() {
           <Route path="/user/register" element={<UserRegister />} />
           <Route path="/user/dashboard" element={<UserDashboard />} />
           <Route path="/user/settings" element={<UserSettings />} />
+          <Route path="/user/kyc" element={<UserKYC />} />
 
           {/* Public Routes */}
           <Route

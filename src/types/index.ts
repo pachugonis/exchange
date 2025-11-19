@@ -6,3 +6,4 @@ export * from './admin';
 export * from './promo';
 export * from './favorite';
 export * from './chart';
+export * from './kyc';

@@ -3,3 +3,4 @@ export { AdminDashboard } from './AdminDashboard';
 export { AdminOrders } from './AdminOrders';
 export { AdminSettings } from './AdminSettings';
 export { AdminCurrencies } from './AdminCurrencies';
+export { AdminKYC } from './AdminKYC';
