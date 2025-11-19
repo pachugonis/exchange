@@ -54,6 +54,21 @@ export const Footer: React.FC = () => {
           </div>
         </div>
         
+        {/* Banners Section */}
+        <div className="border-t border-dark-700 mt-8 pt-8">
+          <div className="flex flex-wrap items-center justify-center gap-4">
+            {[1, 2, 3, 4, 5, 6].map((index) => (
+              <div
+                key={index}
+                className="w-[88px] h-[31px] bg-dark-800 border border-dark-700 rounded flex items-center justify-center hover:border-primary-500 transition cursor-pointer"
+                title={`Баннер ${index}`}
+              >
+                <span className="text-xs text-dark-500">{88}×{31}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+        
         <div className="border-t border-dark-700 mt-8 pt-8 text-center text-dark-500 text-sm">
           <p>© 2024 4EX Currency Exchange. Все права защищены.</p>
         </div>
