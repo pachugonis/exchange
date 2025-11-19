@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { Review, CreateReviewData } from '../types/review';
 import { generateId } from '../utils/generators';
+import { useOrderStore } from './orderStore';
 
 interface ReviewState {
   reviews: Review[];
@@ -32,11 +33,18 @@ export const useReviewStore = create<ReviewState>()(
           return { success: false, error: 'Комментарий должен содержать минимум 10 символов' };
         }
         
+        if (data.comment.trim().length > 200) {
+          return { success: false, error: 'Комментарий не должен превышать 200 символов' };
+        }
+        
         // Check if review already exists for this order
         const existingReview = get().reviews.find(r => r.orderId === data.orderId);
         if (existingReview) {
           return { success: false, error: 'Вы уже оставили отзыв для этого обмена' };
         }
+        
+        // Get order details to include exchange direction
+        const order = useOrderStore.getState().getOrderById(data.orderId);
         
         const newReview: Review = {
           id: generateId('REVIEW'),
@@ -49,6 +57,12 @@ export const useReviewStore = create<ReviewState>()(
           createdAt: Date.now(),
           isPublished: true, // Auto-publish (can be changed to require approval)
           isVerified: true, // Verified because it's from completed order
+          exchangeDirection: order ? {
+            fromAmount: order.fromAmount,
+            fromCurrency: order.fromCurrency.code,
+            toAmount: order.toAmount,
+            toCurrency: order.toCurrency.code,
+          } : undefined,
         };
         
         set((state) => ({

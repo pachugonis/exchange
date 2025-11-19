@@ -1,5 +1,5 @@
 import React from 'react';
-import { Star, MessageCircle } from 'lucide-react';
+import { Star, MessageCircle, ArrowRight } from 'lucide-react';
 import { Card } from '../ui/Card';
 import { Alert } from '../ui/Alert';
 import { useReviewStore } from '../../store/reviewStore';
@@ -70,6 +70,22 @@ export const Testimonials: React.FC = () => {
                       ))}
                     </div>
                   </div>
+                  
+                  {/* Exchange Direction */}
+                  {review.exchangeDirection && (
+                    <div className="mb-3 pb-3 border-b border-dark-200 dark:border-dark-700">
+                      <div className="flex items-center gap-2 text-sm">
+                        <span className="font-medium text-primary-600 dark:text-primary-400">
+                          {review.exchangeDirection.fromAmount} {review.exchangeDirection.fromCurrency}
+                        </span>
+                        <ArrowRight className="w-4 h-4 text-dark-400" />
+                        <span className="font-medium text-primary-600 dark:text-primary-400">
+                          {review.exchangeDirection.toAmount} {review.exchangeDirection.toCurrency}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                  
                   <p className="text-dark-600 dark:text-dark-300 text-sm flex-grow">
                     {review.comment}
                   </p>

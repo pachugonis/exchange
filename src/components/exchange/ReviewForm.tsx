@@ -38,6 +38,11 @@ export const ReviewForm: React.FC<ReviewFormProps> = ({ order, onSubmitSuccess }
       return;
     }
     
+    if (comment.trim().length > 200) {
+      toast.error('Комментарий не должен превышать 200 символов');
+      return;
+    }
+    
     setLoading(true);
     
     const result = await createReview(
@@ -140,9 +145,10 @@ export const ReviewForm: React.FC<ReviewFormProps> = ({ order, onSubmitSuccess }
             className="w-full h-32 px-4 py-2 rounded-lg border border-dark-300 dark:border-dark-600 bg-white dark:bg-dark-800 focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none"
             required
             minLength={10}
+            maxLength={200}
           />
           <p className="text-xs text-dark-500 mt-1">
-            Минимум 10 символов ({comment.length}/10)
+            {comment.length}/200 символов (минимум 10)
           </p>
         </div>
 

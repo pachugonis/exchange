@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Star, Eye, EyeOff, Trash2, MessageSquare, Send } from 'lucide-react';
+import { Star, Eye, EyeOff, Trash2, MessageSquare, Send, ArrowRight } from 'lucide-react';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Alert } from '../../components/ui/Alert';
@@ -125,6 +125,22 @@ export const AdminReviews: React.FC = () => {
 
               {/* Comment */}
               <p className="text-dark-600 dark:text-dark-300 mb-4">{review.comment}</p>
+              
+              {/* Exchange Direction */}
+              {review.exchangeDirection && (
+                <div className="mb-4 pb-4 border-b border-dark-200 dark:border-dark-700">
+                  <p className="text-xs text-dark-500 mb-2">Направление обмена:</p>
+                  <div className="flex items-center gap-2 text-sm">
+                    <span className="font-medium text-primary-600 dark:text-primary-400">
+                      {review.exchangeDirection.fromAmount} {review.exchangeDirection.fromCurrency}
+                    </span>
+                    <ArrowRight className="w-4 h-4 text-dark-400" />
+                    <span className="font-medium text-primary-600 dark:text-primary-400">
+                      {review.exchangeDirection.toAmount} {review.exchangeDirection.toCurrency}
+                    </span>
+                  </div>
+                </div>
+              )}
 
               {/* Existing Admin Response */}
               {review.response && (

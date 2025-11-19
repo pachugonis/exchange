@@ -9,6 +9,13 @@ export interface Review {
   createdAt: number;
   isPublished: boolean; // Admin can approve/hide reviews
   isVerified: boolean; // Verified as completed exchange
+  // Exchange direction info
+  exchangeDirection?: {
+    fromAmount: number;
+    fromCurrency: string;
+    toAmount: number;
+    toCurrency: string;
+  };
   response?: {
     text: string;
     createdAt: number;
