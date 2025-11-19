@@ -231,6 +231,10 @@ export const Exchange: React.FC = () => {
     
     console.log('Cancelling order:', orderId);
     cancelOrder(orderId);
+    
+    // Reset exchange flow to clear all data
+    resetFlow();
+    
     toast.success('Заявка успешно отменена');
     setShowCancelModal(false);
     
