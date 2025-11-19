@@ -40,6 +40,8 @@ export interface Order {
   expiresAt: number; // Курс резервируется на 15 минут
   statusHistory: StatusChange[];
   paymentAddress?: string; // Адрес для оплаты
+  hasReview?: boolean; // Flag to track if user has left a review
+  reviewId?: string; // Reference to the review if one exists
 }
 
 export interface StatusChange {

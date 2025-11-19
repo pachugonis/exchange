@@ -1,5 +1,8 @@
 import React from 'react';
 import { Card } from '../components/ui/Card';
+import { Alert } from '../components/ui/Alert';
+import { useReviewStore } from '../store/reviewStore';
+import { formatDate } from '../utils/formatters';
 
 export const Rules: React.FC = () => {
   return (
@@ -59,57 +62,83 @@ export const Rules: React.FC = () => {
 };
 
 export const Reviews: React.FC = () => {
-  const reviews = [
-    {
-      id: '1',
-      userName: 'Александр М.',
-      rating: 5,
-      text: 'Быстрый обмен BTC на рубли. Все прошло за 20 минут, курс отличный!',
-      exchangeType: 'BTC → Visa/MC RUB',
-      date: '15.11.2024',
-    },
-    {
-      id: '2',
-      userName: 'Мария К.',
-      rating: 5,
-      text: 'Пользуюсь уже полгода, всегда выгодные курсы и быстрая поддержка.',
-      exchangeType: 'USDT TRC20 → Payeer RUB',
-      date: '14.11.2024',
-    },
-    {
-      id: '3',
-      userName: 'Дмитрий П.',
-      rating: 4,
-      text: 'Хороший сервис, обмен прошел без проблем. Рекомендую!',
-      exchangeType: 'ETH → Perfect Money USD',
-      date: '13.11.2024',
-    },
-  ];
+  const { getPublishedReviews } = useReviewStore();
+  const reviews = getPublishedReviews();
+
+  // Calculate average rating
+  const avgRating = reviews.length > 0
+    ? (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1)
+    : '0';
 
   return (
     <div className="min-h-screen py-12 px-4">
       <div className="container mx-auto max-w-4xl">
-        <h1 className="text-4xl font-bold mb-8">Отзывы</h1>
-        
-        <div className="space-y-4">
-          {reviews.map((review) => (
-            <Card key={review.id}>
-              <div className="flex items-start justify-between mb-3">
-                <div>
-                  <h3 className="font-semibold text-lg">{review.userName}</h3>
-                  <p className="text-sm text-dark-500">{review.date}</p>
-                </div>
-                <div className="flex gap-1">
-                  {Array.from({ length: review.rating }).map((_, i) => (
-                    <span key={i} className="text-yellow-500">★</span>
-                  ))}
-                </div>
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-bold mb-4">Отзывы</h1>
+          <p className="text-dark-600 dark:text-dark-400">
+            Отзывы наших клиентов о работе сервиса
+          </p>
+          {reviews.length > 0 && (
+            <div className="mt-4 flex items-center justify-center gap-4">
+              <div className="text-2xl font-bold">{avgRating}</div>
+              <div className="flex gap-1 text-yellow-400 text-2xl">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <span key={star}>
+                    {star <= Math.round(parseFloat(avgRating)) ? '★' : '☆'}
+                  </span>
+                ))}
               </div>
-              <p className="text-dark-600 dark:text-dark-300 mb-3">{review.text}</p>
-              <p className="text-sm text-primary-500">{review.exchangeType}</p>
-            </Card>
-          ))}
+              <div className="text-dark-500">
+                {reviews.length} {reviews.length === 1 ? 'отзыв' : reviews.length < 5 ? 'отзыва' : 'отзывов'}
+              </div>
+            </div>
+          )}
         </div>
+        
+        {reviews.length === 0 ? (
+          <Alert variant="info">
+            Пока нет отзывов. Станьте первым, кто оставит отзыв о нашем сервисе!
+          </Alert>
+        ) : (
+          <div className="space-y-4">
+            {reviews.map((review) => (
+              <Card key={review.id}>
+                <div className="flex items-start justify-between mb-3">
+                  <div>
+                    <div className="flex items-center gap-3">
+                      <h3 className="font-semibold text-lg">{review.userName}</h3>
+                      {review.isVerified && (
+                        <span className="px-2 py-1 text-xs bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-full">
+                          ✓ Проверенный обмен
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-sm text-dark-500">{formatDate(review.createdAt)}</p>
+                  </div>
+                  <div className="flex gap-1 text-yellow-400">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <span key={star} className="text-xl">
+                        {star <= review.rating ? '★' : '☆'}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+                <p className="text-dark-600 dark:text-dark-300 mb-3">{review.comment}</p>
+                
+                {/* Admin Response */}
+                {review.response && (
+                  <div className="mt-4 p-4 bg-primary-50 dark:bg-primary-900/20 rounded-lg border-l-4 border-primary-500">
+                    <p className="text-sm font-medium mb-1">Ответ администрации:</p>
+                    <p className="text-sm text-dark-600 dark:text-dark-400">{review.response.text}</p>
+                    <p className="text-xs text-dark-500 mt-1">
+                      {review.response.author} • {formatDate(review.response.createdAt)}
+                    </p>
+                  </div>
+                )}
+              </Card>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

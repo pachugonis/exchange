@@ -7,6 +7,7 @@ interface OrderState {
   currentOrder: Order | null;
   addOrder: (order: Order) => void;
   updateOrderStatus: (id: string, status: OrderStatus) => void;
+  updateOrder: (id: string, updates: Partial<Order>) => void;
   cancelOrder: (id: string) => void;
   getOrderById: (id: string) => Order | undefined;
   getOrdersByUserId: (userId: string) => Order[];
@@ -37,6 +38,20 @@ export const useOrderStore = create<OrderState>()(
                     ...order.statusHistory,
                     { status, timestamp: Date.now() },
                   ],
+                }
+              : order
+          ),
+        }));
+      },
+      
+      updateOrder: (id, updates) => {
+        set((state) => ({
+          orders: state.orders.map((order) =>
+            order.id === id
+              ? {
+                  ...order,
+                  ...updates,
+                  updatedAt: Date.now(),
                 }
               : order
           ),

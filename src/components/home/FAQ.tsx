@@ -61,6 +61,8 @@ export const FAQ: React.FC = () => {
             <span className="text-dark-400">•</span>
             <a
               href="https://t.me/4ex_support"
+              target="_blank"
+              rel="noopener noreferrer"
               className="text-primary-500 hover:text-primary-600 font-medium"
             >
               Telegram: @4ex_support

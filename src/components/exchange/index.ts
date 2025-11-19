@@ -6,3 +6,4 @@ export { RateChart } from './RateChart';
 export { PromoCodeInput } from './PromoCodeInput';
 export { FavoriteButton } from './FavoriteButton';
 export { FavoritesList } from './FavoritesList';
+export { ReviewForm } from './ReviewForm';

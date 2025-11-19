@@ -5,13 +5,17 @@ import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { Alert } from '../components/ui/Alert';
 import { ExchangeStatus, ExchangeProgress } from '../components/exchange';
+import { ReviewForm } from '../components/exchange/ReviewForm';
 import { useOrderStore } from '../store/orderStore';
+import { useReviewStore } from '../store/reviewStore';
 import { formatDate } from '../utils/formatters';
 
 export const OrderTracking: React.FC = () => {
   const [searchId, setSearchId] = useState('');
   const [searchedOrder, setSearchedOrder] = useState<any>(null);
+  const [showReviewForm, setShowReviewForm] = useState(false);
   const { getOrderById, orders } = useOrderStore();
+  const { getOrderReview } = useReviewStore();
 
   const handleSearch = () => {
     if (!searchId.trim()) {
@@ -149,6 +153,68 @@ export const OrderTracking: React.FC = () => {
             </div>
           </Card>
         )}
+
+        {/* Review Section - Only show for completed orders */}
+        {searchedOrder && searchedOrder.status === 'completed' && !searchedOrder.hasReview && (
+          <div className="mb-8">
+            {!showReviewForm ? (
+              <Card>
+                <div className="text-center">
+                  <h3 className="text-xl font-semibold mb-2">Обмен завершен успешно!</h3>
+                  <p className="text-dark-600 dark:text-dark-400 mb-4">
+                    Пожалуйста, оставьте отзыв о вашем опыте обмена
+                  </p>
+                  <Button onClick={() => setShowReviewForm(true)}>
+                    Оставить отзыв
+                  </Button>
+                </div>
+              </Card>
+            ) : (
+              <ReviewForm 
+                order={searchedOrder} 
+                onSubmitSuccess={() => {
+                  setShowReviewForm(false);
+                  // Update the searched order to reflect the review
+                  const updatedOrder = getOrderById(searchedOrder.id);
+                  setSearchedOrder(updatedOrder);
+                }}
+              />
+            )}
+          </div>
+        )}
+
+        {/* Show existing review if already submitted */}
+        {searchedOrder && searchedOrder.hasReview && (() => {
+          const review = getOrderReview(searchedOrder.id);
+          return review ? (
+            <Card className="mb-8">
+              <h3 className="text-xl font-semibold mb-4">Ваш отзыв</h3>
+              <div className="flex gap-1 mb-2">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <span
+                    key={star}
+                    className={star <= review.rating ? 'text-yellow-400' : 'text-dark-300'}
+                  >
+                    ★
+                  </span>
+                ))}
+              </div>
+              <p className="text-dark-600 dark:text-dark-400 mb-2">{review.comment}</p>
+              <p className="text-sm text-dark-500">
+                Отзыв оставлен {formatDate(review.createdAt)}
+              </p>
+              {review.response && (
+                <div className="mt-4 p-4 bg-primary-50 dark:bg-primary-900/20 rounded-lg">
+                  <p className="text-sm font-medium mb-1">Ответ администрации:</p>
+                  <p className="text-sm text-dark-600 dark:text-dark-400">{review.response.text}</p>
+                  <p className="text-xs text-dark-500 mt-1">
+                    {review.response.author} • {formatDate(review.response.createdAt)}
+                  </p>
+                </div>
+              )}
+            </Card>
+          ) : null;
+        })()}
 
         {/* Recent Orders */}
         {recentOrders.length > 0 && !searchId && (

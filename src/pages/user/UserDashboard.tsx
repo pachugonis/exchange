@@ -14,25 +14,32 @@ import {
   Home,
   ChevronLeft,
   ChevronRight,
+  MessageSquare,
+  X,
 } from 'lucide-react';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
 import { Alert } from '../../components/ui/Alert';
 import { ExchangeStatus } from '../../components/exchange';
+import { ReviewForm } from '../../components/exchange/ReviewForm';
 import { useUserStore } from '../../store/userStore';
 import { useOrderStore } from '../../store/orderStore';
+import { useReviewStore } from '../../store/reviewStore';
 import { useFavoriteStore } from '../../store/favoriteStore';
 import { formatDate } from '../../utils/formatters';
 import toast from 'react-hot-toast';
+import type { Order } from '../../types';
 
 export const UserDashboard: React.FC = () => {
   const navigate = useNavigate();
   const { user, isAuthenticated, logout, resendVerificationEmail } = useUserStore();
-  const { orders } = useOrderStore();
+  const { orders, getOrderById } = useOrderStore();
+  const { getOrderReview } = useReviewStore();
   const { favorites } = useFavoriteStore();
   const [currentPage, setCurrentPage] = useState(1);
   const [resendingEmail, setResendingEmail] = useState(false);
+  const [reviewModalOrder, setReviewModalOrder] = useState<Order | null>(null);
   const ordersPerPage = 10;
 
   useEffect(() => {
@@ -275,27 +282,51 @@ export const UserDashboard: React.FC = () => {
               ) : (
                 <>
                   <div className="space-y-3">
-                    {paginatedOrders.map((order) => (
-                    <div
-                      key={order.id}
-                      className="p-4 border border-dark-200 dark:border-dark-700 rounded-lg hover:bg-dark-50 dark:hover:bg-dark-700 transition"
-                    >
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="font-medium text-sm">{order.id}</div>
-                        <ExchangeStatus status={order.status} />
-                      </div>
-                      <div className="flex items-center justify-between text-sm">
-                        <div className="text-dark-600 dark:text-dark-400">
-                          {order.fromAmount} {order.fromCurrency.code} →{' '}
-                          {order.toAmount} {order.toCurrency.code}
+                    {paginatedOrders.map((order) => {
+                      const hasReview = order.hasReview || getOrderReview(order.id);
+                      const isCompleted = order.status === 'completed';
+                      
+                      return (
+                        <div
+                          key={order.id}
+                          className="p-4 border border-dark-200 dark:border-dark-700 rounded-lg hover:bg-dark-50 dark:hover:bg-dark-700 transition"
+                        >
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="font-medium text-sm">{order.id}</div>
+                            <div className="flex items-center gap-2">
+                              <ExchangeStatus status={order.status} />
+                              {isCompleted && !hasReview && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => setReviewModalOrder(order)}
+                                  className="gap-1"
+                                >
+                                  <MessageSquare className="w-3 h-3" />
+                                  Оставить отзыв
+                                </Button>
+                              )}
+                              {hasReview && (
+                                <Badge variant="success" className="text-xs gap-1">
+                                  <Star className="w-3 h-3" />
+                                  Отзыв оставлен
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex items-center justify-between text-sm">
+                            <div className="text-dark-600 dark:text-dark-400">
+                              {order.fromAmount} {order.fromCurrency.code} →{' '}
+                              {order.toAmount} {order.toCurrency.code}
+                            </div>
+                            <div className="text-xs text-dark-500 dark:text-dark-400">
+                              {formatDate(order.createdAt)}
+                            </div>
+                          </div>
                         </div>
-                        <div className="text-xs text-dark-500 dark:text-dark-400">
-                          {formatDate(order.createdAt)}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                      );
+                    })}
+                  </div>
 
                 {/* Pagination */}
                 {totalPages > 1 && (
@@ -359,6 +390,44 @@ export const UserDashboard: React.FC = () => {
             </Card>
           </div>
         </div>
+
+        {/* Review Modal */}
+        {reviewModalOrder && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white dark:bg-dark-800 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="sticky top-0 bg-white dark:bg-dark-800 border-b border-dark-200 dark:border-dark-700 p-4 flex items-center justify-between">
+                <h3 className="text-xl font-semibold">Оставить отзыв</h3>
+                <button
+                  onClick={() => setReviewModalOrder(null)}
+                  className="p-2 hover:bg-dark-100 dark:hover:bg-dark-700 rounded-lg transition"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <div className="p-6">
+                <div className="mb-4 p-3 bg-dark-50 dark:bg-dark-700 rounded-lg">
+                  <div className="text-sm text-dark-600 dark:text-dark-400 mb-1">
+                    Заявка: <span className="font-medium text-dark-900 dark:text-dark-100">{reviewModalOrder.id}</span>
+                  </div>
+                  <div className="text-sm text-dark-600 dark:text-dark-400">
+                    {reviewModalOrder.fromAmount} {reviewModalOrder.fromCurrency.code} → {reviewModalOrder.toAmount} {reviewModalOrder.toCurrency.code}
+                  </div>
+                </div>
+                <ReviewForm
+                  order={reviewModalOrder}
+                  onSubmitSuccess={() => {
+                    setReviewModalOrder(null);
+                    // Force re-render to show updated review status
+                    const updatedOrder = getOrderById(reviewModalOrder.id);
+                    if (updatedOrder) {
+                      // The order will be re-rendered automatically due to state update
+                    }
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
