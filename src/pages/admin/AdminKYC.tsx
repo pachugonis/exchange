@@ -15,6 +15,8 @@ export const AdminKYC: React.FC = () => {
   const { updateProfile } = useUserStore();
   const [selectedKYC, setSelectedKYC] = useState<any>(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [showDocumentModal, setShowDocumentModal] = useState(false);
+  const [selectedDocument, setSelectedDocument] = useState<any>(null);
   const [rejectionReason, setRejectionReason] = useState('');
   const [filterStatus, setFilterStatus] = useState<'all' | 'pending' | 'verified' | 'rejected'>('all');
 
@@ -250,14 +252,18 @@ export const AdminKYC: React.FC = () => {
                           </p>
                         </div>
                       </div>
-                      <a
-                        href={doc.fileUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-primary-500 hover:text-primary-600 text-sm"
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          setSelectedDocument(doc);
+                          setShowDocumentModal(true);
+                        }}
+                        className="gap-1"
                       >
+                        <Eye className="w-3 h-3" />
                         Просмотр
-                      </a>
+                      </Button>
                     </div>
                   ))}
                 </div>
@@ -319,6 +325,52 @@ export const AdminKYC: React.FC = () => {
                 </div>
               </div>
             )}
+          </div>
+        )}
+      </Modal>
+
+      {/* Document Preview Modal */}
+      <Modal
+        isOpen={showDocumentModal}
+        onClose={() => {
+          setShowDocumentModal(false);
+          setSelectedDocument(null);
+        }}
+        title="Просмотр документа"
+        size="xl"
+      >
+        {selectedDocument && (
+          <div className="space-y-4">
+            <div className="text-center">
+              <p className="text-sm text-dark-600 dark:text-dark-400 mb-2">
+                {selectedDocument.fileName}
+              </p>
+              <p className="text-xs text-dark-500 mb-4">
+                {selectedDocument.type === 'passport' && 'Паспорт'}
+                {selectedDocument.type === 'id_card' && 'ID карта'}
+                {selectedDocument.type === 'driver_license' && 'Водительские права'}
+                {selectedDocument.type === 'selfie' && 'Селфи'}
+                {selectedDocument.type === 'address_proof' && 'Подтверждение адреса'}
+              </p>
+            </div>
+            <div className="bg-dark-100 dark:bg-dark-800 rounded-lg p-4 max-h-[600px] overflow-auto">
+              <img
+                src={selectedDocument.fileUrl}
+                alt={selectedDocument.fileName}
+                className="w-full h-auto rounded-lg"
+              />
+            </div>
+            <div className="flex justify-end">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowDocumentModal(false);
+                  setSelectedDocument(null);
+                }}
+              >
+                Закрыть
+              </Button>
+            </div>
           </div>
         )}
       </Modal>

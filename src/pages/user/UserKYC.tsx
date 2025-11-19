@@ -99,6 +99,16 @@ export const UserKYC: React.FC = () => {
     }
   };
 
+  // Convert file to base64
+  const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = error => reject(error);
+    });
+  };
+
   const handleSubmit = async () => {
     setIsSubmitting(true);
     try {
@@ -121,28 +131,31 @@ export const UserKYC: React.FC = () => {
         return;
       }
 
-      // Upload documents (in real app, upload to server)
+      // Upload documents (convert to base64 for storage)
       if (uploadedFiles.document) {
+        const base64 = await fileToBase64(uploadedFiles.document);
         uploadDocument(user.id, {
           type: formData.documentType,
           fileName: uploadedFiles.document.name,
-          fileUrl: URL.createObjectURL(uploadedFiles.document),
+          fileUrl: base64,
         });
       }
 
       if (uploadedFiles.selfie) {
+        const base64 = await fileToBase64(uploadedFiles.selfie);
         uploadDocument(user.id, {
           type: 'selfie',
           fileName: uploadedFiles.selfie.name,
-          fileUrl: URL.createObjectURL(uploadedFiles.selfie),
+          fileUrl: base64,
         });
       }
 
       if (uploadedFiles.addressProof) {
+        const base64 = await fileToBase64(uploadedFiles.addressProof);
         uploadDocument(user.id, {
           type: 'address_proof',
           fileName: uploadedFiles.addressProof.name,
-          fileUrl: URL.createObjectURL(uploadedFiles.addressProof),
+          fileUrl: base64,
         });
       }
 

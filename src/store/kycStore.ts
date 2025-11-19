@@ -4,7 +4,7 @@ import type { KYCData, KYCDocument, KYCLevel, KYCStatus } from '../types/kyc';
 import { generateId } from '../utils/generators';
 
 interface KYCState {
-  kycData: Map<string, KYCData>;
+  kycData: Record<string, KYCData>;
   submitKYC: (userId: string, level: KYCLevel, data: Partial<KYCData>) => Promise<{ success: boolean; error?: string }>;
   updateKYCStatus: (userId: string, status: KYCStatus, rejectionReason?: string) => void;
   uploadDocument: (userId: string, document: Omit<KYCDocument, 'id' | 'uploadedAt' | 'status'>) => void;
@@ -12,42 +12,18 @@ interface KYCState {
   getAllKYCSubmissions: () => KYCData[];
 }
 
-const KYC_STORAGE_KEY = 'kyc-data-storage';
-
-const loadKYCData = (): Map<string, KYCData> => {
-  try {
-    const stored = localStorage.getItem(KYC_STORAGE_KEY);
-    if (stored) {
-      const data = JSON.parse(stored);
-      return new Map(Object.entries(data));
-    }
-  } catch (error) {
-    console.error('Error loading KYC data:', error);
-  }
-  return new Map();
-};
-
-const saveKYCData = (data: Map<string, KYCData>) => {
-  try {
-    const obj = Object.fromEntries(data);
-    localStorage.setItem(KYC_STORAGE_KEY, JSON.stringify(obj));
-  } catch (error) {
-    console.error('Error saving KYC data:', error);
-  }
-};
-
 export const useKYCStore = create<KYCState>()(
   persist(
     (set, get) => ({
-      kycData: loadKYCData(),
+      kycData: {},
 
       submitKYC: async (userId, level, data) => {
         await new Promise(resolve => setTimeout(resolve, 500));
 
-        const currentKYC = get().kycData.get(userId) || {
+        const currentKYC = get().kycData[userId] || {
           userId,
           level: 0,
-          status: 'none',
+          status: 'none' as KYCStatus,
         };
 
         // Calculate limits based on level
@@ -69,17 +45,18 @@ export const useKYCStore = create<KYCState>()(
           monthlyLimit: levelLimits.monthly,
         };
 
-        const newData = new Map(get().kycData);
-        newData.set(userId, updatedKYC);
-        saveKYCData(newData);
-
-        set({ kycData: newData });
+        set((state) => ({
+          kycData: {
+            ...state.kycData,
+            [userId]: updatedKYC,
+          },
+        }));
 
         return { success: true };
       },
 
       updateKYCStatus: (userId, status, rejectionReason) => {
-        const currentKYC = get().kycData.get(userId);
+        const currentKYC = get().kycData[userId];
         if (!currentKYC) return;
 
         const updatedKYC: KYCData = {
@@ -89,15 +66,16 @@ export const useKYCStore = create<KYCState>()(
           rejectionReason,
         };
 
-        const newData = new Map(get().kycData);
-        newData.set(userId, updatedKYC);
-        saveKYCData(newData);
-
-        set({ kycData: newData });
+        set((state) => ({
+          kycData: {
+            ...state.kycData,
+            [userId]: updatedKYC,
+          },
+        }));
       },
 
       uploadDocument: (userId, document) => {
-        const currentKYC = get().kycData.get(userId);
+        const currentKYC = get().kycData[userId];
         if (!currentKYC) return;
 
         const newDocument: KYCDocument = {
@@ -112,19 +90,20 @@ export const useKYCStore = create<KYCState>()(
           documents: [...(currentKYC.documents || []), newDocument],
         };
 
-        const newData = new Map(get().kycData);
-        newData.set(userId, updatedKYC);
-        saveKYCData(newData);
-
-        set({ kycData: newData });
+        set((state) => ({
+          kycData: {
+            ...state.kycData,
+            [userId]: updatedKYC,
+          },
+        }));
       },
 
       getKYCData: (userId) => {
-        return get().kycData.get(userId);
+        return get().kycData[userId];
       },
 
       getAllKYCSubmissions: () => {
-        return Array.from(get().kycData.values());
+        return Object.values(get().kycData);
       },
     }),
     {
