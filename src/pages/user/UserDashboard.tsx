@@ -316,8 +316,8 @@ export const UserDashboard: React.FC = () => {
                           </div>
                           <div className="flex items-center justify-between text-sm">
                             <div className="text-dark-600 dark:text-dark-400">
-                              {order.fromAmount} {order.fromCurrency.code} →{' '}
-                              {order.toAmount} {order.toCurrency.code}
+                              {order.fromAmount} {order.fromCurrency.code} ({order.fromCurrency.name}) →{' '}
+                              {order.toAmount} {order.toCurrency.code} ({order.toCurrency.name})
                             </div>
                             <div className="text-xs text-dark-500 dark:text-dark-400">
                               {formatDate(order.createdAt)}
@@ -410,7 +410,7 @@ export const UserDashboard: React.FC = () => {
                     Заявка: <span className="font-medium text-dark-900 dark:text-dark-100">{reviewModalOrder.id}</span>
                   </div>
                   <div className="text-sm text-dark-600 dark:text-dark-400">
-                    {reviewModalOrder.fromAmount} {reviewModalOrder.fromCurrency.code} → {reviewModalOrder.toAmount} {reviewModalOrder.toCurrency.code}
+                    {reviewModalOrder.fromAmount} {reviewModalOrder.fromCurrency.code} ({reviewModalOrder.fromCurrency.name}) → {reviewModalOrder.toAmount} {reviewModalOrder.toCurrency.code} ({reviewModalOrder.toCurrency.name})
                   </div>
                 </div>
                 <ReviewForm

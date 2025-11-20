@@ -94,13 +94,13 @@ export const OrderTracking: React.FC = () => {
                   <div className="flex justify-between">
                     <span className="text-dark-600 dark:text-dark-400">Отдаете:</span>
                     <span className="font-medium">
-                      {searchedOrder.fromAmount} {searchedOrder.fromCurrency.code}
+                      {searchedOrder.fromAmount} {searchedOrder.fromCurrency.code} ({searchedOrder.fromCurrency.name})
                     </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-dark-600 dark:text-dark-400">Получаете:</span>
                     <span className="font-medium">
-                      {searchedOrder.toAmount} {searchedOrder.toCurrency.code}
+                      {searchedOrder.toAmount} {searchedOrder.toCurrency.code} ({searchedOrder.toCurrency.name})
                     </span>
                   </div>
                   <div className="flex justify-between">
@@ -240,8 +240,8 @@ export const OrderTracking: React.FC = () => {
                     <div>
                       <div className="font-semibold">{order.id}</div>
                       <div className="text-sm text-dark-600 dark:text-dark-400">
-                        {order.fromAmount} {order.fromCurrency.code} →{' '}
-                        {order.toAmount} {order.toCurrency.code}
+                        {order.fromAmount} {order.fromCurrency.code} ({order.fromCurrency.name}) →{' '}
+                        {order.toAmount} {order.toCurrency.code} ({order.toCurrency.name})
                       </div>
                       <div className="text-xs text-dark-500 dark:text-dark-400 mt-1">
                         {formatDate(order.createdAt)}

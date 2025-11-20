@@ -190,8 +190,8 @@ export const AdminOrders: React.FC = () => {
                     <p>
                       <span className="text-dark-500">Обмен:</span>{' '}
                       <span className="font-medium">
-                        {order.fromAmount} {order.fromCurrency.code} → {order.toAmount}{' '}
-                        {order.toCurrency.code}
+                        {order.fromAmount} {order.fromCurrency.code} ({order.fromCurrency.name}) → {order.toAmount}{' '}
+                        {order.toCurrency.code} ({order.toCurrency.name})
                       </span>
                     </p>
                   </div>
@@ -408,13 +408,13 @@ export const AdminOrders: React.FC = () => {
                   <div className="flex justify-between">
                     <span className="text-dark-500">Отдаете:</span>
                     <span className="font-medium">
-                      {selectedOrder.fromAmount} {selectedOrder.fromCurrency.code}
+                      {selectedOrder.fromAmount} {selectedOrder.fromCurrency.code} ({selectedOrder.fromCurrency.name})
                     </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-dark-500">Получаете:</span>
                     <span className="font-medium">
-                      {selectedOrder.toAmount} {selectedOrder.toCurrency.code}
+                      {selectedOrder.toAmount} {selectedOrder.toCurrency.code} ({selectedOrder.toCurrency.name})
                     </span>
                   </div>
                   <div className="flex justify-between">
