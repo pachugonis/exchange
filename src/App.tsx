@@ -22,6 +22,7 @@ import { AdminKYC } from './pages/admin/AdminKYC';
 import { AdminNewsletter } from './pages/admin/AdminNewsletter';
 import { AdminReviews } from './pages/admin/AdminReviews';
 import { AdminAnnouncements } from './pages/admin/AdminAnnouncements';
+import { AdminUsers } from './pages/admin/AdminUsers';
 import { useThemeStore } from './store/themeStore';
 import { useAdminStore } from './store/adminStore';
 
@@ -61,6 +62,7 @@ function App() {
             <Route path="currencies" element={<AdminCurrencies />} />
             <Route path="promos" element={<AdminPromos />} />
             <Route path="kyc" element={<AdminKYC />} />
+            <Route path="users" element={<AdminUsers />} />
             <Route path="content" element={<AdminContent />} />
             <Route path="newsletter" element={<AdminNewsletter />} />
             <Route path="reviews" element={<AdminReviews />} />

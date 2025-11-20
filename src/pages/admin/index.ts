@@ -5,3 +5,4 @@ export { AdminSettings } from './AdminSettings';
 export { AdminCurrencies } from './AdminCurrencies';
 export { AdminKYC } from './AdminKYC';
 export { AdminAnnouncements } from './AdminAnnouncements';
+export { AdminUsers } from './AdminUsers';
