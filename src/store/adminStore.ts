@@ -20,7 +20,7 @@ interface AdminState {
 const defaultSettings: AdminSettings = {
   commission: 0.02,
   minCommission: 0.005,
-  maxCommission: 0.05,
+  maxCommission: 1.0,
   paymentAddresses: {
     BTC: 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh',
     ETH: '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb',
@@ -138,6 +138,23 @@ export const useAdminStore = create<AdminState>()(
         username: state.username,
         settings: state.settings,
       }),
+      merge: (persistedState: any, currentState) => {
+        // Merge persisted settings with new defaults to ensure new fields are added
+        const mergedSettings = {
+          ...defaultSettings,
+          ...(persistedState?.settings || {}),
+          // Force update maxCommission if it's still the old value
+          maxCommission: (persistedState?.settings?.maxCommission === 0.05) 
+            ? 1.0 
+            : (persistedState?.settings?.maxCommission || 1.0),
+        };
+        
+        return {
+          ...currentState,
+          ...persistedState,
+          settings: mergedSettings,
+        };
+      },
     }
   )
 );

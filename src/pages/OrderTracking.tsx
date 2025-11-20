@@ -13,6 +13,7 @@ import { formatDate } from '../utils/formatters';
 export const OrderTracking: React.FC = () => {
   const [searchId, setSearchId] = useState('');
   const [searchedOrder, setSearchedOrder] = useState<any>(null);
+  const [hasSearched, setHasSearched] = useState(false);
   const [showReviewForm, setShowReviewForm] = useState(false);
   const { getOrderById, orders } = useOrderStore();
   const { getOrderReview } = useReviewStore();
@@ -24,6 +25,7 @@ export const OrderTracking: React.FC = () => {
 
     const order = getOrderById(searchId.trim());
     setSearchedOrder(order || null);
+    setHasSearched(true);
   };
 
   const recentOrders = orders.slice(-5).reverse();
@@ -45,7 +47,10 @@ export const OrderTracking: React.FC = () => {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-dark-400" />
               <Input
                 value={searchId}
-                onChange={(e) => setSearchId(e.target.value)}
+                onChange={(e) => {
+                  setSearchId(e.target.value);
+                  setHasSearched(false);
+                }}
                 placeholder="Введите номер заявки (например: ORD-1234567890123)"
                 className="pl-10"
                 onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
@@ -56,7 +61,7 @@ export const OrderTracking: React.FC = () => {
         </Card>
 
         {/* Search Results */}
-        {searchId && searchedOrder === null && (
+        {hasSearched && searchedOrder === null && (
           <Alert variant="warning" className="mb-8">
             Заявка с номером <strong>{searchId}</strong> не найдена.
             Проверьте правильность номера.
@@ -228,6 +233,7 @@ export const OrderTracking: React.FC = () => {
                   onClick={() => {
                     setSearchId(order.id);
                     setSearchedOrder(order);
+                    setHasSearched(true);
                   }}
                 >
                   <div className="flex items-center justify-between">
