@@ -4,10 +4,12 @@ import { ArrowRight, Zap, Shield, Clock, Award, TrendingUp, TrendingDown, Megaph
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { Alert } from '../components/ui/Alert';
+import { CurrencyIcon } from '../components/ui/CurrencyIcon';
 import { fetchCryptoRates } from '../api/cryptoAPI';
 import { Testimonials, PopularDirections } from '../components/home';
 import { ExchangeSteps } from '../components/exchange';
 import { useAnnouncementStore } from '../store/announcementStore';
+import { currencies } from '../data/currencies';
 
 export const Home: React.FC = () => {
   const { getActiveAnnouncement } = useAnnouncementStore();
@@ -144,7 +146,7 @@ export const Home: React.FC = () => {
                       <div className="text-sm text-dark-500 dark:text-dark-400 mb-1">Bitcoin</div>
                       <div className="text-2xl font-bold">${cryptoRates.BTC_USD.toLocaleString('en-US', { maximumFractionDigits: 0 })}</div>
                     </div>
-                    <div className="text-4xl">₿</div>
+                    <CurrencyIcon currency={currencies.find(c => c.code === 'BTC')!} size="xl" />
                   </div>
                 </Card>
                 
@@ -154,7 +156,7 @@ export const Home: React.FC = () => {
                       <div className="text-sm text-dark-500 dark:text-dark-400 mb-1">Ethereum</div>
                       <div className="text-2xl font-bold">${cryptoRates.ETH_USD.toLocaleString('en-US', { maximumFractionDigits: 0 })}</div>
                     </div>
-                    <div className="text-4xl">Ξ</div>
+                    <CurrencyIcon currency={currencies.find(c => c.code === 'ETH')!} size="xl" />
                   </div>
                 </Card>
                 
@@ -164,7 +166,7 @@ export const Home: React.FC = () => {
                       <div className="text-sm text-dark-500 dark:text-dark-400 mb-1">Tether</div>
                       <div className="text-2xl font-bold">${cryptoRates.USDT_USD.toFixed(4)}</div>
                     </div>
-                    <div className="text-4xl">₮</div>
+                    <CurrencyIcon currency={currencies.find(c => c.code === 'USDT_TRC20')!} size="xl" />
                   </div>
                 </Card>
               </div>

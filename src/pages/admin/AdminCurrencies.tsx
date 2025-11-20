@@ -6,6 +6,7 @@ import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
 import { Toggle } from '../../components/ui/Toggle';
+import { CurrencyIcon } from '../../components/ui/CurrencyIcon';
 import { currencies as initialCurrencies } from '../../data/currencies';
 import type { Currency } from '../../types';
 import { Plus, Edit2, Trash2, Save, X } from 'lucide-react';
@@ -157,7 +158,7 @@ export const AdminCurrencies: React.FC = () => {
                 {/* Header */}
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <span className="text-2xl">{currency.icon}</span>
+                    <CurrencyIcon currency={currency} size="md" />
                     <div>
                       <div className="flex items-center gap-2">
                         <h3 className="font-semibold text-lg">

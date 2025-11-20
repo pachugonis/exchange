@@ -9,6 +9,7 @@ import { Card } from '../components/ui/Card';
 import { Input } from '../components/ui/Input';
 import { Button } from '../components/ui/Button';
 import { Modal } from '../components/ui/Modal';
+import { CurrencySelect } from '../components/ui/CurrencySelect';
 import { PromoCodeInput } from '../components/exchange/PromoCodeInput';
 import { ArrowLeftRight, RefreshCw, ArrowRight, ArrowLeft, Check, Loader2, Copy, XCircle } from 'lucide-react';
 import { formatCurrency } from '../utils/formatters';
@@ -294,44 +295,30 @@ export const Exchange: React.FC = () => {
       
       {/* From Currency */}
       <div>
-        <label className="block text-sm font-medium mb-2">Отдаю</label>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <select
-              className="w-full px-4 py-2.5 bg-white dark:bg-dark-700 border border-dark-300 dark:border-dark-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-              value={fromCurrency?.id || ''}
-              onChange={(e) => {
-                const currency = currencyList.find((c) => c.id === e.target.value);
-                setFromCurrency(currency || null);
-              }}
-            >
-              <option value="">Выберите валюту</option>
-              {currencyList
-                .filter((currency) => !toCurrency || currency.id !== toCurrency.id)
-                .map((currency) => (
-                  <option key={currency.id} value={currency.id}>
-                    {currency.icon} {currency.name} ({currency.code})
-                  </option>
-                ))}
-            </select>
-            {validationErrors.fromCurrency && (
-              <p className="text-red-500 text-sm mt-1">{validationErrors.fromCurrency}</p>
-            )}
-          </div>
-          
-          <div>
-            <Input
-              type="number"
-              placeholder="Сумма"
-              value={fromAmount}
-              onChange={(e) => setFromAmount(e.target.value)}
-              min={fromCurrency?.minAmount || 0}
-              max={fromCurrency?.maxAmount || undefined}
-            />
-            {validationErrors.fromAmount && (
-              <p className="text-red-500 text-sm mt-1">{validationErrors.fromAmount}</p>
-            )}
-          </div>
+        <CurrencySelect
+          label="Отдаю"
+          value={fromCurrency?.id || ''}
+          onChange={(value) => {
+            const currency = currencyList.find((c) => c.id === value);
+            setFromCurrency(currency || null);
+          }}
+          currencies={currencyList}
+          excludeCurrencyId={toCurrency?.id}
+          error={validationErrors.fromCurrency}
+        />
+        
+        <div className="mt-2">
+          <Input
+            type="number"
+            placeholder="Сумма"
+            value={fromAmount}
+            onChange={(e) => setFromAmount(e.target.value)}
+            min={fromCurrency?.minAmount || 0}
+            max={fromCurrency?.maxAmount || undefined}
+          />
+          {validationErrors.fromAmount && (
+            <p className="text-red-500 text-sm mt-1">{validationErrors.fromAmount}</p>
+          )}
         </div>
         {fromCurrency && (
           <p className="text-sm text-dark-500 mt-1">
@@ -363,31 +350,19 @@ export const Exchange: React.FC = () => {
 
       {/* To Currency */}
       <div>
-        <label className="block text-sm font-medium mb-2">Получаю</label>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <select
-              className="w-full px-4 py-2.5 bg-white dark:bg-dark-700 border border-dark-300 dark:border-dark-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-              value={toCurrency?.id || ''}
-              onChange={(e) => {
-                const currency = currencyList.find((c) => c.id === e.target.value);
-                setToCurrency(currency || null);
-              }}
-            >
-              <option value="">Выберите валюту</option>
-              {currencyList
-                .filter((currency) => !fromCurrency || currency.id !== fromCurrency.id)
-                .map((currency) => (
-                  <option key={currency.id} value={currency.id}>
-                    {currency.icon} {currency.name} ({currency.code})
-                  </option>
-                ))}
-            </select>
-            {validationErrors.toCurrency && (
-              <p className="text-red-500 text-sm mt-1">{validationErrors.toCurrency}</p>
-            )}
-          </div>
-          
+        <CurrencySelect
+          label="Получаю"
+          value={toCurrency?.id || ''}
+          onChange={(value) => {
+            const currency = currencyList.find((c) => c.id === value);
+            setToCurrency(currency || null);
+          }}
+          currencies={currencyList}
+          excludeCurrencyId={fromCurrency?.id}
+          error={validationErrors.toCurrency}
+        />
+        
+        <div className="mt-2">
           <Input
             type="text"
             placeholder="Рассчитанная сумма"

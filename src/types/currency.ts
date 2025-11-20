@@ -9,6 +9,7 @@ export interface Currency {
   nameEn: string;
   type: CurrencyType;
   icon: string;
+  iconUrl?: string; // URL to icon image (for crypto)
   minAmount: number;
   maxAmount: number;
   reserve: number;

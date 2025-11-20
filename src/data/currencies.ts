@@ -1,4 +1,16 @@
 import type { Currency } from '../types';
+import btcIcon from '../assets/crypto-icons/btc.png';
+import ethIcon from '../assets/crypto-icons/eth.png';
+import usdtIcon from '../assets/crypto-icons/usdt.png';
+import usdcIcon from '../assets/crypto-icons/usdc.png';
+import xrpIcon from '../assets/crypto-icons/xrp.png';
+import bnbIcon from '../assets/crypto-icons/bnb.png';
+import solIcon from '../assets/crypto-icons/sol.png';
+import trxIcon from '../assets/crypto-icons/trx.png';
+import dogeIcon from '../assets/crypto-icons/doge.png';
+import xmrIcon from '../assets/crypto-icons/xmr.png';
+import ltcIcon from '../assets/crypto-icons/ltc.png';
+import suiIcon from '../assets/crypto-icons/sui.png';
 
 export const currencies: Currency[] = [
   // Cryptocurrencies
@@ -9,6 +21,7 @@ export const currencies: Currency[] = [
     nameEn: 'Bitcoin',
     type: 'crypto',
     icon: '₿',
+    iconUrl: btcIcon,
     minAmount: 0.001,
     maxAmount: 10,
     reserve: 5.234,
@@ -25,6 +38,7 @@ export const currencies: Currency[] = [
     nameEn: 'Ethereum',
     type: 'crypto',
     icon: 'Ξ',
+    iconUrl: ethIcon,
     minAmount: 0.01,
     maxAmount: 100,
     reserve: 45.67,
@@ -41,6 +55,7 @@ export const currencies: Currency[] = [
     nameEn: 'Tether TRC20',
     type: 'crypto',
     icon: '₮',
+    iconUrl: usdtIcon,
     minAmount: 10,
     maxAmount: 100000,
     reserve: 250000,
@@ -57,6 +72,7 @@ export const currencies: Currency[] = [
     nameEn: 'Tether ERC20',
     type: 'crypto',
     icon: '₮',
+    iconUrl: usdtIcon,
     minAmount: 10,
     maxAmount: 100000,
     reserve: 180000,
@@ -73,6 +89,7 @@ export const currencies: Currency[] = [
     nameEn: 'USD Coin',
     type: 'crypto',
     icon: '$',
+    iconUrl: usdcIcon,
     minAmount: 10,
     maxAmount: 100000,
     reserve: 150000,
@@ -88,6 +105,7 @@ export const currencies: Currency[] = [
     nameEn: 'Ripple',
     type: 'crypto',
     icon: '◎',
+    iconUrl: xrpIcon,
     minAmount: 10,
     maxAmount: 100000,
     reserve: 500000,
@@ -103,6 +121,7 @@ export const currencies: Currency[] = [
     nameEn: 'Binance Coin',
     type: 'crypto',
     icon: 'ⓑ',
+    iconUrl: bnbIcon,
     minAmount: 0.1,
     maxAmount: 1000,
     reserve: 2500,
@@ -118,6 +137,7 @@ export const currencies: Currency[] = [
     nameEn: 'Solana',
     type: 'crypto',
     icon: '◎',
+    iconUrl: solIcon,
     minAmount: 1,
     maxAmount: 10000,
     reserve: 15000,
@@ -133,6 +153,7 @@ export const currencies: Currency[] = [
     nameEn: 'TRON',
     type: 'crypto',
     icon: '⚡',
+    iconUrl: trxIcon,
     minAmount: 100,
     maxAmount: 1000000,
     reserve: 5000000,
@@ -148,6 +169,7 @@ export const currencies: Currency[] = [
     nameEn: 'Dogecoin',
     type: 'crypto',
     icon: 'Ð',
+    iconUrl: dogeIcon,
     minAmount: 100,
     maxAmount: 500000,
     reserve: 2000000,
@@ -163,6 +185,7 @@ export const currencies: Currency[] = [
     nameEn: 'Monero',
     type: 'crypto',
     icon: 'ɱ',
+    iconUrl: xmrIcon,
     minAmount: 0.1,
     maxAmount: 1000,
     reserve: 5000,
@@ -178,6 +201,7 @@ export const currencies: Currency[] = [
     nameEn: 'Litecoin',
     type: 'crypto',
     icon: 'Ł',
+    iconUrl: ltcIcon,
     minAmount: 0.1,
     maxAmount: 1000,
     reserve: 8000,
@@ -193,6 +217,7 @@ export const currencies: Currency[] = [
     nameEn: 'Sui',
     type: 'crypto',
     icon: '水',
+    iconUrl: suiIcon,
     minAmount: 10,
     maxAmount: 50000,
     reserve: 100000,

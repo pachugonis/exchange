@@ -2,6 +2,7 @@ import React from 'react';
 import { Star, ArrowRight, Trash2 } from 'lucide-react';
 import { Card } from '../ui/Card';
 import { Badge } from '../ui/Badge';
+import { CurrencyIcon } from '../ui/CurrencyIcon';
 import { useFavoriteStore } from '../../store/favoriteStore';
 import { useExchangeStore } from '../../store/exchangeStore';
 import toast from 'react-hot-toast';
@@ -71,7 +72,7 @@ export const FavoritesList: React.FC<FavoritesListProps> = ({
             >
               <div className="flex items-center gap-3 flex-1">
                 <div className="flex items-center gap-2">
-                  <span className="text-xl">{fromCurrency.icon}</span>
+                  <CurrencyIcon currency={fromCurrency} size="sm" />
                   <div>
                     <div className="font-medium text-sm">{fromCurrency.code}</div>
                     <div className="text-xs text-dark-500 dark:text-dark-400">
@@ -83,7 +84,7 @@ export const FavoritesList: React.FC<FavoritesListProps> = ({
                 <ArrowRight className="w-4 h-4 text-primary-500" />
 
                 <div className="flex items-center gap-2">
-                  <span className="text-xl">{toCurrency.icon}</span>
+                  <CurrencyIcon currency={toCurrency} size="sm" />
                   <div>
                     <div className="font-medium text-sm">{toCurrency.code}</div>
                     <div className="text-xs text-dark-500 dark:text-dark-400">

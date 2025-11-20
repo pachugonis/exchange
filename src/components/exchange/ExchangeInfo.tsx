@@ -1,6 +1,7 @@
 import React from 'react';
 import { Info, Shield, Clock, AlertCircle } from 'lucide-react';
 import { Card } from '../ui/Card';
+import { CurrencyIcon } from '../ui/CurrencyIcon';
 import type { Currency } from '../../types';
 
 interface ExchangeInfoProps {
@@ -25,7 +26,7 @@ export const ExchangeInfo: React.FC<ExchangeInfoProps> = ({
         {fromCurrency && (
           <div>
             <h4 className="font-medium text-sm mb-2 flex items-center gap-2">
-              <span className="text-lg">{fromCurrency.icon}</span>
+              <CurrencyIcon currency={fromCurrency} size="sm" />
               {fromCurrency.name}
             </h4>
             <div className="space-y-1 text-sm text-dark-600 dark:text-dark-400">
@@ -54,7 +55,7 @@ export const ExchangeInfo: React.FC<ExchangeInfoProps> = ({
         {toCurrency && (
           <div className="pt-4 border-t border-dark-200 dark:border-dark-700">
             <h4 className="font-medium text-sm mb-2 flex items-center gap-2">
-              <span className="text-lg">{toCurrency.icon}</span>
+              <CurrencyIcon currency={toCurrency} size="sm" />
               {toCurrency.name}
             </h4>
             <div className="space-y-1 text-sm text-dark-600 dark:text-dark-400">

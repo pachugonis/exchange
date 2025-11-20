@@ -9,3 +9,5 @@ export { Toggle } from './Toggle';
 export { Alert } from './Alert';
 export { Loader, Spinner } from './Loader';
 export { Tabs, TabPanel } from './Tabs';
+export { CurrencyIcon } from './CurrencyIcon';
+export { CurrencySelect } from './CurrencySelect';
