@@ -15,6 +15,7 @@ import { AdminLogin } from './pages/admin/AdminLogin';
 import { AdminDashboard } from './pages/admin/AdminDashboard';
 import { AdminOrders } from './pages/admin/AdminOrders';
 import { AdminSettings } from './pages/admin/AdminSettings';
+import { AdminSiteSettings } from './pages/admin/AdminSiteSettings';
 import { AdminCurrencies } from './pages/admin/AdminCurrencies';
 import { AdminPromos } from './pages/admin/AdminPromos';
 import { AdminContent } from './pages/admin/AdminContent';
@@ -67,6 +68,7 @@ function App() {
             <Route path="newsletter" element={<AdminNewsletter />} />
             <Route path="reviews" element={<AdminReviews />} />
             <Route path="announcements" element={<AdminAnnouncements />} />
+            <Route path="site-settings" element={<AdminSiteSettings />} />
             <Route path="settings" element={<AdminSettings />} />
           </Route>
 

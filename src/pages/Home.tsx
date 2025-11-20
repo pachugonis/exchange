@@ -9,10 +9,12 @@ import { fetchCryptoRates } from '../api/cryptoAPI';
 import { Testimonials, PopularDirections } from '../components/home';
 import { ExchangeSteps } from '../components/exchange';
 import { useAnnouncementStore } from '../store/announcementStore';
+import { useSiteSettingsStore } from '../store/siteSettingsStore';
 import { currencies } from '../data/currencies';
 
 export const Home: React.FC = () => {
   const { getActiveAnnouncement } = useAnnouncementStore();
+  const { settings } = useSiteSettingsStore();
   const [showAnnouncement, setShowAnnouncement] = useState(true);
   const activeAnnouncement = getActiveAnnouncement();
   
@@ -64,10 +66,10 @@ export const Home: React.FC = () => {
       <section className="py-20 px-4">
         <div className="container mx-auto text-center">
           <h1 className="text-5xl md:text-6xl font-bold mb-6 bg-gradient-primary bg-clip-text text-transparent">
-            Быстрый и надежный обмен валют
+            {settings.heroTitle}
           </h1>
           <p className="text-xl text-dark-600 dark:text-dark-300 mb-8 max-w-2xl mx-auto">
-            Обменивайте криптовалюты, электронные деньги и банковские карты по выгодным курсам
+            {settings.heroSubtitle}
           </p>
           <Link to="/exchange">
             <Button size="lg" className="gap-2">
@@ -75,70 +77,74 @@ export const Home: React.FC = () => {
             </Button>
           </Link>
           
-          <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-4 max-w-3xl mx-auto text-sm">
-            <div className="text-dark-600 dark:text-dark-400">
-              <div className="text-2xl font-bold text-primary-500">15 000+</div>
-              <div>Успешных обменов</div>
+          {settings.showStats && (
+            <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-4 max-w-3xl mx-auto text-sm">
+              <div className="text-dark-600 dark:text-dark-400">
+                <div className="text-2xl font-bold text-primary-500">{settings.stat1Value}</div>
+                <div>{settings.stat1Label}</div>
+              </div>
+              <div className="text-dark-600 dark:text-dark-400">
+                <div className="text-2xl font-bold text-primary-500">{settings.stat2Value}</div>
+                <div>{settings.stat2Label}</div>
+              </div>
+              <div className="text-dark-600 dark:text-dark-400">
+                <div className="text-2xl font-bold text-primary-500">{settings.stat3Value}</div>
+                <div>{settings.stat3Label}</div>
+              </div>
             </div>
-            <div className="text-dark-600 dark:text-dark-400">
-              <div className="text-2xl font-bold text-primary-500">24/7</div>
-              <div>Поддержка клиентов</div>
-            </div>
-            <div className="text-dark-600 dark:text-dark-400">
-              <div className="text-2xl font-bold text-primary-500">5-30 мин</div>
-              <div>Время обмена</div>
-            </div>
-          </div>
+          )}
         </div>
       </section>
 
       {/* Features */}
-      <section className="py-20 px-4 bg-dark-50 dark:bg-dark-800/50">
-        <div className="container mx-auto">
-          <h2 className="text-3xl font-bold text-center mb-12">Почему выбирают нас</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <Card>
-              <Zap className="w-10 h-10 text-primary-500 mb-4" />
-              <h3 className="font-semibold text-lg mb-2">Высокая скорость</h3>
-              <p className="text-dark-600 dark:text-dark-400 text-sm">
-                Обмен занимает от 5 до 30 минут
-              </p>
-            </Card>
-            
-            <Card>
-              <Shield className="w-10 h-10 text-primary-500 mb-4" />
-              <h3 className="font-semibold text-lg mb-2">Безопасность</h3>
-              <p className="text-dark-600 dark:text-dark-400 text-sm">
-                SSL шифрование и AML/KYC проверки
-              </p>
-            </Card>
-            
-            <Card>
-              <Clock className="w-10 h-10 text-primary-500 mb-4" />
-              <h3 className="font-semibold text-lg mb-2">Круглосуточно</h3>
-              <p className="text-dark-600 dark:text-dark-400 text-sm">
-                Работаем 24/7 без выходных
-              </p>
-            </Card>
-            
-            <Card>
-              <Award className="w-10 h-10 text-primary-500 mb-4" />
-              <h3 className="font-semibold text-lg mb-2">Выгодные курсы</h3>
-              <p className="text-dark-600 dark:text-dark-400 text-sm">
-                Лучшие курсы обмена на рынке
-              </p>
-            </Card>
+      {settings.showFeatures && (
+        <section className="py-20 px-4 bg-dark-50 dark:bg-dark-800/50">
+          <div className="container mx-auto">
+            <h2 className="text-3xl font-bold text-center mb-12">Почему выбирают нас</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <Card>
+                <Zap className="w-10 h-10 text-primary-500 mb-4" />
+                <h3 className="font-semibold text-lg mb-2">{settings.feature1Title}</h3>
+                <p className="text-dark-600 dark:text-dark-400 text-sm">
+                  {settings.feature1Description}
+                </p>
+              </Card>
+              
+              <Card>
+                <Shield className="w-10 h-10 text-primary-500 mb-4" />
+                <h3 className="font-semibold text-lg mb-2">{settings.feature2Title}</h3>
+                <p className="text-dark-600 dark:text-dark-400 text-sm">
+                  {settings.feature2Description}
+                </p>
+              </Card>
+              
+              <Card>
+                <Clock className="w-10 h-10 text-primary-500 mb-4" />
+                <h3 className="font-semibold text-lg mb-2">{settings.feature3Title}</h3>
+                <p className="text-dark-600 dark:text-dark-400 text-sm">
+                  {settings.feature3Description}
+                </p>
+              </Card>
+              
+              <Card>
+                <Award className="w-10 h-10 text-primary-500 mb-4" />
+                <h3 className="font-semibold text-lg mb-2">{settings.feature4Title}</h3>
+                <p className="text-dark-600 dark:text-dark-400 text-sm">
+                  {settings.feature4Description}
+                </p>
+              </Card>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* CTA */}
       <section className="py-20 px-4">
         <div className="container mx-auto">
           {/* Live Rates Widget */}
-          {cryptoRates && (
+          {settings.showCryptoRates && cryptoRates && (
             <div className="mb-16">
-              <h2 className="text-3xl font-bold text-center mb-8">Курсы криптовалют</h2>
+              <h2 className="text-3xl font-bold text-center mb-8">{settings.cryptoRatesTitle}</h2>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
                 <Card className="bg-gradient-to-br from-orange-500/10 to-orange-600/10 border-orange-500/20">
                   <div className="flex items-center justify-between">
@@ -176,26 +182,28 @@ export const Home: React.FC = () => {
             </div>
           )}
           
-          <div className="text-center">
-            <h2 className="text-3xl font-bold mb-6">Готовы начать?</h2>
-            <p className="text-dark-600 dark:text-dark-300 mb-8 max-w-2xl mx-auto">
-              Создайте заявку прямо сейчас и обменяйте валюту по выгодному курсу
-            </p>
-            <Link to="/exchange">
-              <Button size="lg">Обменять валюту</Button>
-            </Link>
-          </div>
+          {settings.showCTA && (
+            <div className="text-center">
+              <h2 className="text-3xl font-bold mb-6">{settings.ctaTitle}</h2>
+              <p className="text-dark-600 dark:text-dark-300 mb-8 max-w-2xl mx-auto">
+                {settings.ctaDescription}
+              </p>
+              <Link to="/exchange">
+                <Button size="lg">{settings.ctaButtonText}</Button>
+              </Link>
+            </div>
+          )}
         </div>
       </section>
 
       {/* Popular Directions */}
-      <PopularDirections />
+      {settings.showPopularDirections && <PopularDirections />}
 
       {/* Exchange Steps */}
-      <ExchangeSteps />
+      {settings.showExchangeSteps && <ExchangeSteps />}
 
       {/* Testimonials */}
-      <Testimonials />
+      {settings.showTestimonials && <Testimonials />}
     </div>
   );
 };

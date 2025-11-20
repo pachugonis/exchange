@@ -4,10 +4,12 @@ import { Mail, MessageCircle, Shield, Send } from 'lucide-react';
 import { Input } from '../ui/Input';
 import { Button } from '../ui/Button';
 import { useNewsletterStore } from '../../store/newsletterStore';
+import { useSiteSettingsStore } from '../../store/siteSettingsStore';
 import toast from 'react-hot-toast';
 
 export const Footer: React.FC = () => {
   const { addSubscriber } = useNewsletterStore();
+  const { settings } = useSiteSettingsStore();
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -33,10 +35,10 @@ export const Footer: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div>
             <h3 className="text-xl font-bold mb-4 bg-gradient-primary bg-clip-text text-transparent">
-              4EX
+              {settings.siteName}
             </h3>
             <p className="text-dark-400 text-sm">
-              Надежный сервис обмена криптовалют и электронных денег
+              {settings.footerDescription}
             </p>
           </div>
           
@@ -64,11 +66,11 @@ export const Footer: React.FC = () => {
             <ul className="space-y-3 text-dark-400">
               <li className="flex items-center gap-2">
                 <Mail className="w-4 h-4" />
-                support@4ex.cash
+                {settings.footerEmail}
               </li>
               <li className="flex items-center gap-2">
                 <MessageCircle className="w-4 h-4" />
-                @4ex_support
+                {settings.footerTelegram}
               </li>
               <li className="flex items-center gap-2">
                 <Shield className="w-4 h-4" />
@@ -107,22 +109,31 @@ export const Footer: React.FC = () => {
         </div>
         
         {/* Banners Section */}
-        <div className="border-t border-dark-700 mt-8 pt-8">
-          <div className="flex flex-wrap items-center justify-center gap-4">
-            {[1, 2, 3, 4, 5, 6].map((index) => (
-              <div
-                key={index}
-                className="w-[88px] h-[31px] bg-dark-800 border border-dark-700 rounded flex items-center justify-center hover:border-primary-500 transition cursor-pointer"
-                title={`Баннер ${index}`}
-              >
-                <span className="text-xs text-dark-500">{88}×{31}</span>
-              </div>
-            ))}
+        {settings.footerBanners.length > 0 && (
+          <div className="border-t border-dark-700 mt-8 pt-8">
+            <div className="flex flex-wrap items-center justify-center gap-4">
+              {settings.footerBanners.map((banner) => (
+                <a
+                  key={banner.id}
+                  href={banner.link || '#'}
+                  target={banner.link ? '_blank' : undefined}
+                  rel={banner.link ? 'noopener noreferrer' : undefined}
+                  className="w-[88px] h-[31px] hover:opacity-80 transition"
+                  title={banner.title}
+                >
+                  <img
+                    src={banner.image}
+                    alt={banner.title}
+                    className="w-full h-full object-contain"
+                  />
+                </a>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
         
         <div className="border-t border-dark-700 mt-8 pt-8 text-center text-dark-500 text-sm">
-          <p>© 2024 4EX Currency Exchange. Все права защищены.</p>
+          <p>{settings.footerCopyright}</p>
         </div>
       </div>
     </footer>
