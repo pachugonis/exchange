@@ -73,6 +73,14 @@ export const useUserStore = create<UserState>()(
           return { success: false, error: 'Неверный пароль' };
         }
 
+        // Check if user is banned
+        if (userRecord.user.isBanned) {
+          const banMessage = userRecord.user.banReason 
+            ? `Ваш аккаунт заблокирован. Причина: ${userRecord.user.banReason}`
+            : 'Ваш аккаунт заблокирован. Обратитесь к администратору.';
+          return { success: false, error: banMessage };
+        }
+
         // Check if 2FA is enabled
         if (userRecord.user.twoFactorEnabled && userRecord.user.twoFactorSecret) {
           if (!twoFactorCode) {

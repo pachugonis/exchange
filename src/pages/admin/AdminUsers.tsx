@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Users, Search, Edit2, Trash2, CheckCircle, XCircle, Shield, Mail, Calendar, Eye } from 'lucide-react';
+import { Users, Search, Edit2, Trash2, CheckCircle, XCircle, Shield, Mail, Calendar, Eye, Ban } from 'lucide-react';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
@@ -20,6 +20,10 @@ interface User {
   kycStatus?: 'none' | 'pending' | 'verified' | 'rejected';
   kycLevel?: number;
   twoFactorEnabled?: boolean;
+  isBanned?: boolean;
+  banReason?: string;
+  bannedAt?: number;
+  bannedBy?: string;
 }
 
 const USERS_STORAGE_KEY = 'mock-users-db';
@@ -30,6 +34,8 @@ export const AdminUsers: React.FC = () => {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showBanModal, setShowBanModal] = useState(false);
+  const [banReason, setBanReason] = useState('');
   const [editForm, setEditForm] = useState<Partial<User>>({});
 
   // Load users from localStorage
@@ -145,6 +151,54 @@ export const AdminUsers: React.FC = () => {
     toast.success(`Email ${!user.emailVerified ? 'подтвержден' : 'отменен'}`);
   };
 
+  const handleBan = (user: User) => {
+    setSelectedUser(user);
+    setBanReason('');
+    setShowBanModal(true);
+  };
+
+  const confirmBan = () => {
+    if (!selectedUser) return;
+
+    if (!banReason.trim()) {
+      toast.error('Укажите причину бана');
+      return;
+    }
+
+    const updatedUsers = users.map(u =>
+      u.id === selectedUser.id
+        ? {
+            ...u,
+            isBanned: true,
+            banReason: banReason.trim(),
+            bannedAt: Date.now(),
+            bannedBy: 'admin',
+          }
+        : u
+    );
+    saveUsers(updatedUsers);
+    toast.success(`Пользователь ${selectedUser.name} заблокирован`);
+    setShowBanModal(false);
+    setSelectedUser(null);
+    setBanReason('');
+  };
+
+  const handleUnban = (user: User) => {
+    const updatedUsers = users.map(u =>
+      u.id === user.id
+        ? {
+            ...u,
+            isBanned: false,
+            banReason: undefined,
+            bannedAt: undefined,
+            bannedBy: undefined,
+          }
+        : u
+    );
+    saveUsers(updatedUsers);
+    toast.success(`Пользователь ${user.name} разблокирован`);
+  };
+
   const filteredUsers = users.filter(user =>
     user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
     user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -181,7 +235,7 @@ export const AdminUsers: React.FC = () => {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
         <Card>
           <div className="text-center">
             <div className="text-3xl font-bold text-primary-500">{users.length}</div>
@@ -210,6 +264,14 @@ export const AdminUsers: React.FC = () => {
               {users.filter(u => u.twoFactorEnabled).length}
             </div>
             <div className="text-sm text-dark-500">2FA включен</div>
+          </div>
+        </Card>
+        <Card>
+          <div className="text-center">
+            <div className="text-3xl font-bold text-red-500">
+              {users.filter(u => u.isBanned).length}
+            </div>
+            <div className="text-sm text-dark-500">Заблокировано</div>
           </div>
         </Card>
       </div>
@@ -291,6 +353,24 @@ export const AdminUsers: React.FC = () => {
                       </Badge>
                     </div>
                   )}
+
+                  {user.isBanned && (
+                    <div className="mt-2">
+                      <Badge variant="error" className="text-xs">
+                        🚫 Заблокирован
+                      </Badge>
+                      {user.banReason && (
+                        <p className="text-xs text-red-600 dark:text-red-400 mt-1">
+                          Причина: {user.banReason}
+                        </p>
+                      )}
+                      {user.bannedAt && (
+                        <p className="text-xs text-dark-500 mt-1">
+                          Дата: {formatDate(user.bannedAt)}
+                        </p>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex gap-2">
@@ -307,6 +387,30 @@ export const AdminUsers: React.FC = () => {
                       <CheckCircle className="w-4 h-4" />
                     )}
                   </Button>
+
+                  {user.isBanned ? (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleUnban(user)}
+                      className="gap-1 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20"
+                      title="Разблокировать"
+                    >
+                      <CheckCircle className="w-4 h-4" />
+                      Разблокировать
+                    </Button>
+                  ) : (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleBan(user)}
+                      className="gap-1 text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-900/20"
+                      title="Заблокировать"
+                    >
+                      <Ban className="w-4 h-4" />
+                      Бан
+                    </Button>
+                  )}
 
                   <Button
                     size="sm"
@@ -452,6 +556,51 @@ export const AdminUsers: React.FC = () => {
                 className="bg-red-600 hover:bg-red-700 text-white"
               >
                 Удалить
+              </Button>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      {/* Ban Modal */}
+      <Modal
+        isOpen={showBanModal}
+        onClose={() => setShowBanModal(false)}
+        title="Заблокировать пользователя"
+        size="sm"
+      >
+        {selectedUser && (
+          <div className="space-y-4">
+            <p className="text-dark-600 dark:text-dark-400">
+              Заблокировать пользователя <strong>{selectedUser.name}</strong> ({selectedUser.email})?
+            </p>
+            
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                Причина блокировки *
+              </label>
+              <textarea
+                value={banReason}
+                onChange={(e) => setBanReason(e.target.value)}
+                placeholder="Укажите причину бана..."
+                className="w-full px-4 py-2 bg-white dark:bg-dark-700 border border-dark-300 dark:border-dark-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none"
+                rows={3}
+              />
+            </div>
+
+            <Alert variant="warning">
+              🚫 Пользователь не сможет войти в систему до разблокировки.
+            </Alert>
+
+            <div className="flex gap-3 justify-end">
+              <Button variant="outline" onClick={() => setShowBanModal(false)}>
+                Отмена
+              </Button>
+              <Button
+                onClick={confirmBan}
+                className="bg-orange-600 hover:bg-orange-700 text-white"
+              >
+                Заблокировать
               </Button>
             </div>
           </div>

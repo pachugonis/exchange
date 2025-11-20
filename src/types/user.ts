@@ -10,6 +10,10 @@ export interface User {
   kycLevel?: number; // 0, 1, 2, 3
   twoFactorEnabled?: boolean;
   twoFactorSecret?: string;
+  isBanned?: boolean;
+  banReason?: string;
+  bannedAt?: number;
+  bannedBy?: string;
 }
 
 export interface UserProfile extends User {
