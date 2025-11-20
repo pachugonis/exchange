@@ -18,7 +18,7 @@ import { createOrder } from '../api/mockAPI';
 
 export const Exchange: React.FC = () => {
   const navigate = useNavigate();
-  const { addOrder, cancelOrder } = useOrderStore();
+  const { addOrder, cancelOrder, getOrderById } = useOrderStore();
   const { user } = useUserStore();
   const { incrementPromoUse, appliedPromo, removePromo } = usePromoStore();
   const { settings } = useAdminStore(); // Move hook to top level
@@ -80,12 +80,20 @@ export const Exchange: React.FC = () => {
     }
   }, [user, email, telegram, setEmail, setTelegram]);
 
-  // Ensure we're on step 1 when mounting
+  // Reset flow if on step 5 when mounting (user returning from completed order)
   useEffect(() => {
-    if (currentStep > 5 || currentStep < 1) {
+    if (currentStep === 5 && orderId) {
+      // Check if this is a page load (not a fresh order creation)
+      const currentOrder = getOrderById(orderId);
+      if (currentOrder) {
+        // Reset to start a new exchange
+        console.log('Detected step 5 on mount with existing order, resetting flow');
+        resetFlow();
+      }
+    } else if (currentStep > 5 || currentStep < 1) {
       resetFlow();
     }
-  }, []);
+  }, []); // Run only on mount
 
   // Log step changes for debugging
   useEffect(() => {
@@ -771,17 +779,27 @@ export const Exchange: React.FC = () => {
           >
             Новый обмен
           </Button>
-          <Button
-            onClick={() => {
-              console.log('Cancel button clicked, opening modal');
-              setShowCancelModal(true);
-            }}
-            variant="outline"
-            className="gap-2 border-red-300 text-red-600 hover:bg-red-50 dark:border-red-700 dark:text-red-400 dark:hover:bg-red-900/20"
-          >
-            <XCircle className="w-4 h-4" />
-            Отменить заявку
-          </Button>
+          {/* Only show cancel button if order is not completed or cancelled */}
+          {(() => {
+            const currentOrder = getOrderById(orderId || '');
+            const canCancel = currentOrder && 
+                             currentOrder.status !== 'completed' && 
+                             currentOrder.status !== 'cancelled';
+            
+            return canCancel ? (
+              <Button
+                onClick={() => {
+                  console.log('Cancel button clicked, opening modal');
+                  setShowCancelModal(true);
+                }}
+                variant="outline"
+                className="gap-2 border-red-300 text-red-600 hover:bg-red-50 dark:border-red-700 dark:text-red-400 dark:hover:bg-red-900/20"
+              >
+                <XCircle className="w-4 h-4" />
+                Отменить заявку
+              </Button>
+            ) : null;
+          })()}
         </div>
       </div>
     );

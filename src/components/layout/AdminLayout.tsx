@@ -2,7 +2,7 @@ import React from 'react';
 import { Link, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAdminStore } from '../../store/adminStore';
 import { useThemeStore } from '../../store/themeStore';
-import { LayoutDashboard, Settings, ShoppingCart, DollarSign, LogOut, Moon, Sun, Ticket, FileText, Shield, Mail, Star } from 'lucide-react';
+import { LayoutDashboard, Settings, ShoppingCart, DollarSign, LogOut, Moon, Sun, Ticket, FileText, Shield, Mail, Star, Megaphone } from 'lucide-react';
 
 export const AdminLayout: React.FC = () => {
   const navigate = useNavigate();
@@ -22,6 +22,7 @@ export const AdminLayout: React.FC = () => {
     { path: '/admin/promos', icon: Ticket, label: 'Промокоды' },
     { path: '/admin/kyc', icon: Shield, label: 'KYC' },
     { path: '/admin/content', icon: FileText, label: 'Контент' },
+    { path: '/admin/announcements', icon: Megaphone, label: 'Объявления' },
     { path: '/admin/newsletter', icon: Mail, label: 'Рассылки' },
     { path: '/admin/reviews', icon: Star, label: 'Отзывы' },
     { path: '/admin/settings', icon: Settings, label: 'Настройки' },

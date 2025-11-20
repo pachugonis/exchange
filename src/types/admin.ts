@@ -36,3 +36,12 @@ export interface AdminStats {
   todayVolume: number;
   activeUsers: number;
 }
+
+export interface Announcement {
+  id: string;
+  message: string;
+  publishDate: number;
+  endDate?: number; // Optional end date for announcement
+  createdAt: number;
+  isActive: boolean;
+}

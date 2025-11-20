@@ -1,13 +1,19 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Zap, Shield, Clock, Award, TrendingUp, TrendingDown } from 'lucide-react';
+import { ArrowRight, Zap, Shield, Clock, Award, TrendingUp, TrendingDown, Megaphone, X } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
+import { Alert } from '../components/ui/Alert';
 import { fetchCryptoRates } from '../api/cryptoAPI';
-import { Testimonials, FAQ, PopularDirections } from '../components/home';
+import { Testimonials, PopularDirections } from '../components/home';
 import { ExchangeSteps } from '../components/exchange';
+import { useAnnouncementStore } from '../store/announcementStore';
 
 export const Home: React.FC = () => {
+  const { getActiveAnnouncement } = useAnnouncementStore();
+  const [showAnnouncement, setShowAnnouncement] = useState(true);
+  const activeAnnouncement = getActiveAnnouncement();
+  
   const [cryptoRates, setCryptoRates] = useState<{
     BTC_USD: number;
     ETH_USD: number;
@@ -31,6 +37,27 @@ export const Home: React.FC = () => {
   }, []);
   return (
     <div className="min-h-screen">
+      {/* Announcement Banner */}
+      {activeAnnouncement && showAnnouncement && (
+        <div className="bg-gradient-to-r from-primary-500 to-primary-600 text-white py-3 px-4">
+          <div className="container mx-auto">
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3 flex-1">
+                <Megaphone className="w-5 h-5 flex-shrink-0" />
+                <p className="text-sm md:text-base">{activeAnnouncement.message}</p>
+              </div>
+              <button
+                onClick={() => setShowAnnouncement(false)}
+                className="p-1 hover:bg-white/20 rounded transition flex-shrink-0"
+                aria-label="Закрыть"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      
       {/* Hero Section */}
       <section className="py-20 px-4">
         <div className="container mx-auto text-center">
@@ -167,9 +194,6 @@ export const Home: React.FC = () => {
 
       {/* Testimonials */}
       <Testimonials />
-
-      {/* FAQ */}
-      <FAQ />
     </div>
   );
 };
