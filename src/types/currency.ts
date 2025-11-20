@@ -1,4 +1,4 @@
-export type CurrencyType = 'crypto' | 'ewallet' | 'card' | 'cash';
+export type CurrencyType = 'crypto' | 'ewallet' | 'card' | 'cash' | 'custom';
 
 export type CryptoNetwork = 'TRC20' | 'ERC20' | 'BEP20' | 'BTC' | 'ETH' | 'XRP' | 'Solana' | 'DOGE' | 'XMR' | 'LTC' | 'Sui';
 
@@ -18,6 +18,10 @@ export interface Currency {
   symbol?: string;
   decimals: number;
   paymentAddress?: string; // Адрес для оплаты
+  // Custom currency fields
+  customRate?: number; // Fixed rate for custom currencies
+  customCommission?: number; // Custom commission percentage
+  isCustom?: boolean; // Flag to identify custom currencies
 }
 
 export interface ExchangePair {

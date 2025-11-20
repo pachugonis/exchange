@@ -62,6 +62,7 @@ export const Exchange: React.FC = () => {
     setOrderId,
     resetFlow,
     setCurrentStep,
+    refreshCurrencies,
   } = useExchangeFlowStore();
 
   const { currencies: currencyList, reloadCurrencies } = useExchangeStore();

@@ -11,21 +11,22 @@ const loadCurrencies = (): Currency[] => {
     if (stored) {
       const parsed = JSON.parse(stored);
       
-      // Get valid currency codes from defaults
-      const validCodes = new Set(defaultCurrencies.map(c => c.code));
+      // Merge default currencies with stored custom currencies
+      const defaultMap = new Map(defaultCurrencies.map(c => [c.code, c]));
+      const storedMap = new Map(parsed.map((c: Currency) => [c.code, c]));
       
-      // Filter stored currencies to only include those still in defaults
-      const validStored = parsed.filter((c: Currency) => validCodes.has(c.code));
-      
-      // Merge: update existing currencies with stored values, add new ones from defaults
-      const storedMap = new Map(validStored.map((c: Currency) => [c.code, c]));
+      // Start with default currencies and update with stored values
       const merged = defaultCurrencies.map(defaultCurrency => {
         const stored = storedMap.get(defaultCurrency.code);
         return stored ? { ...defaultCurrency, ...stored } : defaultCurrency;
       });
       
-      // Save cleaned list back to localStorage
-      localStorage.setItem('currencies-data', JSON.stringify(merged));
+      // Add custom currencies that are not in defaults
+      parsed.forEach((currency: Currency) => {
+        if (currency.isCustom && !defaultMap.has(currency.code)) {
+          merged.push(currency);
+        }
+      });
       
       return merged.filter((c: Currency) => c.isActive);
     }
@@ -84,7 +85,7 @@ export const useExchangeStore = create<ExchangeState>((set, get) => ({
   },
   
   calculateToAmount: async () => {
-    const { fromCurrency, toCurrency, fromAmount, commission } = get();
+    const { fromCurrency, toCurrency, fromAmount, commission: defaultCommission } = get();
     
     if (!fromCurrency || !toCurrency || !fromAmount) {
       set({ toAmount: '', rate: 0 });
@@ -97,10 +98,34 @@ export const useExchangeStore = create<ExchangeState>((set, get) => ({
       return;
     }
     
+    // Determine commission to use
+    let commission = defaultCommission;
+    if (fromCurrency?.customCommission !== undefined) {
+      commission = fromCurrency.customCommission;
+    } else if (toCurrency?.customCommission !== undefined) {
+      commission = toCurrency.customCommission;
+    }
+    
     try {
       set({ isLoadingRates: true });
-      const rates = await fetchCryptoRates();
-      const rate = calculateRate(rates, fromCurrency.code, toCurrency.code);
+      
+      let rate: number;
+      let lastUpdated: number;
+      
+      // Check if any currency has custom rate
+      if (fromCurrency.customRate) {
+        rate = fromCurrency.customRate;
+        lastUpdated = Date.now();
+      } else if (toCurrency.customRate) {
+        rate = 1 / toCurrency.customRate;
+        lastUpdated = Date.now();
+      } else {
+        // Use API rates
+        const rates = await fetchCryptoRates();
+        rate = calculateRate(rates, fromCurrency.code, toCurrency.code);
+        lastUpdated = rates.lastUpdated;
+      }
+      
       const baseAmount = amount * rate;
       const commissionAmount = baseAmount * commission;
       const total = baseAmount - commissionAmount;
@@ -108,8 +133,9 @@ export const useExchangeStore = create<ExchangeState>((set, get) => ({
       set({ 
         rate,
         toAmount: total.toFixed(toCurrency.decimals),
-        lastRateUpdate: rates.lastUpdated,
+        lastRateUpdate: lastUpdated,
         isLoadingRates: false,
+        commission,
       });
     } catch (error) {
       console.error('Error calculating exchange:', error);
@@ -130,21 +156,22 @@ export const useExchangeStore = create<ExchangeState>((set, get) => ({
       try {
         const parsed = JSON.parse(stored);
         
-        // Get valid currency codes from defaults
-        const validCodes = new Set(defaultCurrencies.map(c => c.code));
+        // Merge default currencies with stored custom currencies
+        const defaultMap = new Map(defaultCurrencies.map(c => [c.code, c]));
+        const storedMap = new Map(parsed.map((c: Currency) => [c.code, c]));
         
-        // Filter stored currencies to only include those still in defaults
-        const validStored = parsed.filter((c: Currency) => validCodes.has(c.code));
-        
-        // Merge: update existing currencies with stored values, add new ones from defaults
-        const storedMap = new Map(validStored.map((c: Currency) => [c.code, c]));
+        // Start with default currencies and update with stored values
         currencies = defaultCurrencies.map(defaultCurrency => {
           const stored = storedMap.get(defaultCurrency.code);
           return stored ? { ...defaultCurrency, ...stored } : defaultCurrency;
         });
         
-        // Save cleaned list back to localStorage
-        localStorage.setItem('currencies-data', JSON.stringify(currencies));
+        // Add custom currencies that are not in defaults
+        parsed.forEach((currency: Currency) => {
+          if (currency.isCustom && !defaultMap.has(currency.code)) {
+            currencies.push(currency);
+          }
+        });
       } catch (error) {
         console.error('Error reloading currencies:', error);
         currencies = defaultCurrencies;

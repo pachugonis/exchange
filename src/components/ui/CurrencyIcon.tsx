@@ -26,13 +26,13 @@ export const CurrencyIcon: React.FC<CurrencyIconProps> = ({
     xl: 'text-2xl',
   };
 
-  // Use icon image for crypto currencies if available
-  if (currency.type === 'crypto' && currency.iconUrl) {
+  // Use icon image if iconUrl is available (for any currency type)
+  if (currency.iconUrl) {
     return (
       <img
         src={currency.iconUrl}
         alt={currency.name}
-        className={`${sizeClasses[size]} rounded-full ${className}`}
+        className={`${sizeClasses[size]} rounded-full object-cover ${className}`}
         onError={(e) => {
           // Fallback to text icon if image fails to load
           const target = e.target as HTMLImageElement;
@@ -46,7 +46,7 @@ export const CurrencyIcon: React.FC<CurrencyIconProps> = ({
     );
   }
 
-  // Fallback to text/emoji icon for non-crypto or if iconUrl not available
+  // Fallback to text/emoji icon
   return (
     <span className={`${textSizes[size]} ${className}`}>
       {currency.icon}

@@ -51,6 +51,7 @@ interface ExchangeFlowState extends ExchangeFlowData {
   setFromAmount: (amount: string) => void;
   calculateToAmount: () => Promise<void>;
   swapCurrencies: () => void;
+  refreshCurrencies: () => void;
   
   // Step 2
   setEmail: (email: string) => void;
@@ -158,6 +159,13 @@ export const useExchangeFlowStore = create<ExchangeFlowState>()(
           }
         }
         
+        // Check if any currency has custom commission
+        if (fromCurrency?.customCommission !== undefined) {
+          commission = fromCurrency.customCommission;
+        } else if (toCurrency?.customCommission !== undefined) {
+          commission = toCurrency.customCommission;
+        }
+        
         if (!fromCurrency || !toCurrency || !fromAmount) {
           set({ toAmount: '', rate: 0 });
           return;
@@ -171,9 +179,21 @@ export const useExchangeFlowStore = create<ExchangeFlowState>()(
         
         try {
           set({ isLoadingRates: true });
-          const { fetchCryptoRates, calculateRate } = await import('../api/cryptoAPI');
-          const rates = await fetchCryptoRates();
-          const rate = calculateRate(rates, fromCurrency.code, toCurrency.code);
+          
+          let rate: number;
+          
+          // Check if any currency has custom rate
+          if (fromCurrency.customRate) {
+            rate = fromCurrency.customRate;
+          } else if (toCurrency.customRate) {
+            rate = 1 / toCurrency.customRate;
+          } else {
+            // Use API rates
+            const { fetchCryptoRates, calculateRate } = await import('../api/cryptoAPI');
+            const rates = await fetchCryptoRates();
+            rate = calculateRate(rates, fromCurrency.code, toCurrency.code);
+          }
+          
           const baseAmount = amount * rate;
           const commissionAmount = baseAmount * commission;
           const total = baseAmount - commissionAmount;
@@ -181,7 +201,7 @@ export const useExchangeFlowStore = create<ExchangeFlowState>()(
           set({ 
             rate,
             toAmount: total.toFixed(toCurrency.decimals),
-            lastRateUpdate: rates.lastUpdated,
+            lastRateUpdate: Date.now(),
             isLoadingRates: false,
             commission,
           });
@@ -199,6 +219,43 @@ export const useExchangeFlowStore = create<ExchangeFlowState>()(
           fromAmount: '',
           toAmount: '',
         });
+      },
+      
+      refreshCurrencies: () => {
+        const { fromCurrency, toCurrency } = get();
+        
+        // Reload currencies from localStorage
+        const stored = localStorage.getItem('currencies-data');
+        if (!stored || (!fromCurrency && !toCurrency)) return;
+        
+        try {
+          const currencies: Currency[] = JSON.parse(stored);
+          
+          // Find updated currency objects by both id and code
+          const updatedFromCurrency = fromCurrency 
+            ? currencies.find(c => c.id === fromCurrency.id || c.code === fromCurrency.code)
+            : null;
+          const updatedToCurrency = toCurrency
+            ? currencies.find(c => c.id === toCurrency.id || c.code === toCurrency.code)
+            : null;
+          
+          console.log('Refreshing currencies:', {
+            fromCurrency: fromCurrency?.code,
+            toCurrency: toCurrency?.code,
+            updatedFromReserve: updatedFromCurrency?.reserve,
+            updatedToReserve: updatedToCurrency?.reserve,
+          });
+          
+          // Update if found
+          if (updatedFromCurrency || updatedToCurrency) {
+            set({
+              fromCurrency: updatedFromCurrency || fromCurrency,
+              toCurrency: updatedToCurrency || toCurrency,
+            });
+          }
+        } catch (error) {
+          console.error('Error refreshing currencies:', error);
+        }
       },
       
       setEmail: (email) => set({ email }),

@@ -6,10 +6,11 @@ import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
 import { Toggle } from '../../components/ui/Toggle';
+import { Modal } from '../../components/ui/Modal';
 import { CurrencyIcon } from '../../components/ui/CurrencyIcon';
 import { currencies as initialCurrencies } from '../../data/currencies';
-import type { Currency } from '../../types';
-import { Plus, Edit2, Trash2, Save, X } from 'lucide-react';
+import type { Currency, CurrencyType } from '../../types';
+import { Plus, Edit2, Trash2, Save, X, Upload } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export const AdminCurrencies: React.FC = () => {
@@ -20,21 +21,22 @@ export const AdminCurrencies: React.FC = () => {
       try {
         const parsed = JSON.parse(stored);
         
-        // Get valid currency codes from defaults
-        const validCodes = new Set(initialCurrencies.map(c => c.code));
+        // Merge default currencies with stored custom currencies
+        const defaultMap = new Map(initialCurrencies.map(c => [c.code, c]));
+        const storedMap = new Map(parsed.map((c: Currency) => [c.code, c]));
         
-        // Filter stored currencies to only include those still in defaults
-        const validStored = parsed.filter((c: Currency) => validCodes.has(c.code));
-        
-        // Merge: update existing currencies with stored values, add new ones from defaults
-        const storedMap = new Map(validStored.map((c: Currency) => [c.code, c]));
+        // Start with initial currencies and update with stored values
         const merged = initialCurrencies.map(defaultCurrency => {
           const stored = storedMap.get(defaultCurrency.code);
           return stored ? { ...defaultCurrency, ...stored } : defaultCurrency;
         });
         
-        // Save cleaned list back to localStorage
-        localStorage.setItem('currencies-data', JSON.stringify(merged));
+        // Add custom currencies that are not in defaults
+        parsed.forEach((currency: Currency) => {
+          if (currency.isCustom && !defaultMap.has(currency.code)) {
+            merged.push(currency);
+          }
+        });
         
         return merged;
       } catch (error) {
@@ -47,6 +49,17 @@ export const AdminCurrencies: React.FC = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<Partial<Currency>>({});
   const [filterType, setFilterType] = useState<string>('all');
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [newCurrency, setNewCurrency] = useState<Partial<Currency>>({
+    type: 'custom',
+    isActive: true,
+    decimals: 2,
+    minAmount: 0,
+    maxAmount: 1000000,
+    reserve: 0,
+    icon: '💱',
+    isCustom: true,
+  });
 
   if (!isAuthenticated) {
     return <Navigate to="/admin/login" replace />;
@@ -90,6 +103,81 @@ export const AdminCurrencies: React.FC = () => {
     setEditForm({ ...editForm, [field]: value });
   };
 
+  const handleAddCurrency = () => {
+    // Validate required fields
+    if (!newCurrency.code || !newCurrency.name || !newCurrency.nameEn) {
+      toast.error('Заполните все обязательные поля');
+      return;
+    }
+
+    // Check if code already exists
+    if (currencies.some(c => c.code === newCurrency.code)) {
+      toast.error('Валюта с таким кодом уже существует');
+      return;
+    }
+
+    const currency: Currency = {
+      id: `custom-${Date.now()}`,
+      code: newCurrency.code!.toUpperCase(),
+      name: newCurrency.name!,
+      nameEn: newCurrency.nameEn!,
+      type: newCurrency.type || 'custom',
+      icon: newCurrency.icon || '💱',
+      iconUrl: newCurrency.iconUrl,
+      minAmount: newCurrency.minAmount || 0,
+      maxAmount: newCurrency.maxAmount || 1000000,
+      reserve: newCurrency.reserve || 0,
+      isActive: newCurrency.isActive ?? true,
+      symbol: newCurrency.symbol || newCurrency.code,
+      decimals: newCurrency.decimals || 2,
+      paymentAddress: newCurrency.paymentAddress,
+      customRate: newCurrency.customRate,
+      customCommission: newCurrency.customCommission,
+      isCustom: true,
+    };
+
+    const updated = [...currencies, currency];
+    saveCurrencies(updated);
+    setShowAddModal(false);
+    resetNewCurrency();
+  };
+
+  const handleDeleteCurrency = (id: string) => {
+    if (!currencies.find(c => c.id === id)?.isCustom) {
+      toast.error('Можно удалять только пользовательские валюты');
+      return;
+    }
+
+    if (confirm('Вы уверены, что хотите удалить эту валюту?')) {
+      const updated = currencies.filter(c => c.id !== id);
+      saveCurrencies(updated);
+    }
+  };
+
+  const resetNewCurrency = () => {
+    setNewCurrency({
+      type: 'custom',
+      isActive: true,
+      decimals: 2,
+      minAmount: 0,
+      maxAmount: 1000000,
+      reserve: 0,
+      icon: '💱',
+      isCustom: true,
+    });
+  };
+
+  const handleIconUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setNewCurrency({ ...newCurrency, iconUrl: event.target?.result as string });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const filteredCurrencies = currencies.filter((c) => {
     if (filterType === 'all') return true;
     return c.type === filterType;
@@ -101,6 +189,7 @@ export const AdminCurrencies: React.FC = () => {
       ewallet: 'Электронный кошелек',
       card: 'Банковская карта',
       cash: 'Наличные',
+      custom: 'Пользовательская',
     };
     return labels[type] || type;
   };
@@ -111,6 +200,7 @@ export const AdminCurrencies: React.FC = () => {
       ewallet: 'purple',
       card: 'green',
       cash: 'orange',
+      custom: 'cyan',
     };
     return colors[type] || 'gray';
   };
@@ -124,13 +214,16 @@ export const AdminCurrencies: React.FC = () => {
             Настройка доступных валют для обмена
           </p>
         </div>
+        <Button onClick={() => setShowAddModal(true)} className="gap-2">
+          <Plus className="w-4 h-4" /> Добавить валюту
+        </Button>
       </div>
 
       {/* Filters */}
       <Card>
         <div className="flex items-center gap-2 flex-wrap">
           <span className="text-sm font-medium">Тип:</span>
-          {['all', 'crypto', 'ewallet', 'card', 'cash'].map((type) => (
+          {['all', 'crypto', 'ewallet', 'card', 'cash', 'custom'].map((type) => (
             <button
               key={type}
               onClick={() => setFilterType(type)}
@@ -185,14 +278,26 @@ export const AdminCurrencies: React.FC = () => {
                     </div>
                     
                     {!isEditing ? (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleEdit(currency)}
-                        className="gap-2"
-                      >
-                        <Edit2 className="w-4 h-4" /> Редактировать
-                      </Button>
+                      <>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleEdit(currency)}
+                          className="gap-2"
+                        >
+                          <Edit2 className="w-4 h-4" /> Редактировать
+                        </Button>
+                        {currency.isCustom && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleDeleteCurrency(currency.id)}
+                            className="gap-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
+                          >
+                            <Trash2 className="w-4 h-4" /> Удалить
+                          </Button>
+                        )}
+                      </>
                     ) : (
                       <div className="flex gap-2">
                         <Button
@@ -315,6 +420,52 @@ export const AdminCurrencies: React.FC = () => {
                       </p>
                     </div>
                   )}
+
+                  {currency.isCustom && (
+                    <>
+                      <div>
+                        <label className="block text-xs text-dark-500 mb-1">
+                          Фиксированный курс
+                        </label>
+                        {isEditing ? (
+                          <Input
+                            type="number"
+                            step="0.0001"
+                            value={form.customRate || ''}
+                            onChange={(e) =>
+                              handleUpdateField('customRate', parseFloat(e.target.value))
+                            }
+                            placeholder="Не указан"
+                            className="text-sm"
+                          />
+                        ) : (
+                          <p className="font-medium">{currency.customRate || 'Не указан'}</p>
+                        )}
+                      </div>
+
+                      <div>
+                        <label className="block text-xs text-dark-500 mb-1">
+                          Комиссия (%)
+                        </label>
+                        {isEditing ? (
+                          <Input
+                            type="number"
+                            step="0.01"
+                            value={form.customCommission ? form.customCommission * 100 : ''}
+                            onChange={(e) =>
+                              handleUpdateField('customCommission', parseFloat(e.target.value) / 100)
+                            }
+                            placeholder="Использовать общую"
+                            className="text-sm"
+                          />
+                        ) : (
+                          <p className="font-medium">
+                            {currency.customCommission ? `${(currency.customCommission * 100).toFixed(2)}%` : 'Общая'}
+                          </p>
+                        )}
+                      </div>
+                    </>
+                  )}
                 </div>
 
                 {/* Payment Address */}
@@ -378,6 +529,250 @@ export const AdminCurrencies: React.FC = () => {
           </p>
         </Card>
       </div>
+
+      {/* Add Currency Modal */}
+      <Modal
+        isOpen={showAddModal}
+        onClose={() => {
+          setShowAddModal(false);
+          resetNewCurrency();
+        }}
+        title="Добавить новую валюту"
+      >
+        <div className="space-y-4">
+          {/* Basic Info */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                Код валюты <span className="text-red-500">*</span>
+              </label>
+              <Input
+                type="text"
+                value={newCurrency.code || ''}
+                onChange={(e) => setNewCurrency({ ...newCurrency, code: e.target.value.toUpperCase() })}
+                placeholder="USD, EUR, GBP..."
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                Тип
+              </label>
+              <select
+                className="w-full px-4 py-2.5 bg-white dark:bg-dark-700 border border-dark-300 dark:border-dark-600 rounded-lg"
+                value={newCurrency.type}
+                onChange={(e) => setNewCurrency({ ...newCurrency, type: e.target.value as CurrencyType })}
+              >
+                <option value="custom">Пользовательская</option>
+                <option value="crypto">Криптовалюта</option>
+                <option value="ewallet">Электронный кошелек</option>
+                <option value="card">Банковская карта</option>
+                <option value="cash">Наличные</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                Название (RU) <span className="text-red-500">*</span>
+              </label>
+              <Input
+                type="text"
+                value={newCurrency.name || ''}
+                onChange={(e) => setNewCurrency({ ...newCurrency, name: e.target.value })}
+                placeholder="Доллар США"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                Название (EN) <span className="text-red-500">*</span>
+              </label>
+              <Input
+                type="text"
+                value={newCurrency.nameEn || ''}
+                onChange={(e) => setNewCurrency({ ...newCurrency, nameEn: e.target.value })}
+                placeholder="US Dollar"
+              />
+            </div>
+          </div>
+
+          {/* Icon */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                Иконка (символ)
+              </label>
+              <Input
+                type="text"
+                value={newCurrency.icon || ''}
+                onChange={(e) => setNewCurrency({ ...newCurrency, icon: e.target.value })}
+                placeholder="$, €, 💱..."
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                Или загрузить изображение
+              </label>
+              <div className="flex gap-2">
+                <Input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleIconUpload}
+                  className="flex-1"
+                />
+                {newCurrency.iconUrl && (
+                  <img src={newCurrency.iconUrl} alt="Icon" className="w-10 h-10 rounded" />
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Amounts */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                Мин. сумма
+              </label>
+              <Input
+                type="number"
+                step="0.01"
+                value={newCurrency.minAmount || 0}
+                onChange={(e) => setNewCurrency({ ...newCurrency, minAmount: parseFloat(e.target.value) })}
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                Макс. сумма
+              </label>
+              <Input
+                type="number"
+                step="0.01"
+                value={newCurrency.maxAmount || 0}
+                onChange={(e) => setNewCurrency({ ...newCurrency, maxAmount: parseFloat(e.target.value) })}
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                Резерв
+              </label>
+              <Input
+                type="number"
+                step="0.01"
+                value={newCurrency.reserve || 0}
+                onChange={(e) => setNewCurrency({ ...newCurrency, reserve: parseFloat(e.target.value) })}
+              />
+            </div>
+          </div>
+
+          {/* Settings */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                Символ
+              </label>
+              <Input
+                type="text"
+                value={newCurrency.symbol || ''}
+                onChange={(e) => setNewCurrency({ ...newCurrency, symbol: e.target.value })}
+                placeholder="$"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                Знаков после запятой
+              </label>
+              <Input
+                type="number"
+                value={newCurrency.decimals || 2}
+                onChange={(e) => setNewCurrency({ ...newCurrency, decimals: parseInt(e.target.value) })}
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                Активна
+              </label>
+              <div className="flex items-center h-10">
+                <Toggle
+                  checked={newCurrency.isActive ?? true}
+                  onChange={(checked) => setNewCurrency({ ...newCurrency, isActive: checked })}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Custom Rate and Commission */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                Фиксированный курс
+              </label>
+              <Input
+                type="number"
+                step="0.0001"
+                value={newCurrency.customRate || ''}
+                onChange={(e) => setNewCurrency({ ...newCurrency, customRate: parseFloat(e.target.value) })}
+                placeholder="Не указан (использовать API)"
+              />
+              <p className="text-xs text-dark-500 mt-1">
+                Если указан, будет использоваться вместо API курса
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                Комиссия (%)
+              </label>
+              <Input
+                type="number"
+                step="0.01"
+                value={newCurrency.customCommission ? newCurrency.customCommission * 100 : ''}
+                onChange={(e) => setNewCurrency({ ...newCurrency, customCommission: parseFloat(e.target.value) / 100 })}
+                placeholder="Использовать общую комиссию"
+              />
+              <p className="text-xs text-dark-500 mt-1">
+                Если не указана, используется общая комиссия
+              </p>
+            </div>
+          </div>
+
+          {/* Payment Address */}
+          <div>
+            <label className="block text-sm font-medium mb-2">
+              Адрес для оплаты/получения
+            </label>
+            <Input
+              type="text"
+              value={newCurrency.paymentAddress || ''}
+              onChange={(e) => setNewCurrency({ ...newCurrency, paymentAddress: e.target.value })}
+              placeholder="Введите адрес"
+              className="font-mono"
+            />
+          </div>
+
+          {/* Actions */}
+          <div className="flex justify-end gap-3 pt-4">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowAddModal(false);
+                resetNewCurrency();
+              }}
+            >
+              Отмена
+            </Button>
+            <Button onClick={handleAddCurrency} className="gap-2">
+              <Plus className="w-4 h-4" /> Добавить
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };
