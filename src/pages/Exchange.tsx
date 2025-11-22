@@ -48,6 +48,7 @@ export const Exchange: React.FC = () => {
     setFromCurrency,
     setToCurrency,
     setFromAmount,
+    setToAmount,
     swapCurrencies,
     setEmail,
     setTelegram,
@@ -365,11 +366,11 @@ export const Exchange: React.FC = () => {
         
         <div className="mt-2">
           <Input
-            type="text"
-            placeholder="Рассчитанная сумма"
+            type="number"
+            placeholder="Рассчитанная сумма (можно редактировать)"
             value={toAmount}
-            readOnly
-            className="bg-dark-50 dark:bg-dark-900"
+            onChange={(e) => setToAmount(e.target.value)}
+            className=""
           />
         </div>
         {toCurrency && (

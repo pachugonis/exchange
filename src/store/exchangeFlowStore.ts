@@ -49,7 +49,9 @@ interface ExchangeFlowState extends ExchangeFlowData {
   setFromCurrency: (currency: Currency | null) => void;
   setToCurrency: (currency: Currency | null) => void;
   setFromAmount: (amount: string) => void;
+  setToAmount: (amount: string) => void;
   calculateToAmount: () => Promise<void>;
+  calculateFromAmount: () => Promise<void>;
   swapCurrencies: () => void;
   refreshCurrencies: () => void;
   
@@ -144,6 +146,11 @@ export const useExchangeFlowStore = create<ExchangeFlowState>()(
         get().calculateToAmount();
       },
       
+      setToAmount: (amount) => {
+        set({ toAmount: amount });
+        get().calculateFromAmount();
+      },
+      
       calculateToAmount: async () => {
         const { fromCurrency, toCurrency, fromAmount } = get();
         
@@ -216,6 +223,90 @@ export const useExchangeFlowStore = create<ExchangeFlowState>()(
           set({ 
             rate,
             toAmount: total.toFixed(toCurrency.decimals),
+            lastRateUpdate: Date.now(),
+            isLoadingRates: false,
+            commission,
+          });
+        } catch (error) {
+          console.error('Error calculating exchange:', error);
+          set({ isLoadingRates: false });
+        }
+      },
+      
+      calculateFromAmount: async () => {
+        const { fromCurrency, toCurrency, toAmount } = get();
+        
+        // Get commission from admin settings
+        const adminStorage = localStorage.getItem('admin-storage');
+        let commission = 0.02; // default
+        if (adminStorage) {
+          try {
+            const { state } = JSON.parse(adminStorage);
+            commission = state.settings?.commission || 0.02;
+          } catch (e) {
+            console.error('Error loading admin commission:', e);
+          }
+        }
+        
+        // Check if any currency has custom commission
+        if (fromCurrency?.customCommission !== undefined) {
+          commission = fromCurrency.customCommission;
+        } else if (toCurrency?.customCommission !== undefined) {
+          commission = toCurrency.customCommission;
+        }
+        
+        if (!fromCurrency || !toCurrency || !toAmount) {
+          set({ fromAmount: '', rate: 0 });
+          return;
+        }
+        
+        const amount = parseFloat(toAmount);
+        if (isNaN(amount) || amount <= 0) {
+          set({ fromAmount: '', rate: 0 });
+          return;
+        }
+        
+        try {
+          set({ isLoadingRates: true });
+          
+          let rate: number;
+          
+          // Check if any currency has custom rate (manual override)
+          if (fromCurrency.customRate) {
+            rate = fromCurrency.customRate;
+          } else if (toCurrency.customRate) {
+            rate = 1 / toCurrency.customRate;
+          } else {
+            // Check if either currency has CoinGecko ID for automatic rate fetching
+            const fromGeckoId = fromCurrency.coinGeckoId;
+            const toGeckoId = toCurrency.coinGeckoId;
+            
+            if (fromGeckoId || toGeckoId) {
+              // Use new function that supports custom cryptocurrencies
+              const { calculateRateWithCustomCrypto } = await import('../api/cryptoAPI');
+              rate = await calculateRateWithCustomCrypto(
+                fromCurrency.code,
+                toCurrency.code,
+                fromGeckoId,
+                toGeckoId
+              );
+            } else {
+              // Use standard API rates for predefined currencies
+              const { fetchCryptoRates, calculateRate } = await import('../api/cryptoAPI');
+              const rates = await fetchCryptoRates();
+              rate = calculateRate(rates, fromCurrency.code, toCurrency.code);
+            }
+          }
+          
+          // Reverse calculation: from toAmount to fromAmount
+          // toAmount = (fromAmount * rate) - commission
+          // toAmount = (fromAmount * rate) * (1 - commission)
+          // fromAmount = toAmount / (rate * (1 - commission))
+          const fromAmountValue = amount / (rate * (1 - commission));
+          
+          set({ 
+            rate,
+            fromAmount: fromAmountValue.toFixed(fromCurrency.decimals),
             lastRateUpdate: Date.now(),
             isLoadingRates: false,
             commission,
