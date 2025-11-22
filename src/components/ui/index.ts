@@ -11,3 +11,5 @@ export { Loader, Spinner } from './Loader';
 export { Tabs, TabPanel } from './Tabs';
 export { CurrencyIcon } from './CurrencyIcon';
 export { CurrencySelect } from './CurrencySelect';
+export { CryptoSelect } from './CryptoSelect';
+export { NetworkSelector } from './NetworkSelector';

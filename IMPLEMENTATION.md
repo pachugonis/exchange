@@ -54,6 +54,20 @@
 - ✅ Mock API with delays
 - ✅ Order creation simulation
 - ✅ Status tracking system
+- ✅ CoinGecko API integration for cryptocurrency data
+- ✅ Cryptocurrency coins list fetching with caching
+- ✅ Coin details API with auto-population
+
+### Admin Features
+- ✅ Admin panel with authentication
+- ✅ Currency management interface
+- ✅ CoinGecko-integrated cryptocurrency selection
+- ✅ Searchable cryptocurrency dropdown (2000+ coins)
+- ✅ Auto-population of crypto metadata (icon, rates, decimals, networks)
+- ✅ Multi-chain network selection (TRC20, ERC20, BEP20, etc.)
+- ✅ Russian name translations for popular cryptocurrencies
+- ✅ Validation rules for cryptocurrency additions
+- ✅ Manual override capability for auto-filled fields
 
 ## Application Status
 

@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import type { Currency } from '../types';
 import { currencies as defaultCurrencies } from '../data/currencies';
-import { fetchCryptoRates, calculateRate } from '../api/cryptoAPI';
+import { fetchCryptoRates, calculateRate, calculateRateWithCustomCrypto } from '../api/cryptoAPI';
 import { DEFAULT_COMMISSION } from '../utils/constants';
 
 // Load currencies from localStorage or use defaults
@@ -112,7 +112,7 @@ export const useExchangeStore = create<ExchangeState>((set, get) => ({
       let rate: number;
       let lastUpdated: number;
       
-      // Check if any currency has custom rate
+      // Check if any currency has custom rate (manual override)
       if (fromCurrency.customRate) {
         rate = fromCurrency.customRate;
         lastUpdated = Date.now();
@@ -120,10 +120,25 @@ export const useExchangeStore = create<ExchangeState>((set, get) => ({
         rate = 1 / toCurrency.customRate;
         lastUpdated = Date.now();
       } else {
-        // Use API rates
-        const rates = await fetchCryptoRates();
-        rate = calculateRate(rates, fromCurrency.code, toCurrency.code);
-        lastUpdated = rates.lastUpdated;
+        // Check if either currency has CoinGecko ID for automatic rate fetching
+        const fromGeckoId = fromCurrency.coinGeckoId;
+        const toGeckoId = toCurrency.coinGeckoId;
+        
+        if (fromGeckoId || toGeckoId) {
+          // Use new function that supports custom cryptocurrencies
+          rate = await calculateRateWithCustomCrypto(
+            fromCurrency.code,
+            toCurrency.code,
+            fromGeckoId,
+            toGeckoId
+          );
+          lastUpdated = Date.now();
+        } else {
+          // Use standard API rates for predefined currencies
+          const rates = await fetchCryptoRates();
+          rate = calculateRate(rates, fromCurrency.code, toCurrency.code);
+          lastUpdated = rates.lastUpdated;
+        }
       }
       
       const baseAmount = amount * rate;

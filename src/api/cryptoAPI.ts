@@ -3,6 +3,8 @@
  * Uses CoinGecko public API
  */
 
+import type { CoinGeckoCoin, CoinGeckoSimpleCoin, CoinGeckoCoinDetails, CoinDetailsResponse, CryptoNetwork } from '../types/currency';
+
 interface CoinGeckoPrice {
   [key: string]: {
     usd: number;
@@ -252,6 +254,85 @@ function generateFallbackRates(timestamp: number): CryptoRates {
 
 /**
  * Get exchange rate between two currencies
+ * Now supports custom cryptocurrencies with CoinGecko IDs
+ */
+export async function calculateRateWithCustomCrypto(
+  fromCode: string,
+  toCode: string,
+  fromCoinGeckoId?: string,
+  toCoinGeckoId?: string
+): Promise<number> {
+  // Extract base currency codes (remove suffixes like _TRC20, _ERC20, etc.)
+  const extractBaseCurrency = (code: string): string => {
+    // Handle cases like USDT_TRC20, USDT_ERC20 -> USDT
+    if (code.includes('_')) {
+      const base = code.split('_')[0];
+      // For payment methods like CARD_RUB, PAYEER_RUB -> use second part (RUB)
+      if (['CARD', 'PAYEER', 'PM', 'ADV', 'CASH'].includes(base)) {
+        return code.split('_')[1];
+      }
+      return base;
+    }
+    return code;
+  };
+
+  const fromBase = extractBaseCurrency(fromCode);
+  const toBase = extractBaseCurrency(toCode);
+  
+  // Same currency
+  if (fromBase === toBase) {
+    return 1;
+  }
+
+  // If both currencies have CoinGecko IDs, fetch their prices
+  if (fromCoinGeckoId && toCoinGeckoId) {
+    try {
+      const [fromPrice, toPrice] = await Promise.all([
+        fetchCoinPrice(fromCoinGeckoId),
+        fetchCoinPrice(toCoinGeckoId),
+      ]);
+      
+      if (fromPrice && toPrice && fromPrice.usd > 0 && toPrice.usd > 0) {
+        return fromPrice.usd / toPrice.usd;
+      }
+    } catch (error) {
+      console.error('Error fetching custom crypto rates:', error);
+    }
+  }
+  
+  // If only fromCurrency has CoinGecko ID
+  if (fromCoinGeckoId && !toCoinGeckoId) {
+    try {
+      const fromPrice = await fetchCoinPrice(fromCoinGeckoId);
+      if (fromPrice) {
+        if (toBase === 'USD') return fromPrice.usd;
+        if (toBase === 'RUB') return fromPrice.rub;
+      }
+    } catch (error) {
+      console.error('Error fetching from currency rate:', error);
+    }
+  }
+  
+  // If only toCurrency has CoinGecko ID
+  if (!fromCoinGeckoId && toCoinGeckoId) {
+    try {
+      const toPrice = await fetchCoinPrice(toCoinGeckoId);
+      if (toPrice) {
+        if (fromBase === 'USD' && toPrice.usd > 0) return 1 / toPrice.usd;
+        if (fromBase === 'RUB' && toPrice.rub > 0) return 1 / toPrice.rub;
+      }
+    } catch (error) {
+      console.error('Error fetching to currency rate:', error);
+    }
+  }
+
+  // Fall back to standard rate calculation with predefined rates
+  const rates = await fetchCryptoRates();
+  return calculateRate(rates, fromCode, toCode);
+}
+
+/**
+ * Get exchange rate between two currencies (legacy function for predefined currencies)
  */
 export function calculateRate(rates: CryptoRates, fromCode: string, toCode: string): number {
   // Extract base currency codes (remove suffixes like _TRC20, _ERC20, etc.)
@@ -350,4 +431,232 @@ export function calculateRate(rates: CryptoRates, fromCode: string, toCode: stri
   // Default fallback
   console.warn(`No rate found for ${fromCode} to ${toCode}, using fallback`);
   return 1;
+}
+
+// ============================================================================
+// CoinGecko Coins List and Details API
+// ============================================================================
+
+interface CoinsListCache {
+  data: CoinGeckoSimpleCoin[];
+  timestamp: number;
+}
+
+interface CoinDetailsCache {
+  [coinId: string]: {
+    data: CoinDetailsResponse;
+    timestamp: number;
+  };
+}
+
+let coinsListCache: CoinsListCache | null = null;
+const coinDetailsCache: CoinDetailsCache = {};
+
+const COINS_LIST_CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
+const COIN_DETAILS_CACHE_DURATION = 60 * 60 * 1000; // 1 hour
+
+/**
+ * Map CoinGecko platform keys to internal network types
+ */
+function mapPlatformToNetwork(platform: string): CryptoNetwork | null {
+  const mapping: Record<string, CryptoNetwork> = {
+    'ethereum': 'ERC20',
+    'tron': 'TRC20',
+    'binance-smart-chain': 'BEP20',
+    'bitcoin': 'BTC',
+    'solana': 'Solana',
+    'ripple': 'XRP',
+    'litecoin': 'LTC',
+    'dogecoin': 'DOGE',
+    'monero': 'XMR',
+    'sui': 'Sui',
+  };
+  return mapping[platform] || null;
+}
+
+/**
+ * Fetch list of all cryptocurrencies from CoinGecko
+ * Cached for 24 hours
+ */
+export async function fetchCoinsList(): Promise<CoinGeckoSimpleCoin[]> {
+  const now = Date.now();
+  
+  // Return cached list if still valid
+  if (coinsListCache && (now - coinsListCache.timestamp) < COINS_LIST_CACHE_DURATION) {
+    console.log('Using cached coins list');
+    return coinsListCache.data;
+  }
+  
+  try {
+    console.log('Fetching coins list from CoinGecko...');
+    const response = await fetch('https://api.coingecko.com/api/v3/coins/list?include_platform=true', {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+      },
+    });
+    
+    if (!response.ok) {
+      throw new Error(`CoinGecko API responded with status ${response.status}`);
+    }
+    
+    const rawData: CoinGeckoCoin[] = await response.json();
+    console.log(`Fetched ${rawData.length} coins from CoinGecko`);
+    
+    // Transform to simplified format
+    const simplifiedData: CoinGeckoSimpleCoin[] = rawData.map(coin => ({
+      id: coin.id,
+      symbol: coin.symbol.toUpperCase(),
+      name: coin.name,
+      platforms: coin.platforms ? Object.keys(coin.platforms) : [],
+    }));
+    
+    // Cache the result
+    coinsListCache = {
+      data: simplifiedData,
+      timestamp: now,
+    };
+    
+    return simplifiedData;
+  } catch (error) {
+    console.error('Failed to fetch coins list:', error);
+    
+    // Return cached data if available (even if stale)
+    if (coinsListCache) {
+      console.log('Returning stale cached coins list');
+      return coinsListCache.data;
+    }
+    
+    // Return empty array if no cache available
+    return [];
+  }
+}
+
+/**
+ * Fetch detailed information for a specific coin
+ * Cached for 1 hour
+ */
+export async function fetchCoinDetails(coinId: string): Promise<CoinDetailsResponse | null> {
+  const now = Date.now();
+  
+  // Return cached details if still valid
+  if (coinDetailsCache[coinId] && (now - coinDetailsCache[coinId].timestamp) < COIN_DETAILS_CACHE_DURATION) {
+    console.log(`Using cached details for ${coinId}`);
+    return coinDetailsCache[coinId].data;
+  }
+  
+  try {
+    console.log(`Fetching coin details for ${coinId}...`);
+    const response = await fetch(
+      `https://api.coingecko.com/api/v3/coins/${coinId}?localization=false&tickers=false&market_data=true&community_data=false&developer_data=false`,
+      {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+        },
+      }
+    );
+    
+    if (!response.ok) {
+      throw new Error(`CoinGecko API responded with status ${response.status}`);
+    }
+    
+    const data: CoinGeckoCoinDetails = await response.json();
+    console.log(`Fetched details for ${coinId}:`, data);
+    
+    // Extract platforms and map to networks
+    const platforms = data.platforms ? Object.keys(data.platforms) : [];
+    const networks: CryptoNetwork[] = platforms
+      .map(mapPlatformToNetwork)
+      .filter((n): n is CryptoNetwork => n !== null);
+    
+    // Determine decimals (default based on type)
+    let decimals = 8; // Default for most crypto
+    if (data.detail_platforms) {
+      const platformValues = Object.values(data.detail_platforms);
+      if (platformValues.length > 0 && platformValues[0].decimal_place !== undefined) {
+        decimals = platformValues[0].decimal_place;
+      }
+    }
+    // Override for known types
+    if (platforms.includes('ethereum') || platforms.includes('binance-smart-chain')) {
+      decimals = 18; // ERC20/BEP20 tokens typically use 18 decimals
+    }
+    if (data.symbol.toLowerCase() === 'usdt' || data.symbol.toLowerCase() === 'usdc') {
+      decimals = 6; // Stablecoins typically use 6 decimals
+    }
+    
+    // Get Russian name (will be handled by translation mapping)
+    const nameRu = data.name; // Placeholder, will be translated by utility
+    
+    const coinDetails: CoinDetailsResponse = {
+      id: data.id,
+      symbol: data.symbol.toUpperCase(),
+      name: data.name,
+      nameRu,
+      iconUrl: data.image?.large || data.image?.small || data.image?.thumb || '',
+      decimals,
+      currentPrice: {
+        usd: data.market_data?.current_price?.usd || 0,
+        rub: data.market_data?.current_price?.rub || 0,
+      },
+      platforms,
+      networks,
+    };
+    
+    // Cache the result
+    coinDetailsCache[coinId] = {
+      data: coinDetails,
+      timestamp: now,
+    };
+    
+    return coinDetails;
+  } catch (error) {
+    console.error(`Failed to fetch coin details for ${coinId}:`, error);
+    
+    // Return cached data if available (even if stale)
+    if (coinDetailsCache[coinId]) {
+      console.log(`Returning stale cached details for ${coinId}`);
+      return coinDetailsCache[coinId].data;
+    }
+    
+    return null;
+  }
+}
+
+/**
+ * Fetch current price for a specific cryptocurrency by CoinGecko ID
+ * Returns prices in USD and RUB
+ */
+export async function fetchCoinPrice(coinGeckoId: string): Promise<{ usd: number; rub: number } | null> {
+  try {
+    console.log(`Fetching price for ${coinGeckoId}...`);
+    const response = await fetch(
+      `https://api.coingecko.com/api/v3/simple/price?ids=${coinGeckoId}&vs_currencies=usd,rub`,
+      {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+        },
+      }
+    );
+    
+    if (!response.ok) {
+      throw new Error(`CoinGecko API responded with status ${response.status}`);
+    }
+    
+    const data = await response.json();
+    
+    if (data[coinGeckoId]) {
+      return {
+        usd: data[coinGeckoId].usd || 0,
+        rub: data[coinGeckoId].rub || 0,
+      };
+    }
+    
+    return null;
+  } catch (error) {
+    console.error(`Failed to fetch price for ${coinGeckoId}:`, error);
+    return null;
+  }
 }

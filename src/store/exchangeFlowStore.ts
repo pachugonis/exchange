@@ -182,16 +182,31 @@ export const useExchangeFlowStore = create<ExchangeFlowState>()(
           
           let rate: number;
           
-          // Check if any currency has custom rate
+          // Check if any currency has custom rate (manual override)
           if (fromCurrency.customRate) {
             rate = fromCurrency.customRate;
           } else if (toCurrency.customRate) {
             rate = 1 / toCurrency.customRate;
           } else {
-            // Use API rates
-            const { fetchCryptoRates, calculateRate } = await import('../api/cryptoAPI');
-            const rates = await fetchCryptoRates();
-            rate = calculateRate(rates, fromCurrency.code, toCurrency.code);
+            // Check if either currency has CoinGecko ID for automatic rate fetching
+            const fromGeckoId = fromCurrency.coinGeckoId;
+            const toGeckoId = toCurrency.coinGeckoId;
+            
+            if (fromGeckoId || toGeckoId) {
+              // Use new function that supports custom cryptocurrencies
+              const { calculateRateWithCustomCrypto } = await import('../api/cryptoAPI');
+              rate = await calculateRateWithCustomCrypto(
+                fromCurrency.code,
+                toCurrency.code,
+                fromGeckoId,
+                toGeckoId
+              );
+            } else {
+              // Use standard API rates for predefined currencies
+              const { fetchCryptoRates, calculateRate } = await import('../api/cryptoAPI');
+              const rates = await fetchCryptoRates();
+              rate = calculateRate(rates, fromCurrency.code, toCurrency.code);
+            }
           }
           
           const baseAmount = amount * rate;

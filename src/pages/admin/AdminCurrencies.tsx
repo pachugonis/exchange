@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAdminStore } from '../../store/adminStore';
 import { Card } from '../../components/ui/Card';
@@ -8,10 +8,14 @@ import { Badge } from '../../components/ui/Badge';
 import { Toggle } from '../../components/ui/Toggle';
 import { Modal } from '../../components/ui/Modal';
 import { CurrencyIcon } from '../../components/ui/CurrencyIcon';
+import { CryptoSelect } from '../../components/ui/CryptoSelect';
+import { NetworkSelector } from '../../components/ui/NetworkSelector';
 import { currencies as initialCurrencies } from '../../data/currencies';
-import type { Currency, CurrencyType } from '../../types';
+import type { Currency, CurrencyType, CryptoNetwork, CoinGeckoSimpleCoin, CoinDetailsResponse } from '../../types';
 import { Plus, Edit2, Trash2, Save, X, Upload } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { fetchCoinsList, fetchCoinDetails } from '../../api/cryptoAPI';
+import { getCryptoRussianName } from '../../utils/cryptoTranslations';
 
 export const AdminCurrencies: React.FC = () => {
   const { isAuthenticated } = useAdminStore();
@@ -61,9 +65,103 @@ export const AdminCurrencies: React.FC = () => {
     isCustom: true,
   });
 
+  // CoinGecko state
+  const [availableCoins, setAvailableCoins] = useState<CoinGeckoSimpleCoin[]>([]);
+  const [isLoadingCoins, setIsLoadingCoins] = useState(false);
+  const [selectedCoin, setSelectedCoin] = useState<CoinGeckoSimpleCoin | null>(null);
+  const [coinDetails, setCoinDetails] = useState<CoinDetailsResponse | null>(null);
+  const [selectedNetworks, setSelectedNetworks] = useState<CryptoNetwork[]>([]);
+  const [isLoadingDetails, setIsLoadingDetails] = useState(false);
+
   if (!isAuthenticated) {
     return <Navigate to="/admin/login" replace />;
   }
+
+  // Load coins list when modal opens with crypto type
+  useEffect(() => {
+    if (showAddModal && newCurrency.type === 'crypto' && availableCoins.length === 0) {
+      loadCoinsList();
+    }
+  }, [showAddModal, newCurrency.type]);
+
+  // Load coin details when a coin is selected
+  useEffect(() => {
+    if (selectedCoin) {
+      loadCoinDetails(selectedCoin.id);
+    }
+  }, [selectedCoin]);
+
+  const loadCoinsList = async () => {
+    setIsLoadingCoins(true);
+    try {
+      const coins = await fetchCoinsList();
+      // Add icon URLs from CoinGecko
+      const coinsWithIcons = coins.map(coin => ({
+        ...coin,
+        iconUrl: `https://assets.coingecko.com/coins/images/${getCoinImageId(coin.id)}/small/${coin.id}.png`,
+      }));
+      setAvailableCoins(coinsWithIcons);
+    } catch (error) {
+      console.error('Failed to load coins list:', error);
+      toast.error('Не удалось загрузить список криптовалют. Попробуйте позже.');
+    } finally {
+      setIsLoadingCoins(false);
+    }
+  };
+
+  const loadCoinDetails = async (coinId: string) => {
+    setIsLoadingDetails(true);
+    try {
+      const details = await fetchCoinDetails(coinId);
+      if (details) {
+        setCoinDetails(details);
+        // Auto-populate fields
+        const russianName = getCryptoRussianName(details.name);
+        setNewCurrency(prev => ({
+          ...prev,
+          code: details.symbol,
+          name: russianName,
+          nameEn: details.name,
+          symbol: details.symbol,
+          iconUrl: details.iconUrl,
+          decimals: details.decimals,
+        }));
+        // Set available networks
+        if (details.networks.length > 0) {
+          // Auto-select first network or all if only one
+          setSelectedNetworks(details.networks.length === 1 ? details.networks : [details.networks[0]]);
+        }
+      } else {
+        toast.error('Не удалось загрузить данные криптовалюты');
+      }
+    } catch (error) {
+      console.error('Failed to load coin details:', error);
+      toast.error('Ошибка при загрузке данных криптовалюты');
+    } finally {
+      setIsLoadingDetails(false);
+    }
+  };
+
+  // Helper function to get CoinGecko image ID (simplified)
+  const getCoinImageId = (coinId: string): string => {
+    // CoinGecko uses sequential IDs, but we'll use a simple mapping for popular coins
+    const mapping: Record<string, string> = {
+      'bitcoin': '1',
+      'ethereum': '279',
+      'tether': '325',
+      'binancecoin': '825',
+      'ripple': '44',
+      'dogecoin': '5',
+      'cardano': '975',
+      'solana': '4128',
+      'polkadot': '12171',
+    };
+    return mapping[coinId] || '1'; // Fallback to bitcoin icon
+  };
+
+  const handleCoinSelect = (coin: CoinGeckoSimpleCoin) => {
+    setSelectedCoin(coin);
+  };
 
   const saveCurrencies = (newCurrencies: Currency[]) => {
     setCurrencies(newCurrencies);
@@ -110,9 +208,34 @@ export const AdminCurrencies: React.FC = () => {
       return;
     }
 
+    // Additional validation for crypto type
+    if (newCurrency.type === 'crypto') {
+      if (!selectedCoin) {
+        toast.error('Выберите криптовалюту');
+        return;
+      }
+      if (coinDetails && coinDetails.networks.length > 1 && selectedNetworks.length === 0) {
+        toast.error('Выберите хотя бы одну сеть');
+        return;
+      }
+    }
+
     // Check if code already exists
     if (currencies.some(c => c.code === newCurrency.code)) {
       toast.error('Валюта с таким кодом уже существует');
+      return;
+    }
+
+    // Validate decimals
+    if (newCurrency.decimals !== undefined && (newCurrency.decimals < 0 || newCurrency.decimals > 18)) {
+      toast.error('Количество знаков после запятой должно быть от 0 до 18');
+      return;
+    }
+
+    // Validate amounts
+    if (newCurrency.minAmount !== undefined && newCurrency.maxAmount !== undefined && 
+        newCurrency.minAmount >= newCurrency.maxAmount) {
+      toast.error('Минимальная сумма должна быть меньше максимальной');
       return;
     }
 
@@ -134,6 +257,10 @@ export const AdminCurrencies: React.FC = () => {
       customRate: newCurrency.customRate,
       customCommission: newCurrency.customCommission,
       isCustom: true,
+      // Add CoinGecko ID for automatic rate fetching
+      coinGeckoId: selectedCoin?.id,
+      // Add networks for crypto
+      networks: newCurrency.type === 'crypto' && selectedNetworks.length > 0 ? selectedNetworks : undefined,
     };
 
     const updated = [...currencies, currency];
@@ -165,6 +292,10 @@ export const AdminCurrencies: React.FC = () => {
       icon: '💱',
       isCustom: true,
     });
+    // Reset crypto-related state
+    setSelectedCoin(null);
+    setCoinDetails(null);
+    setSelectedNetworks([]);
   };
 
   const handleIconUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -540,96 +671,174 @@ export const AdminCurrencies: React.FC = () => {
         title="Добавить новую валюту"
       >
         <div className="space-y-4">
-          {/* Basic Info */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium mb-2">
-                Код валюты <span className="text-red-500">*</span>
-              </label>
-              <Input
-                type="text"
-                value={newCurrency.code || ''}
-                onChange={(e) => setNewCurrency({ ...newCurrency, code: e.target.value.toUpperCase() })}
-                placeholder="USD, EUR, GBP..."
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-2">
-                Тип
-              </label>
-              <select
-                className="w-full px-4 py-2.5 bg-white dark:bg-dark-700 border border-dark-300 dark:border-dark-600 rounded-lg"
-                value={newCurrency.type}
-                onChange={(e) => setNewCurrency({ ...newCurrency, type: e.target.value as CurrencyType })}
-              >
-                <option value="custom">Пользовательская</option>
-                <option value="crypto">Криптовалюта</option>
-                <option value="ewallet">Электронный кошелек</option>
-                <option value="card">Банковская карта</option>
-                <option value="cash">Наличные</option>
-              </select>
-            </div>
+          {/* Type Selection */}
+          <div>
+            <label className="block text-sm font-medium mb-2">
+              Тип
+            </label>
+            <select
+              className="w-full px-4 py-2.5 bg-white dark:bg-dark-700 border border-dark-300 dark:border-dark-600 rounded-lg"
+              value={newCurrency.type}
+              onChange={(e) => {
+                setNewCurrency({ ...newCurrency, type: e.target.value as CurrencyType });
+                // Reset crypto-specific state when changing type
+                if (e.target.value !== 'crypto') {
+                  setSelectedCoin(null);
+                  setCoinDetails(null);
+                  setSelectedNetworks([]);
+                }
+              }}
+            >
+              <option value="custom">Пользовательская</option>
+              <option value="crypto">Криптовалюта</option>
+              <option value="ewallet">Электронный кошелек</option>
+              <option value="card">Банковская карта</option>
+              <option value="cash">Наличные</option>
+            </select>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium mb-2">
-                Название (RU) <span className="text-red-500">*</span>
-              </label>
-              <Input
-                type="text"
-                value={newCurrency.name || ''}
-                onChange={(e) => setNewCurrency({ ...newCurrency, name: e.target.value })}
-                placeholder="Доллар США"
+          {/* Cryptocurrency Selection */}
+          {newCurrency.type === 'crypto' && (
+            <>
+              <CryptoSelect
+                coins={availableCoins}
+                isLoading={isLoadingCoins}
+                onSelect={handleCoinSelect}
+                selectedCoin={selectedCoin}
               />
-            </div>
 
-            <div>
-              <label className="block text-sm font-medium mb-2">
-                Название (EN) <span className="text-red-500">*</span>
-              </label>
-              <Input
-                type="text"
-                value={newCurrency.nameEn || ''}
-                onChange={(e) => setNewCurrency({ ...newCurrency, nameEn: e.target.value })}
-                placeholder="US Dollar"
-              />
-            </div>
-          </div>
+              {/* Auto-populated Info Preview */}
+              {coinDetails && (
+                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                  <h4 className="text-sm font-semibold mb-3 text-blue-900 dark:text-blue-100">
+                    Автоматически загруженная информация
+                  </h4>
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                    <div>
+                      <span className="text-blue-700 dark:text-blue-300">Код:</span>
+                      <Badge variant="blue" className="ml-2">{coinDetails.symbol}</Badge>
+                    </div>
+                    <div>
+                      <span className="text-blue-700 dark:text-blue-300">Знаков:</span>
+                      <span className="ml-2 font-medium">{coinDetails.decimals}</span>
+                    </div>
+                    <div className="col-span-2">
+                      <span className="text-blue-700 dark:text-blue-300">Название:</span>
+                      <span className="ml-2 font-medium">{coinDetails.name} ({coinDetails.nameRu})</span>
+                    </div>
+                    {coinDetails.currentPrice && (
+                      <div className="col-span-2">
+                        <span className="text-blue-700 dark:text-blue-300">Текущий курс:</span>
+                        <span className="ml-2 font-medium">
+                          ${coinDetails.currentPrice.usd.toFixed(2)} / ₽{coinDetails.currentPrice.rub.toFixed(2)}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
 
-          {/* Icon */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium mb-2">
-                Иконка (символ)
-              </label>
-              <Input
-                type="text"
-                value={newCurrency.icon || ''}
-                onChange={(e) => setNewCurrency({ ...newCurrency, icon: e.target.value })}
-                placeholder="$, €, 💱..."
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-2">
-                Или загрузить изображение
-              </label>
-              <div className="flex gap-2">
-                <Input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleIconUpload}
-                  className="flex-1"
+              {/* Network Selection */}
+              {coinDetails && coinDetails.networks.length > 0 && (
+                <NetworkSelector
+                  availableNetworks={coinDetails.networks}
+                  selectedNetworks={selectedNetworks}
+                  onChange={setSelectedNetworks}
                 />
-                {newCurrency.iconUrl && (
-                  <img src={newCurrency.iconUrl} alt="Icon" className="w-10 h-10 rounded" />
-                )}
-              </div>
-            </div>
-          </div>
+              )}
+            </>
+          )}
 
+          {/* Manual Entry Fields (for non-crypto) */}
+          {newCurrency.type !== 'crypto' && (
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-2">
+                    Код валюты <span className="text-red-500">*</span>
+                  </label>
+                  <Input
+                    type="text"
+                    value={newCurrency.code || ''}
+                    onChange={(e) => setNewCurrency({ ...newCurrency, code: e.target.value.toUpperCase() })}
+                    placeholder="USD, EUR, GBP..."
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2">
+                    Символ
+                  </label>
+                  <Input
+                    type="text"
+                    value={newCurrency.symbol || ''}
+                    onChange={(e) => setNewCurrency({ ...newCurrency, symbol: e.target.value })}
+                    placeholder="$"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-2">
+                    Название (RU) <span className="text-red-500">*</span>
+                  </label>
+                  <Input
+                    type="text"
+                    value={newCurrency.name || ''}
+                    onChange={(e) => setNewCurrency({ ...newCurrency, name: e.target.value })}
+                    placeholder="Доллар США"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2">
+                    Название (EN) <span className="text-red-500">*</span>
+                  </label>
+                  <Input
+                    type="text"
+                    value={newCurrency.nameEn || ''}
+                    onChange={(e) => setNewCurrency({ ...newCurrency, nameEn: e.target.value })}
+                    placeholder="US Dollar"
+                  />
+                </div>
+              </div>
+
+              {/* Icon */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-2">
+                    Иконка (символ)
+                  </label>
+                  <Input
+                    type="text"
+                    value={newCurrency.icon || ''}
+                    onChange={(e) => setNewCurrency({ ...newCurrency, icon: e.target.value })}
+                    placeholder="$, €, 💱..."
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2">
+                    Или загрузить изображение
+                  </label>
+                  <div className="flex gap-2">
+                    <Input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleIconUpload}
+                      className="flex-1"
+                    />
+                    {newCurrency.iconUrl && (
+                      <img src={newCurrency.iconUrl} alt="Icon" className="w-10 h-10 rounded" />
+                    )}
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* Common Fields - shown for all types */}
           {/* Amounts */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
@@ -671,17 +880,20 @@ export const AdminCurrencies: React.FC = () => {
 
           {/* Settings */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label className="block text-sm font-medium mb-2">
-                Символ
-              </label>
-              <Input
-                type="text"
-                value={newCurrency.symbol || ''}
-                onChange={(e) => setNewCurrency({ ...newCurrency, symbol: e.target.value })}
-                placeholder="$"
-              />
-            </div>
+            {/* Symbol - only for non-crypto (crypto auto-fills this) */}
+            {newCurrency.type !== 'crypto' && (
+              <div>
+                <label className="block text-sm font-medium mb-2">
+                  Символ
+                </label>
+                <Input
+                  type="text"
+                  value={newCurrency.symbol || ''}
+                  onChange={(e) => setNewCurrency({ ...newCurrency, symbol: e.target.value })}
+                  placeholder="$"
+                />
+              </div>
+            )}
 
             <div>
               <label className="block text-sm font-medium mb-2">
@@ -691,7 +903,13 @@ export const AdminCurrencies: React.FC = () => {
                 type="number"
                 value={newCurrency.decimals || 2}
                 onChange={(e) => setNewCurrency({ ...newCurrency, decimals: parseInt(e.target.value) })}
+                disabled={newCurrency.type === 'crypto' && isLoadingDetails}
               />
+              {newCurrency.type === 'crypto' && (
+                <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+                  Авто-заполнено из CoinGecko (можно изменить)
+                </p>
+              )}
             </div>
 
             <div>
