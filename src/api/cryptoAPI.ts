@@ -293,7 +293,10 @@ export async function calculateRateWithCustomCrypto(
       ]);
       
       if (fromPrice && toPrice && fromPrice.usd > 0 && toPrice.usd > 0) {
-        return fromPrice.usd / toPrice.usd;
+        // Calculate cross-rate through USD
+        const rate = fromPrice.usd / toPrice.usd;
+        console.log(`Cross-rate for ${fromCode} to ${toCode}: ${rate} (via USD: ${fromPrice.usd} / ${toPrice.usd})`);
+        return rate;
       }
     } catch (error) {
       console.error('Error fetching custom crypto rates:', error);
@@ -305,6 +308,19 @@ export async function calculateRateWithCustomCrypto(
     try {
       const fromPrice = await fetchCoinPrice(fromCoinGeckoId);
       if (fromPrice) {
+        // Try to get standard rates for toCurrency
+        const rates = await fetchCryptoRates();
+        
+        // Check if toCurrency exists in standard rates
+        const toUSD = `${toBase}_USD` as keyof Omit<CryptoRates, 'lastUpdated'>;
+        if (rates[toUSD] && rates[toUSD] > 0) {
+          // Calculate cross-rate: fromPrice.usd / toUSD_rate
+          const rate = fromPrice.usd / rates[toUSD];
+          console.log(`Cross-rate for ${fromCode} to ${toCode}: ${rate} (${fromPrice.usd} USD / ${rates[toUSD]} USD)`);
+          return rate;
+        }
+        
+        // Direct conversion to USD or RUB
         if (toBase === 'USD') return fromPrice.usd;
         if (toBase === 'RUB') return fromPrice.rub;
       }
@@ -318,6 +334,19 @@ export async function calculateRateWithCustomCrypto(
     try {
       const toPrice = await fetchCoinPrice(toCoinGeckoId);
       if (toPrice) {
+        // Try to get standard rates for fromCurrency
+        const rates = await fetchCryptoRates();
+        
+        // Check if fromCurrency exists in standard rates
+        const fromUSD = `${fromBase}_USD` as keyof Omit<CryptoRates, 'lastUpdated'>;
+        if (rates[fromUSD] && rates[fromUSD] > 0 && toPrice.usd > 0) {
+          // Calculate cross-rate: fromUSD_rate / toPrice.usd
+          const rate = rates[fromUSD] / toPrice.usd;
+          console.log(`Cross-rate for ${fromCode} to ${toCode}: ${rate} (${rates[fromUSD]} USD / ${toPrice.usd} USD)`);
+          return rate;
+        }
+        
+        // Direct conversion from USD or RUB
         if (fromBase === 'USD' && toPrice.usd > 0) return 1 / toPrice.usd;
         if (fromBase === 'RUB' && toPrice.rub > 0) return 1 / toPrice.rub;
       }

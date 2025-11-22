@@ -19,16 +19,37 @@ export const AdminOrders: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const ordersPerPage = 10;
 
+  // Debug: Log orders when component mounts or orders change
+  useEffect(() => {
+    console.log('AdminOrders - Total orders:', orders.length);
+    // Check for STRK orders specifically
+    const strkOrders = orders.filter(o => 
+      o.fromCurrency?.code === 'STRK' || o.toCurrency?.code === 'STRK'
+    );
+    console.log('AdminOrders - STRK orders found:', strkOrders.length);
+    if (strkOrders.length > 0) {
+      console.log('AdminOrders - STRK orders:', strkOrders);
+    }
+  }, [orders]);
+
   if (!isAuthenticated) {
     return <Navigate to="/admin/login" replace />;
   }
 
   const filteredOrders = orders.filter((order) => {
+    // Safety check for order structure
+    if (!order || !order.id || !order.contactInfo) {
+      console.warn('AdminOrders - Invalid order structure:', order);
+      return false;
+    }
+    
     const matchesSearch =
       order.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
       order.contactInfo.email.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus = statusFilter === 'all' || order.status === statusFilter;
-    return matchesSearch && matchesStatus;
+    const matches = matchesSearch && matchesStatus;
+    
+    return matches;
   }).sort((a, b) => b.createdAt - a.createdAt); // Sort by newest first
 
   // Pagination calculations
@@ -190,8 +211,8 @@ export const AdminOrders: React.FC = () => {
                     <p>
                       <span className="text-dark-500">Обмен:</span>{' '}
                       <span className="font-medium">
-                        {order.fromAmount} {order.fromCurrency.code} ({order.fromCurrency.name}) → {order.toAmount}{' '}
-                        {order.toCurrency.code} ({order.toCurrency.name})
+                        {order.fromAmount} {order.fromCurrency.code} ({order.fromCurrency.name || order.fromCurrency.code}) → {order.toAmount}{' '}
+                        {order.toCurrency.code} ({order.toCurrency.name || order.toCurrency.code})
                       </span>
                     </p>
                   </div>
@@ -408,13 +429,13 @@ export const AdminOrders: React.FC = () => {
                   <div className="flex justify-between">
                     <span className="text-dark-500">Отдаете:</span>
                     <span className="font-medium">
-                      {selectedOrder.fromAmount} {selectedOrder.fromCurrency.code} ({selectedOrder.fromCurrency.name})
+                      {selectedOrder.fromAmount} {selectedOrder.fromCurrency.code} ({selectedOrder.fromCurrency.name || selectedOrder.fromCurrency.code})
                     </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-dark-500">Получаете:</span>
                     <span className="font-medium">
-                      {selectedOrder.toAmount} {selectedOrder.toCurrency.code} ({selectedOrder.toCurrency.name})
+                      {selectedOrder.toAmount} {selectedOrder.toCurrency.code} ({selectedOrder.toCurrency.name || selectedOrder.toCurrency.code})
                     </span>
                   </div>
                   <div className="flex justify-between">

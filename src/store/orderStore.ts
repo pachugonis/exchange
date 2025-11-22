@@ -20,10 +20,20 @@ export const useOrderStore = create<OrderState>()(
       currentOrder: null,
       
       addOrder: (order) => {
-        set((state) => ({
-          orders: [...state.orders, order],
-          currentOrder: order,
-        }));
+        console.log('OrderStore - Adding order:', order);
+        set((state) => {
+          const newOrders = [...state.orders, order];
+          console.log('OrderStore - New total orders:', newOrders.length);
+          return {
+            orders: newOrders,
+            currentOrder: order,
+          };
+        });
+        // Log after state update
+        setTimeout(() => {
+          console.log('OrderStore - State after add:', get().orders.length);
+          console.log('OrderStore - localStorage check:', localStorage.getItem('orders-storage'));
+        }, 100);
       },
       
       updateOrderStatus: (id, status) => {
