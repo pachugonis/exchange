@@ -23,6 +23,8 @@ import { Badge } from '../../components/ui/Badge';
 import { Alert } from '../../components/ui/Alert';
 import { ExchangeStatus } from '../../components/exchange';
 import { ReviewForm } from '../../components/exchange/ReviewForm';
+import { FavoriteButton } from '../../components/exchange/FavoriteButton';
+import { FavoritesList } from '../../components/exchange/FavoritesList';
 import { useUserStore } from '../../store/userStore';
 import { useOrderStore } from '../../store/orderStore';
 import { useReviewStore } from '../../store/reviewStore';
@@ -190,7 +192,7 @@ export const UserDashboard: React.FC = () => {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Profile Info */}
-          <div className="lg:col-span-1">
+          <div className="lg:col-span-1 space-y-6">
             <Card>
               <div className="flex items-center gap-4 mb-6">
                 <div className="w-16 h-16 rounded-full bg-gradient-primary flex items-center justify-center text-white text-2xl font-bold">
@@ -254,6 +256,9 @@ export const UserDashboard: React.FC = () => {
                 </Button>
               </Link>
             </Card>
+            
+            {/* Favorites Section */}
+            <FavoritesList />
           </div>
 
           {/* Recent Orders */}
@@ -294,6 +299,12 @@ export const UserDashboard: React.FC = () => {
                           <div className="flex items-center justify-between mb-2">
                             <div className="font-medium text-sm">{order.id}</div>
                             <div className="flex items-center gap-2">
+                              {isCompleted && (
+                                <FavoriteButton
+                                  fromCurrency={order.fromCurrency.code}
+                                  toCurrency={order.toCurrency.code}
+                                />
+                              )}
                               <ExchangeStatus status={order.status} />
                               {isCompleted && !hasReview && (
                                 <Button

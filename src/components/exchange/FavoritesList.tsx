@@ -1,10 +1,12 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Star, ArrowRight, Trash2 } from 'lucide-react';
 import { Card } from '../ui/Card';
 import { Badge } from '../ui/Badge';
 import { CurrencyIcon } from '../ui/CurrencyIcon';
 import { useFavoriteStore } from '../../store/favoriteStore';
 import { useExchangeStore } from '../../store/exchangeStore';
+import { useExchangeFlowStore } from '../../store/exchangeFlowStore';
 import toast from 'react-hot-toast';
 
 interface FavoritesListProps {
@@ -16,16 +18,34 @@ export const FavoritesList: React.FC<FavoritesListProps> = ({
   onSelect,
   className = '',
 }) => {
+  const navigate = useNavigate();
   const { favorites, removeFavorite } = useFavoriteStore();
   const { currencies } = useExchangeStore();
+  const { setFromCurrency, setToCurrency, resetFlow } = useExchangeFlowStore();
 
   const getCurrencyByCode = (code: string) => {
     return currencies.find((c) => c.code === code);
   };
 
   const handleSelect = (fromCode: string, toCode: string) => {
+    const fromCurrency = getCurrencyByCode(fromCode);
+    const toCurrency = getCurrencyByCode(toCode);
+    
+    if (!fromCurrency || !toCurrency) {
+      toast.error('Не удалось найти валюты');
+      return;
+    }
+
     if (onSelect) {
+      // If custom handler is provided, use it
       onSelect(fromCode, toCode);
+    } else {
+      // Default behavior: navigate to exchange with pre-filled currencies
+      resetFlow();
+      setFromCurrency(fromCurrency);
+      setToCurrency(toCurrency);
+      navigate('/exchange');
+      toast.success(`Переход к обмену: ${fromCode} → ${toCode}`);
     }
   };
 

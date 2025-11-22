@@ -6,6 +6,7 @@ import { Card } from '../components/ui/Card';
 import { Alert } from '../components/ui/Alert';
 import { ExchangeStatus, ExchangeProgress } from '../components/exchange';
 import { ReviewForm } from '../components/exchange/ReviewForm';
+import { FavoriteButton } from '../components/exchange/FavoriteButton';
 import { useOrderStore } from '../store/orderStore';
 import { useReviewStore } from '../store/reviewStore';
 import { formatDate } from '../utils/formatters';
@@ -101,7 +102,16 @@ export const OrderTracking: React.FC = () => {
                     Создана: {formatDate(searchedOrder.createdAt)}
                   </p>
                 </div>
-                <ExchangeStatus status={searchedOrder.status} />
+                <div className="flex items-center gap-3">
+                  {searchedOrder.status === 'completed' && (
+                    <FavoriteButton
+                      fromCurrency={searchedOrder.fromCurrency.code}
+                      toCurrency={searchedOrder.toCurrency.code}
+                      showLabel={true}
+                    />
+                  )}
+                  <ExchangeStatus status={searchedOrder.status} />
+                </div>
               </div>
 
               <ExchangeProgress
@@ -252,15 +262,17 @@ export const OrderTracking: React.FC = () => {
               {recentOrders.map((order) => (
                 <Card
                   key={order.id}
-                  className="cursor-pointer hover:shadow-lg transition"
-                  onClick={() => {
-                    setSearchId(order.id);
-                    setSearchedOrder(order);
-                    setHasSearched(true);
-                  }}
+                  className="hover:shadow-lg transition"
                 >
                   <div className="flex items-center justify-between">
-                    <div>
+                    <div 
+                      className="flex-1 cursor-pointer"
+                      onClick={() => {
+                        setSearchId(order.id);
+                        setSearchedOrder(order);
+                        setHasSearched(true);
+                      }}
+                    >
                       <div className="font-semibold">{order.id}</div>
                       <div className="text-sm text-dark-600 dark:text-dark-400">
                         {order.fromAmount} {order.fromCurrency.code} ({order.fromCurrency.name}) →{' '}
@@ -270,7 +282,15 @@ export const OrderTracking: React.FC = () => {
                         {formatDate(order.createdAt)}
                       </div>
                     </div>
-                    <ExchangeStatus status={order.status} />
+                    <div className="flex items-center gap-3">
+                      {order.status === 'completed' && (
+                        <FavoriteButton
+                          fromCurrency={order.fromCurrency.code}
+                          toCurrency={order.toCurrency.code}
+                        />
+                      )}
+                      <ExchangeStatus status={order.status} />
+                    </div>
                   </div>
                 </Card>
               ))}
