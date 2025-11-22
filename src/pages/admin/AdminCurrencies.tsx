@@ -12,7 +12,7 @@ import { CryptoSelect } from '../../components/ui/CryptoSelect';
 import { NetworkSelector } from '../../components/ui/NetworkSelector';
 import { currencies as initialCurrencies } from '../../data/currencies';
 import type { Currency, CurrencyType, CryptoNetwork, CoinGeckoSimpleCoin, CoinDetailsResponse } from '../../types';
-import { Plus, Edit2, Trash2, Save, X, Upload } from 'lucide-react';
+import { Plus, Edit2, Trash2, Save, X, Upload, Search } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { fetchCoinsList, fetchCoinDetails } from '../../api/cryptoAPI';
 import { getCryptoRussianName } from '../../utils/cryptoTranslations';
@@ -53,6 +53,7 @@ export const AdminCurrencies: React.FC = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<Partial<Currency>>({});
   const [filterType, setFilterType] = useState<string>('all');
+  const [searchQuery, setSearchQuery] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
   const [newCurrency, setNewCurrency] = useState<Partial<Currency>>({
     type: 'custom',
@@ -310,8 +311,16 @@ export const AdminCurrencies: React.FC = () => {
   };
 
   const filteredCurrencies = currencies.filter((c) => {
-    if (filterType === 'all') return true;
-    return c.type === filterType;
+    // Filter by type
+    const matchesType = filterType === 'all' || c.type === filterType;
+    
+    // Filter by search query
+    const matchesSearch = searchQuery === '' || 
+      c.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      c.nameEn.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    return matchesType && matchesSearch;
   });
 
   const getCurrencyTypeLabel = (type: string): string => {
@@ -352,27 +361,63 @@ export const AdminCurrencies: React.FC = () => {
 
       {/* Filters */}
       <Card>
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-sm font-medium">Тип:</span>
-          {['all', 'crypto', 'ewallet', 'card', 'cash', 'custom'].map((type) => (
-            <button
-              key={type}
-              onClick={() => setFilterType(type)}
-              className={`px-3 py-1 rounded-lg text-sm transition ${
-                filterType === type
-                  ? 'bg-primary-500 text-white'
-                  : 'bg-dark-100 dark:bg-dark-700 hover:bg-dark-200 dark:hover:bg-dark-600'
-              }`}
-            >
-              {type === 'all' ? 'Все' : getCurrencyTypeLabel(type)}
-            </button>
-          ))}
+        <div className="space-y-4">
+          {/* Search */}
+          <div>
+            <label className="block text-sm font-medium mb-2">Поиск</label>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-dark-400" />
+              <input
+                type="text"
+                placeholder="Код, название на русском или английском..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 bg-white dark:bg-dark-700 border border-dark-300 dark:border-dark-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+              />
+            </div>
+          </div>
+          
+          {/* Type Filter */}
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-sm font-medium">Тип:</span>
+            {['all', 'crypto', 'ewallet', 'card', 'cash', 'custom'].map((type) => (
+              <button
+                key={type}
+                onClick={() => setFilterType(type)}
+                className={`px-3 py-1 rounded-lg text-sm transition ${
+                  filterType === type
+                    ? 'bg-primary-500 text-white'
+                    : 'bg-dark-100 dark:bg-dark-700 hover:bg-dark-200 dark:hover:bg-dark-600'
+                }`}
+              >
+                {type === 'all' ? 'Все' : getCurrencyTypeLabel(type)}
+              </button>
+            ))}
+          </div>
         </div>
       </Card>
 
       {/* Currencies List */}
       <div className="space-y-4">
-        {filteredCurrencies.map((currency) => {
+        {filteredCurrencies.length === 0 ? (
+          <Card>
+            <div className="text-center py-12">
+              <p className="text-dark-500">
+                {searchQuery || filterType !== 'all' 
+                  ? 'Валюты не найдены. Попробуйте изменить фильтры.'
+                  : 'Валюты не найдены'
+                }
+              </p>
+            </div>
+          </Card>
+        ) : (
+          <>
+            {searchQuery && (
+              <div className="text-sm text-dark-600 dark:text-dark-400">
+                Найдено: {filteredCurrencies.length} валют{filteredCurrencies.length === 1 ? 'а' : filteredCurrencies.length > 1 && filteredCurrencies.length < 5 ? 'ы' : ''}
+              </div>
+            )}
+            {filteredCurrencies.map((currency) => {
           const isEditing = editingId === currency.id;
           const form = isEditing ? editForm : currency;
 
@@ -622,6 +667,8 @@ export const AdminCurrencies: React.FC = () => {
             </Card>
           );
         })}
+          </>
+        )}
       </div>
 
       {/* Summary */}

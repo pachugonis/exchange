@@ -10,6 +10,15 @@ interface CoinGeckoPrice {
     usd: number;
     rub: number;
     eur?: number;
+    kzt?: number;
+    azn?: number;
+    amd?: number;
+    byn?: number;
+    kgs?: number;
+    tjs?: number;
+    tmt?: number;
+    uzs?: number;
+    uah?: number;
     usd_24h_change?: number;
   };
 }
@@ -42,6 +51,15 @@ interface CryptoRates {
   USD_RUB: number;  // USD to RUB rate
   EUR_USD: number;  // EUR to USD rate
   EUR_RUB: number;  // EUR to RUB rate
+  KZT_USD: number;  // KZT to USD rate
+  AZN_USD: number;  // AZN to USD rate
+  AMD_USD: number;  // AMD to USD rate
+  BYN_USD: number;  // BYN to USD rate
+  KGS_USD: number;  // KGS to USD rate
+  TJS_USD: number;  // TJS to USD rate
+  TMT_USD: number;  // TMT to USD rate
+  UZS_USD: number;  // UZS to USD rate
+  UAH_USD: number;  // UAH to USD rate
   lastUpdated: number;
 }
 
@@ -69,7 +87,7 @@ const CACHE_DURATION = 60000; // 1 minute
 const API_ENDPOINTS = [
   {
     name: 'CoinGecko',
-    url: (ids: string) => `https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd,rub,eur`,
+    url: (ids: string) => `https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd,rub,eur,kzt,azn,amd,byn,kgs,tjs,tmt,uzs,uah`,
     parser: parseCoinGeckoData,
   },
 ];
@@ -81,6 +99,17 @@ function parseCoinGeckoData(data: CoinGeckoPrice): Partial<CryptoRates> {
   const usdRubRate = data.tether?.rub || 100;
   const eurUsdRate = data.bitcoin?.eur ? data.bitcoin.usd / data.bitcoin.eur : 1.09;
   const eurRubRate = eurUsdRate * usdRubRate;
+  
+  // Get rates for new currencies from API
+  const kztUsdRate = data.tether?.kzt ? 1 / data.tether.kzt : 0.0020;
+  const aznUsdRate = data.tether?.azn ? 1 / data.tether.azn : 0.588;
+  const amdUsdRate = data.tether?.amd ? 1 / data.tether.amd : 0.0025;
+  const bynUsdRate = data.tether?.byn ? 1 / data.tether.byn : 0.305;
+  const kgsUsdRate = data.tether?.kgs ? 1 / data.tether.kgs : 0.0112;
+  const tjsUsdRate = data.tether?.tjs ? 1 / data.tether.tjs : 0.0915;
+  const tmtUsdRate = data.tether?.tmt ? 1 / data.tether.tmt : 0.286;
+  const uzsUsdRate = data.tether?.uzs ? 1 / data.tether.uzs : 0.000078;
+  const uahUsdRate = data.tether?.uah ? 1 / data.tether.uah : 0.024;
   
   return {
     BTC_USD: data.bitcoin?.usd,
@@ -110,6 +139,15 @@ function parseCoinGeckoData(data: CoinGeckoPrice): Partial<CryptoRates> {
     USD_RUB: usdRubRate,
     EUR_USD: eurUsdRate,
     EUR_RUB: eurRubRate,
+    KZT_USD: kztUsdRate,
+    AZN_USD: aznUsdRate,
+    AMD_USD: amdUsdRate,
+    BYN_USD: bynUsdRate,
+    KGS_USD: kgsUsdRate,
+    TJS_USD: tjsUsdRate,
+    TMT_USD: tmtUsdRate,
+    UZS_USD: uzsUsdRate,
+    UAH_USD: uahUsdRate,
   };
 }
 
@@ -176,6 +214,15 @@ export async function fetchCryptoRates(): Promise<CryptoRates> {
         USD_RUB: parsedRates.USD_RUB || 100,
         EUR_USD: parsedRates.EUR_USD || 1.09,
         EUR_RUB: parsedRates.EUR_RUB || 109,
+        KZT_USD: 0.0020,  // 1 USD = ~500 KZT
+        AZN_USD: 0.588,   // 1 USD = ~1.7 AZN
+        AMD_USD: 0.0025,  // 1 USD = ~400 AMD
+        BYN_USD: 0.305,   // 1 USD = ~3.28 BYN
+        KGS_USD: 0.0112,  // 1 USD = ~89 KGS
+        TJS_USD: 0.0915,  // 1 USD = ~10.93 TJS
+        TMT_USD: 0.286,   // 1 USD = ~3.5 TMT
+        UZS_USD: 0.000078,// 1 USD = ~12,800 UZS
+        UAH_USD: 0.024,   // 1 USD = ~41.5 UAH
         lastUpdated: now,
       };
       
@@ -248,6 +295,15 @@ function generateFallbackRates(timestamp: number): CryptoRates {
     USD_RUB: Math.round(usdRub * 100) / 100,
     EUR_USD: eurUsd,
     EUR_RUB: Math.round(eurUsd * usdRub * 100) / 100,
+    KZT_USD: 0.0020,  // 1 USD = ~500 KZT
+    AZN_USD: 0.588,   // 1 USD = ~1.7 AZN
+    AMD_USD: 0.0025,  // 1 USD = ~400 AMD
+    BYN_USD: 0.305,   // 1 USD = ~3.28 BYN
+    KGS_USD: 0.0112,  // 1 USD = ~89 KGS
+    TJS_USD: 0.0915,  // 1 USD = ~10.93 TJS
+    TMT_USD: 0.286,   // 1 USD = ~3.5 TMT
+    UZS_USD: 0.000078,// 1 USD = ~12,800 UZS
+    UAH_USD: 0.024,   // 1 USD = ~41.5 UAH
     lastUpdated: timestamp,
   };
 }
@@ -268,8 +324,12 @@ export async function calculateRateWithCustomCrypto(
     if (code.includes('_')) {
       const base = code.split('_')[0];
       // For payment methods like CARD_RUB, PAYEER_RUB -> use second part (RUB)
-      if (['CARD', 'PAYEER', 'PM', 'ADV', 'CASH'].includes(base)) {
+      if (['CARD', 'PAYEER', 'PM', 'ADV'].includes(base)) {
         return code.split('_')[1];
+      }
+      // For CASH currencies (CASH_MSK, CASH_SPB, etc.) -> always RUB
+      if (base === 'CASH') {
+        return 'RUB';
       }
       return base;
     }
@@ -370,8 +430,12 @@ export function calculateRate(rates: CryptoRates, fromCode: string, toCode: stri
     if (code.includes('_')) {
       const base = code.split('_')[0];
       // For payment methods like CARD_RUB, PAYEER_RUB -> use second part (RUB)
-      if (['CARD', 'PAYEER', 'PM', 'ADV', 'CASH'].includes(base)) {
+      if (['CARD', 'PAYEER', 'PM', 'ADV'].includes(base)) {
         return code.split('_')[1];
+      }
+      // For CASH currencies (CASH_MSK, CASH_SPB, etc.) -> always RUB
+      if (base === 'CASH') {
+        return 'RUB';
       }
       return base;
     }

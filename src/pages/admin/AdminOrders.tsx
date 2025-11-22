@@ -17,20 +17,17 @@ export const AdminOrders: React.FC = () => {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [lastUpdateTime, setLastUpdateTime] = useState(Date.now());
   const ordersPerPage = 10;
 
-  // Debug: Log orders when component mounts or orders change
+  // Auto-refresh orders every 5 seconds
   useEffect(() => {
-    console.log('AdminOrders - Total orders:', orders.length);
-    // Check for STRK orders specifically
-    const strkOrders = orders.filter(o => 
-      o.fromCurrency?.code === 'STRK' || o.toCurrency?.code === 'STRK'
-    );
-    console.log('AdminOrders - STRK orders found:', strkOrders.length);
-    if (strkOrders.length > 0) {
-      console.log('AdminOrders - STRK orders:', strkOrders);
-    }
-  }, [orders]);
+    const interval = setInterval(() => {
+      setLastUpdateTime(Date.now());
+    }, 5000); // Refresh every 5 seconds
+
+    return () => clearInterval(interval);
+  }, []);
 
   if (!isAuthenticated) {
     return <Navigate to="/admin/login" replace />;
@@ -134,9 +131,14 @@ export const AdminOrders: React.FC = () => {
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold mb-2">Управление заявками</h1>
-        <p className="text-dark-600 dark:text-dark-400">
-          Просмотр и управление всеми заявками обмена
-        </p>
+        <div className="flex items-center justify-between">
+          <p className="text-dark-600 dark:text-dark-400">
+            Просмотр и управление всеми заявками обмена
+          </p>
+          <p className="text-xs text-dark-500">
+            Обновлено: {new Date(lastUpdateTime).toLocaleTimeString('ru-RU')}
+          </p>
+        </div>
       </div>
 
       {/* Filters */}

@@ -13,8 +13,10 @@ export interface Review {
   exchangeDirection?: {
     fromAmount: number;
     fromCurrency: string;
+    fromCurrencyName?: string; // Optional for backward compatibility
     toAmount: number;
     toCurrency: string;
+    toCurrencyName?: string; // Optional for backward compatibility
   };
   response?: {
     text: string;

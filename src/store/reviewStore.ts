@@ -60,8 +60,10 @@ export const useReviewStore = create<ReviewState>()(
           exchangeDirection: order ? {
             fromAmount: order.fromAmount,
             fromCurrency: order.fromCurrency.code,
+            fromCurrencyName: order.fromCurrency.name || order.fromCurrency.code,
             toAmount: order.toAmount,
             toCurrency: order.toCurrency.code,
+            toCurrencyName: order.toCurrency.name || order.toCurrency.code,
           } : undefined,
         };
         
