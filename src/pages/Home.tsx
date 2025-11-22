@@ -8,16 +8,13 @@ import { CurrencyIcon } from '../components/ui/CurrencyIcon';
 import { fetchCryptoRates } from '../api/cryptoAPI';
 import { Testimonials, PopularDirections } from '../components/home';
 import { ExchangeSteps } from '../components/exchange';
-import { FavoritesList } from '../components/exchange/FavoritesList';
 import { useAnnouncementStore } from '../store/announcementStore';
 import { useSiteSettingsStore } from '../store/siteSettingsStore';
-import { useFavoriteStore } from '../store/favoriteStore';
 import { currencies } from '../data/currencies';
 
 export const Home: React.FC = () => {
   const { getActiveAnnouncement } = useAnnouncementStore();
   const { settings } = useSiteSettingsStore();
-  const { favorites } = useFavoriteStore();
   const [showAnnouncement, setShowAnnouncement] = useState(true);
   const activeAnnouncement = getActiveAnnouncement();
   
@@ -201,21 +198,6 @@ export const Home: React.FC = () => {
 
       {/* Popular Directions */}
       {settings.showPopularDirections && <PopularDirections />}
-
-      {/* Favorites Section - Only show if user has favorites */}
-      {favorites.length > 0 && (
-        <section className="py-12 px-4 bg-dark-50 dark:bg-dark-800/50">
-          <div className="container mx-auto max-w-4xl">
-            <div className="text-center mb-8">
-              <h2 className="text-3xl font-bold mb-4">Ваши избранные направления</h2>
-              <p className="text-dark-600 dark:text-dark-400">
-                Быстрый доступ к часто используемым обменам
-              </p>
-            </div>
-            <FavoritesList />
-          </div>
-        </section>
-      )}
 
       {/* Exchange Steps */}
       {settings.showExchangeSteps && <ExchangeSteps />}

@@ -9,3 +9,4 @@ export * from './chart';
 export * from './kyc';
 export * from './email';
 export * from './review';
+export * from './telegram';
