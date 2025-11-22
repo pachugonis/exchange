@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search, Clock } from 'lucide-react';
 import { Input } from '../components/ui/Input';
 import { Button } from '../components/ui/Button';
@@ -15,8 +15,26 @@ export const OrderTracking: React.FC = () => {
   const [searchedOrder, setSearchedOrder] = useState<any>(null);
   const [hasSearched, setHasSearched] = useState(false);
   const [showReviewForm, setShowReviewForm] = useState(false);
+  const [lastUpdateTime, setLastUpdateTime] = useState(Date.now());
   const { getOrderById, orders } = useOrderStore();
   const { getOrderReview } = useReviewStore();
+
+  // Auto-refresh orders every 5 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setLastUpdateTime(Date.now());
+      
+      // If user is viewing a specific order, update it
+      if (searchedOrder && searchId) {
+        const updatedOrder = getOrderById(searchId);
+        if (updatedOrder) {
+          setSearchedOrder(updatedOrder);
+        }
+      }
+    }, 5000); // Refresh every 5 seconds
+
+    return () => clearInterval(interval);
+  }, [searchedOrder, searchId, getOrderById]);
 
   const handleSearch = () => {
     if (!searchId.trim()) {
@@ -35,9 +53,14 @@ export const OrderTracking: React.FC = () => {
       <div className="container mx-auto max-w-4xl">
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold mb-4">Отслеживание заявки</h1>
-          <p className="text-dark-600 dark:text-dark-400">
-            Введите номер заявки для проверки статуса обмена
-          </p>
+          <div className="flex items-center justify-between">
+            <p className="text-dark-600 dark:text-dark-400">
+              Введите номер заявки для проверки статуса обмена
+            </p>
+            <p className="text-xs text-dark-500">
+              Обновлено: {new Date(lastUpdateTime).toLocaleTimeString('ru-RU')}
+            </p>
+          </div>
         </div>
 
         {/* Search */}
