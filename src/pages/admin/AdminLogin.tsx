@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAdminStore } from '../../store/adminStore';
 import { useTranslation } from '../../hooks/useTranslation';
@@ -10,13 +10,20 @@ import toast from 'react-hot-toast';
 
 export const AdminLogin: React.FC = () => {
   const navigate = useNavigate();
-  const { login, twoFactorEnabled } = useAdminStore();
+  const { login, twoFactorEnabled, isAuthenticated } = useAdminStore();
   const { t } = useTranslation();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [twoFactorCode, setTwoFactorCode] = useState('');
   const [showTwoFactor, setShowTwoFactor] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Redirect to dashboard if already authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/admin/dashboard', { replace: true });
+    }
+  }, [isAuthenticated, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,7 +38,7 @@ export const AdminLogin: React.FC = () => {
         // Check if 2FA is enabled but code not provided
         if (twoFactorEnabled && !showTwoFactor) {
           setShowTwoFactor(true);
-          toast.info(t('admin.login.twoFactorCode'));
+          toast(t('admin.login.twoFactorCode'), { icon: 'ℹ️' });
         } else {
           toast.error(t('common.messages.error'));
         }
@@ -111,10 +118,6 @@ export const AdminLogin: React.FC = () => {
             >
               {isLoading ? t('common.buttons.loading') : t('admin.login.submit')}
             </Button>
-
-            <div className="text-xs text-center text-dark-500">
-              Demo: admin / admin123
-            </div>
           </form>
         </Card>
       </div>
