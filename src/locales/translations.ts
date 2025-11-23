@@ -93,6 +93,22 @@ export const translations = {
     },
   },
 
+  // 404 Not Found page
+  notFound: {
+    ru: {
+      title: 'Страница не найдена',
+      description: 'К сожалению, запрашиваемая страница не существует или была перемещена.',
+      goHome: 'На главную',
+      goBack: 'Вернуться назад',
+    },
+    en: {
+      title: 'Page Not Found',
+      description: 'Sorry, the page you are looking for does not exist or has been moved.',
+      goHome: 'Go to Home',
+      goBack: 'Go Back',
+    },
+  },
+
   // Navigation
   navigation: {
     ru: {

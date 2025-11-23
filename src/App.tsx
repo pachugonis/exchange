@@ -10,6 +10,7 @@ import { Exchange } from './pages/Exchange';
 import { About, FAQ } from './pages/Info';
 import { Rules, Reviews, Contact } from './pages/Additional';
 import { OrderTracking } from './pages/OrderTracking';
+import { NotFound } from './pages/NotFound';
 import { UserLogin, UserRegister, UserDashboard, UserSettings, UserKYC, ForgotPassword, ResetPassword, VerifyEmail } from './pages/user';
 import { MaintenancePage } from './pages/MaintenancePage';
 import { AdminLogin } from './pages/admin/AdminLogin';
@@ -161,6 +162,7 @@ function App() {
                     <Route path="/rules" element={<Rules />} />
                     <Route path="/reviews" element={<Reviews />} />
                     <Route path="/contact" element={<Contact />} />
+                    <Route path="*" element={<NotFound />} />
                   </Routes>
                 </main>
                 <Footer />
