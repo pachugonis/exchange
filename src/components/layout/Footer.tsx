@@ -5,12 +5,14 @@ import { Input } from '../ui/Input';
 import { Button } from '../ui/Button';
 import { useNewsletterStore } from '../../store/newsletterStore';
 import { useSiteSettingsStore } from '../../store/siteSettingsStore';
+import { useDesignVariant } from '../../hooks/useDesignVariant';
 import { useTranslation } from '../../hooks/useTranslation';
 import toast from 'react-hot-toast';
 
 export const Footer: React.FC = () => {
   const { addSubscriber } = useNewsletterStore();
   const { settings } = useSiteSettingsStore();
+  const designVariant = useDesignVariant();
   const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
@@ -30,13 +32,19 @@ export const Footer: React.FC = () => {
       toast.error(result.error || t('home.newsletter.error'));
     }
   };
+  
+  const footerBg = designVariant === 'alternative' 
+    ? 'bg-gradient-to-br from-dark-900 via-emerald-900/10 to-dark-900'
+    : 'bg-dark-900';
+  const logoGradient = designVariant === 'alternative' ? 'bg-gradient-alternative' : 'bg-gradient-primary';
+  const hoverColor = designVariant === 'alternative' ? 'hover:text-emerald-400' : 'hover:text-primary-400';
 
   return (
-    <footer className="bg-dark-900 text-dark-100 mt-20">
+    <footer className={`${footerBg} text-dark-100 mt-20`}>
       <div className="container mx-auto px-4 py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div>
-            <h3 className="text-xl font-bold mb-4 bg-gradient-primary bg-clip-text text-transparent">
+            <h3 className={`text-xl font-bold mb-4 ${logoGradient} bg-clip-text text-transparent`}>
               {settings.siteName}
             </h3>
             <p className="text-dark-400 text-sm">
@@ -47,19 +55,19 @@ export const Footer: React.FC = () => {
           <div>
             <h4 className="font-semibold mb-4">{t('navigation.footerNavigation')}</h4>
             <ul className="space-y-2 text-dark-400">
-              <li><Link to="/" className="hover:text-primary-400">{t('navigation.home')}</Link></li>
-              <li><Link to="/exchange" className="hover:text-primary-400">{t('navigation.exchange')}</Link></li>
-              <li><Link to="/about" className="hover:text-primary-400">{t('navigation.about')}</Link></li>
-              <li><Link to="/faq" className="hover:text-primary-400">{t('navigation.faq')}</Link></li>
+              <li><Link to="/" className={hoverColor}>{t('navigation.home')}</Link></li>
+              <li><Link to="/exchange" className={hoverColor}>{t('navigation.exchange')}</Link></li>
+              <li><Link to="/about" className={hoverColor}>{t('navigation.about')}</Link></li>
+              <li><Link to="/faq" className={hoverColor}>{t('navigation.faq')}</Link></li>
             </ul>
           </div>
           
           <div>
             <h4 className="font-semibold mb-4">{t('navigation.footerInfo')}</h4>
             <ul className="space-y-2 text-dark-400">
-              <li><Link to="/rules" className="hover:text-primary-400">{t('navigation.rules')}</Link></li>
-              <li><Link to="/reviews" className="hover:text-primary-400">{t('navigation.reviews')}</Link></li>
-              <li><Link to="/contact" className="hover:text-primary-400">{t('navigation.contact')}</Link></li>
+              <li><Link to="/rules" className={hoverColor}>{t('navigation.rules')}</Link></li>
+              <li><Link to="/reviews" className={hoverColor}>{t('navigation.reviews')}</Link></li>
+              <li><Link to="/contact" className={hoverColor}>{t('navigation.contact')}</Link></li>
             </ul>
           </div>
           

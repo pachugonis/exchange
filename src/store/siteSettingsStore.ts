@@ -6,6 +6,9 @@ export interface SiteSettings {
   siteName: string;
   siteLogo: string | null;
   
+  // Design Variant
+  designVariant: 'default' | 'alternative';
+  
   // Hero Section
   heroTitle: string;
   heroSubtitle: string;
@@ -72,6 +75,8 @@ interface SiteSettingsState {
 const defaultSettings: SiteSettings = {
   siteName: '4EX',
   siteLogo: null,
+  
+  designVariant: 'default',
   
   heroTitle: 'Быстрый и надежный обмен валют',
   heroSubtitle: 'Обменивайте криптовалюты, электронные деньги и банковские карты по выгодным курсам',

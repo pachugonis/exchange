@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Navigate } from 'react-router-dom';
-import { Settings, Image as ImageIcon, Type, Eye, EyeOff, Save, RotateCcw, Plus, Trash2, Link as LinkIcon } from 'lucide-react';
+import { Settings, Image as ImageIcon, Type, Eye, EyeOff, Save, RotateCcw, Plus, Trash2, Link as LinkIcon, Palette } from 'lucide-react';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
@@ -95,6 +95,80 @@ export const AdminSiteSettings: React.FC = () => {
           </Button>
         </div>
       </div>
+
+      {/* Design Variant Selection */}
+      <Card>
+        <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+          <Palette className="w-5 h-5" />
+          {t('admin.siteSettings.designVariant.title')}
+        </h2>
+        <p className="text-sm text-dark-600 dark:text-dark-400 mb-4">
+          {t('admin.siteSettings.designVariant.description')}
+        </p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div
+            onClick={() => setLocalSettings({ ...localSettings, designVariant: 'default' })}
+            className={`p-4 border-2 rounded-lg cursor-pointer transition ${
+              localSettings.designVariant === 'default'
+                ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
+                : 'border-dark-300 dark:border-dark-600 hover:border-primary-300'
+            }`}
+          >
+            <div className="flex items-start gap-3">
+              <input
+                type="radio"
+                name="designVariant"
+                value="default"
+                checked={localSettings.designVariant === 'default'}
+                onChange={() => setLocalSettings({ ...localSettings, designVariant: 'default' })}
+                className="mt-1"
+              />
+              <div className="flex-1">
+                <div className="font-semibold mb-1">{t('admin.siteSettings.designVariant.default')}</div>
+                <div className="text-sm text-dark-600 dark:text-dark-400 mb-2">
+                  {t('admin.siteSettings.designVariant.defaultDesc')}
+                </div>
+                <div className="flex gap-2">
+                  <div className="w-8 h-8 rounded bg-gradient-to-br from-blue-500 to-purple-600"></div>
+                  <div className="w-8 h-8 rounded bg-blue-500"></div>
+                  <div className="w-8 h-8 rounded bg-purple-600"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div
+            onClick={() => setLocalSettings({ ...localSettings, designVariant: 'alternative' })}
+            className={`p-4 border-2 rounded-lg cursor-pointer transition ${
+              localSettings.designVariant === 'alternative'
+                ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20'
+                : 'border-dark-300 dark:border-dark-600 hover:border-emerald-300'
+            }`}
+          >
+            <div className="flex items-start gap-3">
+              <input
+                type="radio"
+                name="designVariant"
+                value="alternative"
+                checked={localSettings.designVariant === 'alternative'}
+                onChange={() => setLocalSettings({ ...localSettings, designVariant: 'alternative' })}
+                className="mt-1"
+              />
+              <div className="flex-1">
+                <div className="font-semibold mb-1">{t('admin.siteSettings.designVariant.alternative')}</div>
+                <div className="text-sm text-dark-600 dark:text-dark-400 mb-2">
+                  {t('admin.siteSettings.designVariant.alternativeDesc')}
+                </div>
+                <div className="flex gap-2">
+                  <div className="w-8 h-8 rounded bg-gradient-to-br from-emerald-500 to-teal-500"></div>
+                  <div className="w-8 h-8 rounded bg-emerald-500"></div>
+                  <div className="w-8 h-8 rounded bg-amber-500"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </Card>
 
       {/* Site Identity */}
       <Card>

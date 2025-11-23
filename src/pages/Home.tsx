@@ -10,12 +10,14 @@ import { Testimonials, PopularDirections } from '../components/home';
 import { ExchangeSteps } from '../components/exchange';
 import { useAnnouncementStore } from '../store/announcementStore';
 import { useSiteSettingsStore } from '../store/siteSettingsStore';
+import { useDesignVariant } from '../hooks/useDesignVariant';
 import { useTranslation } from '../hooks/useTranslation';
 import { currencies } from '../data/currencies';
 
 export const Home: React.FC = () => {
   const { getActiveAnnouncement } = useAnnouncementStore();
   const { settings } = useSiteSettingsStore();
+  const designVariant = useDesignVariant();
   const { t } = useTranslation();
   const [showAnnouncement, setShowAnnouncement] = useState(true);
   const activeAnnouncement = getActiveAnnouncement();
@@ -66,33 +68,72 @@ export const Home: React.FC = () => {
       
       {/* Hero Section */}
       <section className="py-20 px-4">
-        <div className="container mx-auto text-center">
-          <h1 className="text-5xl md:text-6xl font-bold mb-6 bg-gradient-primary bg-clip-text text-transparent">
-            {settings.heroTitle}
-          </h1>
-          <p className="text-xl text-dark-600 dark:text-dark-300 mb-8 max-w-2xl mx-auto">
-            {settings.heroSubtitle}
-          </p>
-          <Link to="/exchange">
-            <Button size="lg" className="gap-2">
-              {t('home.startExchange')} <ArrowRight className="w-5 h-5" />
-            </Button>
-          </Link>
-          
-          {settings.showStats && (
-            <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-4 max-w-3xl mx-auto text-sm">
-              <div className="text-dark-600 dark:text-dark-400">
-                <div className="text-2xl font-bold text-primary-500">{settings.stat1Value}</div>
-                <div>{settings.stat1Label}</div>
-              </div>
-              <div className="text-dark-600 dark:text-dark-400">
-                <div className="text-2xl font-bold text-primary-500">{settings.stat2Value}</div>
-                <div>{settings.stat2Label}</div>
-              </div>
-              <div className="text-dark-600 dark:text-dark-400">
-                <div className="text-2xl font-bold text-primary-500">{settings.stat3Value}</div>
-                <div>{settings.stat3Label}</div>
-              </div>
+        <div className="container mx-auto">
+          {designVariant === 'alternative' ? (
+            // Alternative layout: same as default but with alternative styling
+            <div className="text-center">
+              <h1 className="text-5xl md:text-6xl font-bold mb-6">
+                <span className="bg-gradient-alternative bg-clip-text text-transparent">
+                  {settings.heroTitle}
+                </span>
+              </h1>
+              <p className="text-xl text-dark-600 dark:text-dark-300 mb-8 max-w-2xl mx-auto">
+                {settings.heroSubtitle}
+              </p>
+              <Link to="/exchange">
+                <Button size="lg" className="gap-2">
+                  {t('home.startExchange')} <ArrowRight className="w-5 h-5" />
+                </Button>
+              </Link>
+              
+              {settings.showStats && (
+                <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-4 max-w-3xl mx-auto text-sm">
+                  <div className="text-dark-600 dark:text-dark-400">
+                    <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{settings.stat1Value}</div>
+                    <div>{settings.stat1Label}</div>
+                  </div>
+                  <div className="text-dark-600 dark:text-dark-400">
+                    <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{settings.stat2Value}</div>
+                    <div>{settings.stat2Label}</div>
+                  </div>
+                  <div className="text-dark-600 dark:text-dark-400">
+                    <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{settings.stat3Value}</div>
+                    <div>{settings.stat3Label}</div>
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            // Default layout: centered design
+            <div className="text-center">
+              <h1 className="text-5xl md:text-6xl font-bold mb-6 bg-gradient-primary bg-clip-text text-transparent">
+                {settings.heroTitle}
+              </h1>
+              <p className="text-xl text-dark-600 dark:text-dark-300 mb-8 max-w-2xl mx-auto">
+                {settings.heroSubtitle}
+              </p>
+              <Link to="/exchange">
+                <Button size="lg" className="gap-2">
+                  {t('home.startExchange')} <ArrowRight className="w-5 h-5" />
+                </Button>
+              </Link>
+              
+              {settings.showStats && (
+                <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-4 max-w-3xl mx-auto text-sm">
+                  <div className="text-dark-600 dark:text-dark-400">
+                    <div className="text-2xl font-bold text-primary-500">{settings.stat1Value}</div>
+                    <div>{settings.stat1Label}</div>
+                  </div>
+                  <div className="text-dark-600 dark:text-dark-400">
+                    <div className="text-2xl font-bold text-primary-500">{settings.stat2Value}</div>
+                    <div>{settings.stat2Label}</div>
+                  </div>
+                  <div className="text-dark-600 dark:text-dark-400">
+                    <div className="text-2xl font-bold text-primary-500">{settings.stat3Value}</div>
+                    <div>{settings.stat3Label}</div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -103,39 +144,77 @@ export const Home: React.FC = () => {
         <section className="py-20 px-4 bg-dark-50 dark:bg-dark-800/50">
           <div className="container mx-auto">
             <h2 className="text-3xl font-bold text-center mb-12">{t('home.whyChooseUs')}</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <Card>
-                <Zap className="w-10 h-10 text-primary-500 mb-4" />
-                <h3 className="font-semibold text-lg mb-2">{settings.feature1Title}</h3>
-                <p className="text-dark-600 dark:text-dark-400 text-sm">
-                  {settings.feature1Description}
-                </p>
-              </Card>
-              
-              <Card>
-                <Shield className="w-10 h-10 text-primary-500 mb-4" />
-                <h3 className="font-semibold text-lg mb-2">{settings.feature2Title}</h3>
-                <p className="text-dark-600 dark:text-dark-400 text-sm">
-                  {settings.feature2Description}
-                </p>
-              </Card>
-              
-              <Card>
-                <Clock className="w-10 h-10 text-primary-500 mb-4" />
-                <h3 className="font-semibold text-lg mb-2">{settings.feature3Title}</h3>
-                <p className="text-dark-600 dark:text-dark-400 text-sm">
-                  {settings.feature3Description}
-                </p>
-              </Card>
-              
-              <Card>
-                <Award className="w-10 h-10 text-primary-500 mb-4" />
-                <h3 className="font-semibold text-lg mb-2">{settings.feature4Title}</h3>
-                <p className="text-dark-600 dark:text-dark-400 text-sm">
-                  {settings.feature4Description}
-                </p>
-              </Card>
-            </div>
+            {designVariant === 'alternative' ? (
+              // Alternative layout: same 4-column grid but with alternative colors
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <Card>
+                  <Zap className="w-10 h-10 text-emerald-600 dark:text-emerald-400 mb-4" />
+                  <h3 className="font-semibold text-lg mb-2">{settings.feature1Title}</h3>
+                  <p className="text-dark-600 dark:text-dark-400 text-sm">
+                    {settings.feature1Description}
+                  </p>
+                </Card>
+                
+                <Card>
+                  <Shield className="w-10 h-10 text-emerald-600 dark:text-emerald-400 mb-4" />
+                  <h3 className="font-semibold text-lg mb-2">{settings.feature2Title}</h3>
+                  <p className="text-dark-600 dark:text-dark-400 text-sm">
+                    {settings.feature2Description}
+                  </p>
+                </Card>
+                
+                <Card>
+                  <Clock className="w-10 h-10 text-emerald-600 dark:text-emerald-400 mb-4" />
+                  <h3 className="font-semibold text-lg mb-2">{settings.feature3Title}</h3>
+                  <p className="text-dark-600 dark:text-dark-400 text-sm">
+                    {settings.feature3Description}
+                  </p>
+                </Card>
+                
+                <Card>
+                  <Award className="w-10 h-10 text-emerald-600 dark:text-emerald-400 mb-4" />
+                  <h3 className="font-semibold text-lg mb-2">{settings.feature4Title}</h3>
+                  <p className="text-dark-600 dark:text-dark-400 text-sm">
+                    {settings.feature4Description}
+                  </p>
+                </Card>
+              </div>
+            ) : (
+              // Default layout: 4-column grid with top icons
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <Card>
+                  <Zap className="w-10 h-10 text-primary-500 mb-4" />
+                  <h3 className="font-semibold text-lg mb-2">{settings.feature1Title}</h3>
+                  <p className="text-dark-600 dark:text-dark-400 text-sm">
+                    {settings.feature1Description}
+                  </p>
+                </Card>
+                
+                <Card>
+                  <Shield className="w-10 h-10 text-primary-500 mb-4" />
+                  <h3 className="font-semibold text-lg mb-2">{settings.feature2Title}</h3>
+                  <p className="text-dark-600 dark:text-dark-400 text-sm">
+                    {settings.feature2Description}
+                  </p>
+                </Card>
+                
+                <Card>
+                  <Clock className="w-10 h-10 text-primary-500 mb-4" />
+                  <h3 className="font-semibold text-lg mb-2">{settings.feature3Title}</h3>
+                  <p className="text-dark-600 dark:text-dark-400 text-sm">
+                    {settings.feature3Description}
+                  </p>
+                </Card>
+                
+                <Card>
+                  <Award className="w-10 h-10 text-primary-500 mb-4" />
+                  <h3 className="font-semibold text-lg mb-2">{settings.feature4Title}</h3>
+                  <p className="text-dark-600 dark:text-dark-400 text-sm">
+                    {settings.feature4Description}
+                  </p>
+                </Card>
+              </div>
+            )}
           </div>
         </section>
       )}
@@ -147,37 +226,73 @@ export const Home: React.FC = () => {
           {settings.showCryptoRates && cryptoRates && (
             <div className="mb-16">
               <h2 className="text-3xl font-bold text-center mb-8">{settings.cryptoRatesTitle}</h2>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
-                <Card className="bg-gradient-to-br from-orange-500/10 to-orange-600/10 border-orange-500/20">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className="text-sm text-dark-500 dark:text-dark-400 mb-1">Bitcoin</div>
-                      <div className="text-2xl font-bold">${cryptoRates.BTC_USD.toLocaleString('en-US', { maximumFractionDigits: 0 })}</div>
+              {designVariant === 'alternative' ? (
+                // Alternative layout: same as default but with alternative colors
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+                  <Card className="bg-gradient-to-br from-orange-500/10 to-orange-600/10 border-orange-500/20">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="text-sm text-dark-500 dark:text-dark-400 mb-1">Bitcoin</div>
+                        <div className="text-2xl font-bold">${cryptoRates.BTC_USD.toLocaleString('en-US', { maximumFractionDigits: 0 })}</div>
+                      </div>
+                      <CurrencyIcon currency={currencies.find(c => c.code === 'BTC')!} size="xl" />
                     </div>
-                    <CurrencyIcon currency={currencies.find(c => c.code === 'BTC')!} size="xl" />
-                  </div>
-                </Card>
-                
-                <Card className="bg-gradient-to-br from-blue-500/10 to-purple-600/10 border-blue-500/20">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className="text-sm text-dark-500 dark:text-dark-400 mb-1">Ethereum</div>
-                      <div className="text-2xl font-bold">${cryptoRates.ETH_USD.toLocaleString('en-US', { maximumFractionDigits: 0 })}</div>
+                  </Card>
+                  
+                  <Card className="bg-gradient-to-br from-emerald-500/10 to-teal-600/10 border-emerald-500/20">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="text-sm text-dark-500 dark:text-dark-400 mb-1">Ethereum</div>
+                        <div className="text-2xl font-bold">${cryptoRates.ETH_USD.toLocaleString('en-US', { maximumFractionDigits: 0 })}</div>
+                      </div>
+                      <CurrencyIcon currency={currencies.find(c => c.code === 'ETH')!} size="xl" />
                     </div>
-                    <CurrencyIcon currency={currencies.find(c => c.code === 'ETH')!} size="xl" />
-                  </div>
-                </Card>
-                
-                <Card className="bg-gradient-to-br from-green-500/10 to-green-600/10 border-green-500/20">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className="text-sm text-dark-500 dark:text-dark-400 mb-1">Tether</div>
-                      <div className="text-2xl font-bold">${cryptoRates.USDT_USD.toFixed(4)}</div>
+                  </Card>
+                  
+                  <Card className="bg-gradient-to-br from-teal-500/10 to-emerald-600/10 border-teal-500/20">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="text-sm text-dark-500 dark:text-dark-400 mb-1">Tether</div>
+                        <div className="text-2xl font-bold">${cryptoRates.USDT_USD.toFixed(4)}</div>
+                      </div>
+                      <CurrencyIcon currency={currencies.find(c => c.code === 'USDT_TRC20')!} size="xl" />
                     </div>
-                    <CurrencyIcon currency={currencies.find(c => c.code === 'USDT_TRC20')!} size="xl" />
-                  </div>
-                </Card>
-              </div>
+                  </Card>
+                </div>
+              ) : (
+                // Default layout
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+                  <Card className="bg-gradient-to-br from-orange-500/10 to-orange-600/10 border-orange-500/20">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="text-sm text-dark-500 dark:text-dark-400 mb-1">Bitcoin</div>
+                        <div className="text-2xl font-bold">${cryptoRates.BTC_USD.toLocaleString('en-US', { maximumFractionDigits: 0 })}</div>
+                      </div>
+                      <CurrencyIcon currency={currencies.find(c => c.code === 'BTC')!} size="xl" />
+                    </div>
+                  </Card>
+                  
+                  <Card className="bg-gradient-to-br from-blue-500/10 to-purple-600/10 border-blue-500/20">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="text-sm text-dark-500 dark:text-dark-400 mb-1">Ethereum</div>
+                        <div className="text-2xl font-bold">${cryptoRates.ETH_USD.toLocaleString('en-US', { maximumFractionDigits: 0 })}</div>
+                      </div>
+                      <CurrencyIcon currency={currencies.find(c => c.code === 'ETH')!} size="xl" />
+                    </div>
+                  </Card>
+                  
+                  <Card className="bg-gradient-to-br from-green-500/10 to-green-600/10 border-green-500/20">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="text-sm text-dark-500 dark:text-dark-400 mb-1">Tether</div>
+                        <div className="text-2xl font-bold">${cryptoRates.USDT_USD.toFixed(4)}</div>
+                      </div>
+                      <CurrencyIcon currency={currencies.find(c => c.code === 'USDT_TRC20')!} size="xl" />
+                    </div>
+                  </Card>
+                </div>
+              )}
               <p className="text-center text-xs text-dark-400 mt-4">
                 {t('home.cryptoRates.updateInfo')}
               </p>

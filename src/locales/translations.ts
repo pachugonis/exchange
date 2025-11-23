@@ -1546,6 +1546,14 @@ export const translations = {
         subtitle: 'Управление главной страницей и внешним видом сайта',
         reset: 'Сбросить',
         save: 'Сохранить',
+        designVariant: {
+          title: 'Дизайн-тема',
+          description: 'Выберите вариант дизайна сайта',
+          default: 'Стандартный дизайн',
+          defaultDesc: 'Сине-фиолетовая цветовая схема с традиционным расположением',
+          alternative: 'Альтернативный дизайн',
+          alternativeDesc: 'Изумрудно-янтарная цветовая схема с современным асимметричным расположением',
+        },
         identity: {
           title: 'Идентичность сайта',
           siteName: 'Название сайта',
@@ -2253,6 +2261,14 @@ export const translations = {
         subtitle: 'Manage homepage and site appearance',
         reset: 'Reset',
         save: 'Save',
+        designVariant: {
+          title: 'Design Theme',
+          description: 'Select website design variant',
+          default: 'Default Design',
+          defaultDesc: 'Blue and purple color scheme with traditional layout',
+          alternative: 'Alternative Design',
+          alternativeDesc: 'Emerald and amber color scheme with modern asymmetric layout',
+        },
         identity: {
           title: 'Site Identity',
           siteName: 'Site Name',
