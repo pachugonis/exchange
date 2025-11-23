@@ -10,3 +10,4 @@ export * from './kyc';
 export * from './email';
 export * from './review';
 export * from './telegram';
+export * from './license';
