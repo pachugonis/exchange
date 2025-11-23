@@ -5,11 +5,13 @@ import { Input } from '../ui/Input';
 import { Button } from '../ui/Button';
 import { useNewsletterStore } from '../../store/newsletterStore';
 import { useSiteSettingsStore } from '../../store/siteSettingsStore';
+import { useTranslation } from '../../hooks/useTranslation';
 import toast from 'react-hot-toast';
 
 export const Footer: React.FC = () => {
   const { addSubscriber } = useNewsletterStore();
   const { settings } = useSiteSettingsStore();
+  const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -22,10 +24,10 @@ export const Footer: React.FC = () => {
     setLoading(false);
 
     if (result.success) {
-      toast.success('Вы успешно подписались на рассылку!');
+      toast.success(t('home.newsletter.success'));
       setEmail('');
     } else {
-      toast.error(result.error || 'Ошибка подписки');
+      toast.error(result.error || t('home.newsletter.error'));
     }
   };
 
@@ -43,26 +45,26 @@ export const Footer: React.FC = () => {
           </div>
           
           <div>
-            <h4 className="font-semibold mb-4">Навигация</h4>
+            <h4 className="font-semibold mb-4">{t('navigation.footerNavigation')}</h4>
             <ul className="space-y-2 text-dark-400">
-              <li><Link to="/" className="hover:text-primary-400">Главная</Link></li>
-              <li><Link to="/exchange" className="hover:text-primary-400">Обмен</Link></li>
-              <li><Link to="/about" className="hover:text-primary-400">О нас</Link></li>
-              <li><Link to="/faq" className="hover:text-primary-400">FAQ</Link></li>
+              <li><Link to="/" className="hover:text-primary-400">{t('navigation.home')}</Link></li>
+              <li><Link to="/exchange" className="hover:text-primary-400">{t('navigation.exchange')}</Link></li>
+              <li><Link to="/about" className="hover:text-primary-400">{t('navigation.about')}</Link></li>
+              <li><Link to="/faq" className="hover:text-primary-400">{t('navigation.faq')}</Link></li>
             </ul>
           </div>
           
           <div>
-            <h4 className="font-semibold mb-4">Информация</h4>
+            <h4 className="font-semibold mb-4">{t('navigation.footerInfo')}</h4>
             <ul className="space-y-2 text-dark-400">
-              <li><Link to="/rules" className="hover:text-primary-400">Правила</Link></li>
-              <li><Link to="/reviews" className="hover:text-primary-400">Отзывы</Link></li>
-              <li><Link to="/contact" className="hover:text-primary-400">Контакты</Link></li>
+              <li><Link to="/rules" className="hover:text-primary-400">{t('navigation.rules')}</Link></li>
+              <li><Link to="/reviews" className="hover:text-primary-400">{t('navigation.reviews')}</Link></li>
+              <li><Link to="/contact" className="hover:text-primary-400">{t('navigation.contact')}</Link></li>
             </ul>
           </div>
           
           <div>
-            <h4 className="font-semibold mb-4">Контакты</h4>
+            <h4 className="font-semibold mb-4">{t('navigation.footerContacts')}</h4>
             <ul className="space-y-3 text-dark-400">
               <li className="flex items-center gap-2">
                 <Mail className="w-4 h-4" />
@@ -74,7 +76,7 @@ export const Footer: React.FC = () => {
               </li>
               <li className="flex items-center gap-2">
                 <Shield className="w-4 h-4" />
-                SSL Secure
+                {t('home.sslSecure')}
               </li>
             </ul>
           </div>
@@ -83,24 +85,24 @@ export const Footer: React.FC = () => {
         {/* Newsletter Subscription */}
         <div className="border-t border-dark-700 mt-8 pt-8">
           <div className="max-w-md mx-auto text-center">
-            <h4 className="font-semibold mb-2">Подписывайтесь на рассылку</h4>
+            <h4 className="font-semibold mb-2">{t('home.newsletter.title')}</h4>
             <p className="text-dark-400 text-sm mb-4">
-              Получайте новости и специальные предложения
+              {t('home.newsletter.description')}
             </p>
             <form onSubmit={handleSubscribe} className="flex gap-2">
               <Input
                 type="email"
-                placeholder="Ваш email"
+                placeholder={t('home.newsletter.placeholder')}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="flex-1 bg-dark-800 border-dark-600"
                 required
               />
               <Button type="submit" disabled={loading} className="gap-2">
-                {loading ? 'Отправка...' : (
+                {loading ? t('home.newsletter.sending') : (
                   <>
                     <Send className="w-4 h-4" />
-                    Подписаться
+                    {t('home.newsletter.button')}
                   </>
                 )}
               </Button>

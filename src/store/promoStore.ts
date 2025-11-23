@@ -62,25 +62,25 @@ export const usePromoStore = create<PromoState>()(
         );
 
         if (!promo) {
-          return { valid: false, error: 'Промокод не найден' };
+          return { valid: false, error: 'PROMO_NOT_FOUND' };
         }
 
         if (!promo.isActive) {
-          return { valid: false, error: 'Промокод неактивен' };
+          return { valid: false, error: 'PROMO_INACTIVE' };
         }
 
         if (promo.expiresAt && promo.expiresAt < Date.now()) {
-          return { valid: false, error: 'Промокод истек' };
+          return { valid: false, error: 'PROMO_EXPIRED' };
         }
 
         if (promo.maxUses && promo.usesCount && promo.usesCount >= promo.maxUses) {
-          return { valid: false, error: 'Промокод исчерпан' };
+          return { valid: false, error: 'PROMO_EXHAUSTED' };
         }
 
         if (promo.minAmount && amount < promo.minAmount) {
           return {
             valid: false,
-            error: `Минимальная сумма: ${promo.minAmount}`,
+            error: `PROMO_MIN_AMOUNT:${promo.minAmount}`,
           };
         }
 

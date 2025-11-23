@@ -5,6 +5,7 @@ import { useAdminStore } from '../store/adminStore';
 import { useOrderStore } from '../store/orderStore';
 import { useUserStore } from '../store/userStore';
 import { usePromoStore } from '../store/promoStore';
+import { useTranslation } from '../hooks/useTranslation';
 import { Card } from '../components/ui/Card';
 import { Input } from '../components/ui/Input';
 import { Button } from '../components/ui/Button';
@@ -19,6 +20,7 @@ import { createOrder } from '../api/mockAPI';
 
 export const Exchange: React.FC = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { addOrder, cancelOrder, getOrderById } = useOrderStore();
   const { user } = useUserStore();
   const { incrementPromoUse, appliedPromo, removePromo } = usePromoStore();
@@ -147,7 +149,7 @@ export const Exchange: React.FC = () => {
     console.log('Validation errors:', validationErrors);
     
     if (!isValid) {
-      toast.error('Пожалуйста, заполните все обязательные поля и согласитесь с условиями');
+      toast.error(t('exchange.wizard.fillAllFields'));
       return;
     }
 
@@ -205,7 +207,7 @@ export const Exchange: React.FC = () => {
       await new Promise(resolve => setTimeout(resolve, 100));
       
       console.log('Showing success toast');
-      toast.success('Заявка успешно создана!');
+      toast.success(t('exchange.wizard.orderCreated'));
       
       console.log('Moving to step 5, current step before:', currentStep);
       // Use setCurrentStep from hook to trigger re-render
@@ -224,7 +226,7 @@ export const Exchange: React.FC = () => {
         }
       }, 50);
     } catch (error) {
-      toast.error('Ошибка при создании заявки');
+      toast.error(t('exchange.wizard.orderCreationError'));
       console.error('Order creation error:', error);
     } finally {
       setIsCreatingOrder(false);
@@ -236,7 +238,7 @@ export const Exchange: React.FC = () => {
     console.log('handleCancelOrder called, orderId:', orderId);
     if (!orderId) {
       console.error('No orderId found');
-      toast.error('Ошибка: номер заявки не найден');
+      toast.error(t('exchange.wizard.orderIdNotFound'));
       return;
     }
     
@@ -246,7 +248,7 @@ export const Exchange: React.FC = () => {
     // Reset exchange flow to clear all data
     resetFlow();
     
-    toast.success('Заявка успешно отменена');
+    toast.success(t('exchange.wizard.orderCancelled'));
     setShowCancelModal(false);
     
     // Redirect to home after a brief delay
@@ -272,11 +274,11 @@ export const Exchange: React.FC = () => {
               {step < currentStep ? <Check className="w-5 h-5" /> : step}
             </div>
             <div className="text-xs mt-2 text-center">
-              {step === 1 && 'Валюты'}
-              {step === 2 && 'Контакты'}
-              {step === 3 && 'Реквизиты'}
-              {step === 4 && 'Подтверждение'}
-              {step === 5 && 'Оплата'}
+              {step === 1 && t('exchange.wizard.stepLabels.currencies')}
+              {step === 2 && t('exchange.wizard.stepLabels.contacts')}
+              {step === 3 && t('exchange.wizard.stepLabels.details')}
+              {step === 4 && t('exchange.wizard.stepLabels.confirmation')}
+              {step === 5 && t('exchange.wizard.stepLabels.payment')}
             </div>
           </div>
           {step < 5 && (
@@ -293,12 +295,12 @@ export const Exchange: React.FC = () => {
 
   const renderStep1 = () => (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold">Выберите валюты и сумму</h2>
+      <h2 className="text-2xl font-bold">{t('exchange.wizard.step1Title')}</h2>
       
       {/* From Currency */}
       <div>
         <CurrencySelect
-          label="Отдаю"
+          label={t('exchange.wizard.iGive')}
           value={fromCurrency?.id || ''}
           onChange={(value) => {
             const currency = currencyList.find((c) => c.id === value);
@@ -312,7 +314,7 @@ export const Exchange: React.FC = () => {
         <div className="mt-2">
           <Input
             type="number"
-            placeholder="Сумма"
+            placeholder={t('exchange.wizard.amount')}
             value={fromAmount}
             onChange={(e) => setFromAmount(e.target.value)}
             min={fromCurrency?.minAmount || 0}
@@ -324,7 +326,7 @@ export const Exchange: React.FC = () => {
         </div>
         {fromCurrency && (
           <p className="text-sm text-dark-500 mt-1">
-            Мин: {fromCurrency.minAmount} | Макс: {fromCurrency.maxAmount} | Резерв: {fromCurrency.reserve}
+            {t('exchange.wizard.min')}: {fromCurrency.minAmount} | {t('exchange.wizard.max')}: {fromCurrency.maxAmount} | {t('exchange.wizard.reserve')}: {fromCurrency.reserve}
           </p>
         )}
       </div>
@@ -334,7 +336,7 @@ export const Exchange: React.FC = () => {
         <button
           onClick={swapCurrencies}
           className="p-2 rounded-lg hover:bg-dark-100 dark:hover:bg-dark-700 transition"
-          aria-label="Поменять валюты"
+          aria-label={t('exchange.wizard.swapCurrencies')}
           disabled={!fromCurrency || !toCurrency}
         >
           <ArrowLeftRight className="w-6 h-6" />
@@ -345,7 +347,7 @@ export const Exchange: React.FC = () => {
       {fromCurrency && toCurrency && fromCurrency.id === toCurrency.id && (
         <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3">
           <p className="text-sm text-yellow-800 dark:text-yellow-200">
-            ⚠️ <strong>Внимание:</strong> Нельзя обменять одинаковые валюты. Пожалуйста, выберите другую валюту.
+            ⚠️ <strong>{t('exchange.wizard.warning')}</strong> {t('exchange.wizard.sameCurrencyWarning')}
           </p>
         </div>
       )}
@@ -353,7 +355,7 @@ export const Exchange: React.FC = () => {
       {/* To Currency */}
       <div>
         <CurrencySelect
-          label="Получаю"
+          label={t('exchange.wizard.iReceive')}
           value={toCurrency?.id || ''}
           onChange={(value) => {
             const currency = currencyList.find((c) => c.id === value);
@@ -367,7 +369,7 @@ export const Exchange: React.FC = () => {
         <div className="mt-2">
           <Input
             type="number"
-            placeholder="Рассчитанная сумма (можно редактировать)"
+            placeholder={t('exchange.wizard.calculatedAmount')}
             value={toAmount}
             onChange={(e) => setToAmount(e.target.value)}
             className=""
@@ -375,7 +377,7 @@ export const Exchange: React.FC = () => {
         </div>
         {toCurrency && (
           <p className="text-sm text-dark-500 mt-1">
-            Резерв: {formatCurrency(toCurrency.reserve, toCurrency.symbol)}
+            {t('exchange.wizard.reserve')}: {formatCurrency(toCurrency.reserve, toCurrency.symbol)}
           </p>
         )}
       </div>
@@ -384,7 +386,7 @@ export const Exchange: React.FC = () => {
       {rate > 0 && (
         <div className="bg-dark-50 dark:bg-dark-900 rounded-lg p-4 space-y-2">
           <div className="flex justify-between items-center text-sm">
-            <span>Курс обмена:</span>
+            <span>{t('exchange.exchangeRate')}:</span>
             <div className="flex items-center gap-2">
               <span className="font-semibold">
                 1 {fromCurrency?.code} = {rate.toFixed(8)} {toCurrency?.code}
@@ -393,7 +395,7 @@ export const Exchange: React.FC = () => {
             </div>
           </div>
           <div className="flex justify-between text-sm">
-            <span>Комиссия:</span>
+            <span>{t('exchange.commission')}:</span>
             <span className="font-semibold">
               {appliedPromo && appliedPromo.type === 'commission' ? (
                 <>
@@ -406,7 +408,7 @@ export const Exchange: React.FC = () => {
             </span>
           </div>
           <div className="flex justify-between text-lg font-bold text-primary-500">
-            <span>Вы получите:</span>
+            <span>{t('exchange.wizard.youWillReceive')}</span>
             <span>
               {toAmount} {toCurrency?.symbol}
               {appliedPromo && appliedPromo.type === 'bonus' && getBonusAmount() > 0 && (
@@ -421,15 +423,15 @@ export const Exchange: React.FC = () => {
 
   const renderStep2 = () => (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold">Контактная информация</h2>
+      <h2 className="text-2xl font-bold">{t('exchange.wizard.step2Title')}</h2>
       
       <div>
         <label className="block text-sm font-medium mb-2">
-          Email <span className="text-red-500">*</span>
+          {t('exchange.wizard.emailRequired')}
         </label>
         <Input
           type="email"
-          placeholder="example@email.com"
+          placeholder={t('exchange.wizard.emailPlaceholder')}
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           disabled={!!user?.email}
@@ -438,46 +440,46 @@ export const Exchange: React.FC = () => {
           <p className="text-red-500 text-sm mt-1">{validationErrors.email}</p>
         )}
         {user?.email ? (
-          <p className="text-sm text-dark-500 mt-1">Электронная почта взята из вашего профиля</p>
+          <p className="text-sm text-dark-500 mt-1">{t('exchange.wizard.emailFromProfile')}</p>
         ) : (
-          <p className="text-sm text-dark-500 mt-1">На этот email будет отправлена информация о заявке</p>
+          <p className="text-sm text-dark-500 mt-1">{t('exchange.wizard.emailInfo')}</p>
         )}
       </div>
 
       <div>
-        <label className="block text-sm font-medium mb-2">Telegram (опционально)</label>
+        <label className="block text-sm font-medium mb-2">{t('exchange.wizard.telegramOptional')}</label>
         <Input
           type="text"
-          placeholder="@username"
+          placeholder={t('exchange.wizard.telegramPlaceholder')}
           value={telegram}
           onChange={(e) => setTelegram(e.target.value)}
           disabled={!!user?.telegram}
         />
         {user?.telegram ? (
-          <p className="text-sm text-dark-500 mt-1">Telegram взят из вашего профиля</p>
+          <p className="text-sm text-dark-500 mt-1">{t('exchange.wizard.telegramFromProfile')}</p>
         ) : (
-          <p className="text-sm text-dark-500 mt-1">Для быстрой связи с поддержкой</p>
+          <p className="text-sm text-dark-500 mt-1">{t('exchange.wizard.telegramInfo')}</p>
         )}
       </div>
 
       <div>
-        <label className="block text-sm font-medium mb-2">Промокод (опционально)</label>
-        <PromoCodeInput amount={parseFloat(fromAmount) || 0} />
+        <label className="block text-sm font-medium mb-2">{t('exchange.promoCode.title')}</label>
+        <PromoCodeInput amount={parseFloat(fromAmount) || 0} currency={fromCurrency || undefined} />
       </div>
     </div>
   );
 
   const renderStep3 = () => (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold">Платежные реквизиты</h2>
+      <h2 className="text-2xl font-bold">{t('exchange.wizard.step3Title')}</h2>
       
       <div>
         <label className="block text-sm font-medium mb-2">
-          Адрес кошелька отправителя ({fromCurrency?.code}) <span className="text-red-500">*</span>
+          {t('exchange.wizard.senderWallet')} ({fromCurrency?.code}) <span className="text-red-500">*</span>
         </label>
         <Input
           type="text"
-          placeholder={`Ваш ${fromCurrency?.code} адрес`}
+          placeholder={`${t('exchange.wizard.yourAddress')} ${fromCurrency?.code}`}
           value={fromWallet}
           onChange={(e) => setFromWallet(e.target.value)}
         />
@@ -488,11 +490,11 @@ export const Exchange: React.FC = () => {
 
       <div>
         <label className="block text-sm font-medium mb-2">
-          Адрес кошелька получателя ({toCurrency?.code}) <span className="text-red-500">*</span>
+          {t('exchange.wizard.receiverWallet')} ({toCurrency?.code}) <span className="text-red-500">*</span>
         </label>
         <Input
           type="text"
-          placeholder={`Адрес для получения ${toCurrency?.code}`}
+          placeholder={`${t('exchange.wizard.receiveAddress')} ${toCurrency?.code}`}
           value={toWallet}
           onChange={(e) => setToWallet(e.target.value)}
         />
@@ -505,21 +507,21 @@ export const Exchange: React.FC = () => {
 
   const renderStep4 = () => (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold">Подтверждение заявки</h2>
+      <h2 className="text-2xl font-bold">{t('exchange.wizard.step4Title')}</h2>
       
       {/* Summary */}
       <div className="bg-dark-50 dark:bg-dark-900 rounded-lg p-6 space-y-4">
         <div>
-          <h3 className="font-semibold mb-3">Детали обмена</h3>
+          <h3 className="font-semibold mb-3">{t('exchange.wizard.exchangeDetails')}</h3>
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
-              <span className="text-dark-600 dark:text-dark-400">Отдаете:</span>
+              <span className="text-dark-600 dark:text-dark-400">{t('exchange.wizard.sending')}</span>
               <span className="font-semibold">
                 {fromAmount} {fromCurrency?.code}
               </span>
             </div>
             <div className="flex justify-between">
-              <span className="text-dark-600 dark:text-dark-400">Получаете:</span>
+              <span className="text-dark-600 dark:text-dark-400">{t('exchange.wizard.receiving')}</span>
               <span className="font-semibold">
                 {toAmount} {toCurrency?.code}
                 {appliedPromo && appliedPromo.type === 'bonus' && getBonusAmount() > 0 && (
@@ -528,13 +530,13 @@ export const Exchange: React.FC = () => {
               </span>
             </div>
             <div className="flex justify-between">
-              <span className="text-dark-600 dark:text-dark-400">Курс:</span>
+              <span className="text-dark-600 dark:text-dark-400">{t('exchange.wizard.rate')}</span>
               <span>
                 1 {fromCurrency?.code} = {rate.toFixed(8)} {toCurrency?.code}
               </span>
             </div>
             <div className="flex justify-between">
-              <span className="text-dark-600 dark:text-dark-400">Комиссия:</span>
+              <span className="text-dark-600 dark:text-dark-400">{t('exchange.commission')}:</span>
               <span>
                 {appliedPromo && appliedPromo.type === 'commission' ? (
                   <>
@@ -548,7 +550,7 @@ export const Exchange: React.FC = () => {
             </div>
             {appliedPromo && (
               <div className="flex justify-between">
-                <span className="text-dark-600 dark:text-dark-400">Промокод:</span>
+                <span className="text-dark-600 dark:text-dark-400">{t('exchange.promoCode.title')}:</span>
                 <span className="text-green-600 font-semibold">
                   {appliedPromo.code}
                   {appliedPromo.type === 'commission' && ` (-${appliedPromo.discount}%)`}
@@ -560,7 +562,7 @@ export const Exchange: React.FC = () => {
         </div>
 
         <div className="border-t border-dark-200 dark:border-dark-700 pt-4">
-          <h3 className="font-semibold mb-3">Контактная информация</h3>
+          <h3 className="font-semibold mb-3">{t('exchange.wizard.contactInfo')}</h3>
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
               <span className="text-dark-600 dark:text-dark-400">Email:</span>
@@ -576,14 +578,14 @@ export const Exchange: React.FC = () => {
         </div>
 
         <div className="border-t border-dark-200 dark:border-dark-700 pt-4">
-          <h3 className="font-semibold mb-3">Платежные реквизиты</h3>
+          <h3 className="font-semibold mb-3">{t('exchange.wizard.paymentDetails')}</h3>
           <div className="space-y-2 text-sm">
             <div>
-              <span className="text-dark-600 dark:text-dark-400 block mb-1">Кошелек отправителя:</span>
+              <span className="text-dark-600 dark:text-dark-400 block mb-1">{t('exchange.wizard.senderWalletLabel')}</span>
               <span className="font-mono text-xs break-all">{fromWallet}</span>
             </div>
             <div>
-              <span className="text-dark-600 dark:text-dark-400 block mb-1">Кошелек получателя:</span>
+              <span className="text-dark-600 dark:text-dark-400 block mb-1">{t('exchange.wizard.receiverWalletLabel')}</span>
               <span className="font-mono text-xs break-all">{toWallet}</span>
             </div>
           </div>
@@ -600,9 +602,9 @@ export const Exchange: React.FC = () => {
             className="mt-1"
           />
           <span className="text-sm">
-            Я согласен с{' '}
+            {t('exchange.wizard.agreeTerms')}{' '}
             <a href="/rules" className="text-primary-500 hover:underline" target="_blank">
-              правилами обмена
+              {t('exchange.wizard.termsLink')}
             </a>
           </span>
         </label>
@@ -618,9 +620,9 @@ export const Exchange: React.FC = () => {
             className="mt-1"
           />
           <span className="text-sm">
-            Я согласен с{' '}
+            {t('exchange.wizard.agreeAML')}{' '}
             <a href="/rules" className="text-primary-500 hover:underline" target="_blank">
-              политикой AML/KYC
+              {t('exchange.wizard.amlLink')}
             </a>
           </span>
         </label>
@@ -646,9 +648,9 @@ export const Exchange: React.FC = () => {
       console.error('Missing currency data in step 5');
       return (
         <div className="text-center py-12">
-          <p className="text-red-500">Ошибка: данные о валютах потеряны</p>
+          <p className="text-red-500">{t('exchange.wizard.currencyDataLost')}</p>
           <Button onClick={() => resetFlow()} className="mt-4">
-            Начать сначала
+            {t('exchange.wizard.startOver')}
           </Button>
         </div>
       );
@@ -658,9 +660,9 @@ export const Exchange: React.FC = () => {
       console.error('Missing order ID in step 5');
       return (
         <div className="text-center py-12">
-          <p className="text-red-500">Ошибка: номер заявки не найден</p>
+          <p className="text-red-500">{t('exchange.wizard.orderIdLost')}</p>
           <Button onClick={() => resetFlow()} className="mt-4">
-            Начать сначала
+            {t('exchange.wizard.startOver')}
           </Button>
         </div>
       );
@@ -669,17 +671,17 @@ export const Exchange: React.FC = () => {
     // Get payment address from currency data
     const getPaymentAddress = () => {
       try {
-        if (!fromCurrency) return 'Адрес не настроен';
+        if (!fromCurrency) return t('exchange.wizard.addressNotConfigured');
         
         // Check if currency has payment address
         if (fromCurrency.paymentAddress) {
           return fromCurrency.paymentAddress;
         }
         
-        return 'Адрес не настроен';
+        return t('exchange.wizard.addressNotConfigured');
       } catch (error) {
         console.error('Error getting payment address:', error);
-        return 'Ошибка получения адреса';
+        return t('exchange.wizard.errorGettingAddress');
       }
     };
 
@@ -688,10 +690,10 @@ export const Exchange: React.FC = () => {
     const copyToClipboard = (text: string) => {
       try {
         navigator.clipboard.writeText(text);
-        toast.success('Скопировано в буфер обмена');
+        toast.success(t('exchange.wizard.copiedToClipboard'));
       } catch (error) {
         console.error('Error copying to clipboard:', error);
-        toast.error('Ошибка копирования');
+        toast.error(t('exchange.wizard.copyError'));
       }
     };
     
@@ -701,18 +703,18 @@ export const Exchange: React.FC = () => {
           <Check className="w-8 h-8 text-green-600 dark:text-green-400" />
         </div>
         
-        <h2 className="text-2xl font-bold">Заявка создана!</h2>
+        <h2 className="text-2xl font-bold">{t('exchange.wizard.step5Title')}</h2>
         
         <div className="bg-dark-50 dark:bg-dark-900 rounded-lg p-6">
-          <p className="text-sm text-dark-600 dark:text-dark-400 mb-2">Номер заявки</p>
+          <p className="text-sm text-dark-600 dark:text-dark-400 mb-2">{t('exchange.wizard.orderNumber')}</p>
           <p className="text-2xl font-bold font-mono">{orderId}</p>
         </div>
 
         {/* Payment Address */}
         <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-6">
-          <h3 className="font-semibold mb-4 text-lg">Адрес для оплаты</h3>
+          <h3 className="font-semibold mb-4 text-lg">{t('exchange.wizard.paymentAddress')}</h3>
           <div className="bg-white dark:bg-dark-800 rounded-lg p-4 mb-4">
-            <p className="text-xs text-dark-500 mb-2">Отправьте {fromAmount} {fromCurrency?.code} на адрес:</p>
+            <p className="text-xs text-dark-500 mb-2">{t('exchange.wizard.sendAmount')} {fromAmount} {fromCurrency?.code} {t('exchange.wizard.toAddress')}</p>
             <div className="flex items-center gap-2">
               <code className="flex-1 bg-dark-100 dark:bg-dark-900 px-3 py-2 rounded text-sm break-all">
                 {paymentAddress}
@@ -720,7 +722,7 @@ export const Exchange: React.FC = () => {
               <button
                 onClick={() => copyToClipboard(paymentAddress)}
                 className="p-2 hover:bg-dark-100 dark:hover:bg-dark-700 rounded-lg transition"
-                title="Копировать адрес"
+                title={t('exchange.wizard.copyAddress')}
               >
                 <Copy className="w-5 h-5" />
               </button>
@@ -729,24 +731,24 @@ export const Exchange: React.FC = () => {
           
           <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3 mb-4">
             <p className="text-sm text-yellow-800 dark:text-yellow-200">
-              ⚠️ <strong>Важно:</strong> Отправьте точную сумму {fromAmount} {fromCurrency?.code}
+              ⚠️ <strong>{t('exchange.wizard.importantNote')}</strong> {t('exchange.wizard.sendExactAmount')} {fromAmount} {fromCurrency?.code}
             </p>
           </div>
         </div>
 
         <div className="text-left bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-          <h3 className="font-semibold mb-2">Следующие шаги:</h3>
+          <h3 className="font-semibold mb-2">{t('exchange.wizard.nextSteps')}</h3>
           <ol className="list-decimal list-inside space-y-1 text-sm">
-            <li>Отправьте {fromAmount} {fromCurrency?.code} на указанный адрес</li>
-            <li>Ожидайте подтверждения транзакции (обычно 10-30 минут)</li>
-            <li>Получите {toAmount} {toCurrency?.code} на ваш кошелек</li>
-            <li>Проверьте email для отслеживания статуса</li>
+            <li>{t('exchange.wizard.step1Instruction')} {fromAmount} {fromCurrency?.code} {t('exchange.wizard.toTheSpecifiedAddress')}</li>
+            <li>{t('exchange.wizard.step2Instruction')}</li>
+            <li>{t('exchange.wizard.step3Instruction')} {toAmount} {toCurrency?.code} {t('exchange.wizard.toYourWallet')}</li>
+            <li>{t('exchange.wizard.step4Instruction')}</li>
           </ol>
         </div>
 
         <div className="flex gap-4 justify-center">
           <Button onClick={() => navigate('/')} variant="outline">
-            На главную
+            {t('exchange.wizard.goHome')}
           </Button>
           <Button
             onClick={() => {
@@ -754,7 +756,7 @@ export const Exchange: React.FC = () => {
               window.location.reload();
             }}
           >
-            Новый обмен
+            {t('exchange.wizard.newExchange')}
           </Button>
           {/* Only show cancel button if order is not completed or cancelled */}
           {(() => {
@@ -773,7 +775,7 @@ export const Exchange: React.FC = () => {
                 className="gap-2 border-red-300 text-red-600 hover:bg-red-50 dark:border-red-700 dark:text-red-400 dark:hover:bg-red-900/20"
               >
                 <XCircle className="w-4 h-4" />
-                Отменить заявку
+                {t('exchange.wizard.cancelOrder')}
               </Button>
             ) : null;
           })()}
@@ -785,7 +787,7 @@ export const Exchange: React.FC = () => {
   return (
     <div className="min-h-screen py-12 px-4">
       <div className="container mx-auto max-w-4xl">
-        <h1 className="text-4xl font-bold text-center mb-8">Обмен валют</h1>
+        <h1 className="text-4xl font-bold text-center mb-8">{t('exchange.title')}</h1>
         
         {/* Debug info - remove in production */}
         {/*
@@ -820,9 +822,9 @@ export const Exchange: React.FC = () => {
                   console.log('Unknown step:', currentStep);
                   return (
                     <div className="text-center py-12">
-                      <p className="text-red-500">Ошибка: некорректный шаг ({currentStep})</p>
+                      <p className="text-red-500">{t('exchange.wizard.invalidStep')} ({currentStep})</p>
                       <Button onClick={() => resetFlow()} className="mt-4">
-                        Начать сначала
+                        {t('exchange.wizard.startOver')}
                       </Button>
                     </div>
                   );
@@ -832,9 +834,9 @@ export const Exchange: React.FC = () => {
             {/* Fallback if no step matches */}
             {currentStep < 1 || currentStep > 5 ? (
               <div className="text-center py-12">
-                <p className="text-red-500">Ошибка: некорректный шаг ({currentStep})</p>
+                <p className="text-red-500">{t('exchange.wizard.invalidStep')} ({currentStep})</p>
                 <Button onClick={() => resetFlow()} className="mt-4">
-                  Начать сначала
+                  {t('exchange.wizard.startOver')}
                 </Button>
               </div>
             ) : null}
@@ -849,12 +851,12 @@ export const Exchange: React.FC = () => {
                 disabled={currentStep === 1}
                 className="gap-2"
               >
-                <ArrowLeft className="w-4 h-4" /> Назад
+                <ArrowLeft className="w-4 h-4" /> {t('exchange.wizard.back')}
               </Button>
 
               {currentStep < 4 ? (
                 <Button onClick={goToNextStep} className="gap-2">
-                  Далее <ArrowRight className="w-4 h-4" />
+                  {t('exchange.wizard.next')} <ArrowRight className="w-4 h-4" />
                 </Button>
               ) : (
                 <Button 
@@ -864,11 +866,11 @@ export const Exchange: React.FC = () => {
                 >
                   {isCreatingOrder ? (
                     <>
-                      <Loader2 className="w-4 h-4 animate-spin" /> Создание...
+                      <Loader2 className="w-4 h-4 animate-spin" /> {t('exchange.wizard.creating')}
                     </>
                   ) : (
                     <>
-                      Создать заявку <Check className="w-4 h-4" />
+                      {t('exchange.wizard.createOrder')} <Check className="w-4 h-4" />
                     </>
                   )}
                 </Button>
@@ -882,16 +884,16 @@ export const Exchange: React.FC = () => {
       <Modal
         isOpen={showCancelModal}
         onClose={() => setShowCancelModal(false)}
-        title="Подтвердите отмену"
+        title={t('exchange.wizard.cancelOrderConfirm')}
         size="sm"
       >
         <div className="space-y-4">
           <p className="text-dark-600 dark:text-dark-400">
-            Вы уверены, что хотите отменить заявку <strong>{orderId}</strong>?
+            {t('exchange.wizard.cancelOrderText')} <strong>{orderId}</strong>?
           </p>
           <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3">
             <p className="text-sm text-yellow-800 dark:text-yellow-200">
-              ⚠️ <strong>Внимание:</strong> Отмена заявки необратима. Если вы уже отправили средства, обратитесь в поддержку.
+              ⚠️ <strong>{t('exchange.wizard.attention')}</strong> {t('exchange.wizard.cancelWarning')}
             </p>
           </div>
           <div className="flex gap-3 justify-end">
@@ -899,13 +901,13 @@ export const Exchange: React.FC = () => {
               variant="outline"
               onClick={() => setShowCancelModal(false)}
             >
-              Нет, оставить
+              {t('exchange.wizard.cancelNo')}
             </Button>
             <Button
               onClick={handleCancelOrder}
               className="bg-red-600 hover:bg-red-700 text-white"
             >
-              Да, отменить
+              {t('exchange.wizard.cancelYes')}
             </Button>
           </div>
         </div>

@@ -4,11 +4,14 @@ import { Moon, Sun, User, LogOut } from 'lucide-react';
 import { useThemeStore } from '../../store/themeStore';
 import { useUserStore } from '../../store/userStore';
 import { useSiteSettingsStore } from '../../store/siteSettingsStore';
+import { useTranslation } from '../../hooks/useTranslation';
+import { LanguageSelector } from '../ui/LanguageSelector';
 
 export const Header: React.FC = () => {
   const { theme, toggleTheme } = useThemeStore();
   const { user, isAuthenticated } = useUserStore();
   const { settings } = useSiteSettingsStore();
+  const { t } = useTranslation();
 
   return (
     <header className="bg-white dark:bg-dark-800 border-b border-dark-200 dark:border-dark-700 sticky top-0 z-50">
@@ -26,19 +29,19 @@ export const Header: React.FC = () => {
           
           <nav className="hidden md:flex items-center space-x-8">
             <Link to="/" className="text-dark-700 dark:text-dark-300 hover:text-primary-500 transition">
-              Главная
+              {t('navigation.home')}
             </Link>
             <Link to="/exchange" className="text-dark-700 dark:text-dark-300 hover:text-primary-500 transition">
-              Обмен
+              {t('navigation.exchange')}
             </Link>
             <Link to="/tracking" className="text-dark-700 dark:text-dark-300 hover:text-primary-500 transition">
-              Отслеживание
+              {t('navigation.tracking')}
             </Link>
             <Link to="/about" className="text-dark-700 dark:text-dark-300 hover:text-primary-500 transition">
-              О нас
+              {t('navigation.about')}
             </Link>
             <Link to="/faq" className="text-dark-700 dark:text-dark-300 hover:text-primary-500 transition">
-              FAQ
+              {t('navigation.faq')}
             </Link>
           </nav>
           
@@ -57,9 +60,11 @@ export const Header: React.FC = () => {
                 className="flex items-center gap-2 px-4 py-2 border border-primary-500 text-primary-500 rounded-lg hover:bg-primary-50 dark:hover:bg-primary-900/20 transition"
               >
                 <User className="w-4 h-4" />
-                Войти
+                {t('navigation.login')}
               </Link>
             )}
+            
+            <LanguageSelector />
             
             <button
               onClick={toggleTheme}

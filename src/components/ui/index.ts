@@ -13,3 +13,4 @@ export { CurrencyIcon } from './CurrencyIcon';
 export { CurrencySelect } from './CurrencySelect';
 export { CryptoSelect } from './CryptoSelect';
 export { NetworkSelector } from './NetworkSelector';
+export { LanguageSelector } from './LanguageSelector';

@@ -9,6 +9,7 @@ import { ReviewForm } from '../components/exchange/ReviewForm';
 import { FavoriteButton } from '../components/exchange/FavoriteButton';
 import { useOrderStore } from '../store/orderStore';
 import { useReviewStore } from '../store/reviewStore';
+import { useTranslation } from '../hooks/useTranslation';
 import { formatDate } from '../utils/formatters';
 
 export const OrderTracking: React.FC = () => {
@@ -19,6 +20,7 @@ export const OrderTracking: React.FC = () => {
   const [lastUpdateTime, setLastUpdateTime] = useState(Date.now());
   const { getOrderById, orders } = useOrderStore();
   const { getOrderReview } = useReviewStore();
+  const { t, locale } = useTranslation();
 
   // Auto-refresh orders every 5 seconds
   useEffect(() => {
@@ -53,13 +55,13 @@ export const OrderTracking: React.FC = () => {
     <div className="min-h-screen py-12 px-4">
       <div className="container mx-auto max-w-4xl">
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold mb-4">Отслеживание заявки</h1>
+          <h1 className="text-4xl font-bold mb-4">{t('orders.tracking.title')}</h1>
           <div className="flex items-center justify-between">
             <p className="text-dark-600 dark:text-dark-400">
-              Введите номер заявки для проверки статуса обмена
+              {t('orders.tracking.subtitle')}
             </p>
             <p className="text-xs text-dark-500">
-              Обновлено: {new Date(lastUpdateTime).toLocaleTimeString('ru-RU')}
+              {t('orders.tracking.updated')} {new Date(lastUpdateTime).toLocaleTimeString(locale === 'ru' ? 'ru-RU' : 'en-US')}
             </p>
           </div>
         </div>
@@ -75,20 +77,19 @@ export const OrderTracking: React.FC = () => {
                   setSearchId(e.target.value);
                   setHasSearched(false);
                 }}
-                placeholder="Введите номер заявки (например: ORD-1234567890123)"
+                placeholder={t('orders.tracking.placeholder')}
                 className="pl-10"
                 onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
               />
             </div>
-            <Button onClick={handleSearch}>Найти</Button>
+            <Button onClick={handleSearch}>{t('orders.tracking.submit')}</Button>
           </div>
         </Card>
 
         {/* Search Results */}
         {hasSearched && searchedOrder === null && (
           <Alert variant="warning" className="mb-8">
-            Заявка с номером <strong>{searchId}</strong> не найдена.
-            Проверьте правильность номера.
+            {t('orders.tracking.notFound')} <strong>{searchId}</strong> {t('orders.tracking.notFoundDetails')}
           </Alert>
         )}
 
@@ -97,9 +98,9 @@ export const OrderTracking: React.FC = () => {
             <div className="mb-6">
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <h2 className="text-2xl font-bold">Заявка {searchedOrder.id}</h2>
+                  <h2 className="text-2xl font-bold">{t('orders.tracking.order')} {searchedOrder.id}</h2>
                   <p className="text-sm text-dark-500 dark:text-dark-400">
-                    Создана: {formatDate(searchedOrder.createdAt)}
+                    {t('orders.tracking.created')} {formatDate(searchedOrder.createdAt)}
                   </p>
                 </div>
                 <div className="flex items-center gap-3">
@@ -122,54 +123,54 @@ export const OrderTracking: React.FC = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
               <div>
-                <h3 className="font-semibold mb-3">Детали обмена</h3>
+                <h3 className="font-semibold mb-3">{t('orders.tracking.details')}</h3>
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
-                    <span className="text-dark-600 dark:text-dark-400">Отдаете:</span>
+                    <span className="text-dark-600 dark:text-dark-400">{t('orders.tracking.youSend')}</span>
                     <span className="font-medium">
                       {searchedOrder.fromAmount} {searchedOrder.fromCurrency.code} ({searchedOrder.fromCurrency.name})
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-dark-600 dark:text-dark-400">Получаете:</span>
+                    <span className="text-dark-600 dark:text-dark-400">{t('orders.tracking.youGet')}</span>
                     <span className="font-medium">
                       {searchedOrder.toAmount} {searchedOrder.toCurrency.code} ({searchedOrder.toCurrency.name})
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-dark-600 dark:text-dark-400">Курс:</span>
+                    <span className="text-dark-600 dark:text-dark-400">{t('orders.tracking.rate')}</span>
                     <span className="font-medium">{searchedOrder.rate.toFixed(4)}</span>
                   </div>
                 </div>
               </div>
 
               <div>
-                <h3 className="font-semibold mb-3">Контакты</h3>
+                <h3 className="font-semibold mb-3">{t('orders.tracking.contacts')}</h3>
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
                     <span className="text-dark-600 dark:text-dark-400">Email:</span>
-                    <span className="font-medium blur-sm select-none" title="Конфиденциальная информация">
+                    <span className="font-medium blur-sm select-none" title={t('orders.tracking.confidentialInfo')}>
                       {searchedOrder.contactInfo.email}
                     </span>
                   </div>
                   {searchedOrder.contactInfo.telegram && (
                     <div className="flex justify-between">
                       <span className="text-dark-600 dark:text-dark-400">Telegram:</span>
-                      <span className="font-medium blur-sm select-none" title="Конфиденциальная информация">
+                      <span className="font-medium blur-sm select-none" title={t('orders.tracking.confidentialInfo')}>
                         @{searchedOrder.contactInfo.telegram}
                       </span>
                     </div>
                   )}
                 </div>
                 <div className="mt-3 text-xs text-dark-500 dark:text-dark-400 italic">
-                  * Контактная информация скрыта для защиты конфиденциальности
+                  {t('orders.tracking.confidential')}
                 </div>
               </div>
             </div>
 
             {/* Status History */}
             <div>
-              <h3 className="font-semibold mb-3">История статусов</h3>
+              <h3 className="font-semibold mb-3">{t('orders.tracking.statusHistory')}</h3>
               <div className="space-y-2">
                 {searchedOrder.statusHistory.map((item: any, index: number) => (
                   <div
@@ -198,12 +199,12 @@ export const OrderTracking: React.FC = () => {
             {!showReviewForm ? (
               <Card>
                 <div className="text-center">
-                  <h3 className="text-xl font-semibold mb-2">Обмен завершен успешно!</h3>
+                  <h3 className="text-xl font-semibold mb-2">{t('orders.tracking.exchangeCompleted')}</h3>
                   <p className="text-dark-600 dark:text-dark-400 mb-4">
-                    Пожалуйста, оставьте отзыв о вашем опыте обмена
+                    {t('orders.tracking.leaveReviewPrompt')}
                   </p>
                   <Button onClick={() => setShowReviewForm(true)}>
-                    Оставить отзыв
+                    {t('orders.tracking.leaveReview')}
                   </Button>
                 </div>
               </Card>
@@ -226,7 +227,7 @@ export const OrderTracking: React.FC = () => {
           const review = getOrderReview(searchedOrder.id);
           return review ? (
             <Card className="mb-8">
-              <h3 className="text-xl font-semibold mb-4">Ваш отзыв</h3>
+              <h3 className="text-xl font-semibold mb-4">{t('orders.tracking.yourReview')}</h3>
               <div className="flex gap-1 mb-2">
                 {[1, 2, 3, 4, 5].map((star) => (
                   <span
@@ -239,11 +240,11 @@ export const OrderTracking: React.FC = () => {
               </div>
               <p className="text-dark-600 dark:text-dark-400 mb-2">{review.comment}</p>
               <p className="text-sm text-dark-500">
-                Отзыв оставлен {formatDate(review.createdAt)}
+                {t('orders.tracking.reviewLeft')} {formatDate(review.createdAt)}
               </p>
               {review.response && (
                 <div className="mt-4 p-4 bg-primary-50 dark:bg-primary-900/20 rounded-lg">
-                  <p className="text-sm font-medium mb-1">Ответ администрации:</p>
+                  <p className="text-sm font-medium mb-1">{t('orders.tracking.adminResponse')}</p>
                   <p className="text-sm text-dark-600 dark:text-dark-400">{review.response.text}</p>
                   <p className="text-xs text-dark-500 mt-1">
                     {review.response.author} • {formatDate(review.response.createdAt)}
@@ -257,7 +258,7 @@ export const OrderTracking: React.FC = () => {
         {/* Recent Orders */}
         {recentOrders.length > 0 && !searchId && (
           <div>
-            <h2 className="text-2xl font-bold mb-4">Последние заявки</h2>
+            <h2 className="text-2xl font-bold mb-4">{t('orders.tracking.recentOrders')}</h2>
             <div className="space-y-4">
               {recentOrders.map((order) => (
                 <Card
@@ -300,7 +301,7 @@ export const OrderTracking: React.FC = () => {
 
         {recentOrders.length === 0 && !searchId && (
           <Alert variant="info">
-            У вас пока нет заявок. Создайте первую заявку на обмен!
+            {t('orders.tracking.noOrders')}
           </Alert>
         )}
       </div>

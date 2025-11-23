@@ -1,48 +1,51 @@
 import React from 'react';
 import { Search, ArrowDownUp, Send, CheckCircle } from 'lucide-react';
+import { useTranslation } from '../../hooks/useTranslation';
 
 interface Step {
   id: number;
   icon: React.ReactNode;
-  title: string;
-  description: string;
+  titleKey: string;
+  descriptionKey: string;
 }
 
 const steps: Step[] = [
   {
     id: 1,
     icon: <Search className="w-8 h-8" />,
-    title: 'Выберите валюты',
-    description: 'Укажите что хотите обменять и что получить',
+    titleKey: 'exchange.steps.step1',
+    descriptionKey: 'exchange.steps.step1Description',
   },
   {
     id: 2,
     icon: <ArrowDownUp className="w-8 h-8" />,
-    title: 'Проверьте курс',
-    description: 'Убедитесь, что курс вас устраивает',
+    titleKey: 'exchange.steps.step2',
+    descriptionKey: 'exchange.steps.step2Description',
   },
   {
     id: 3,
     icon: <Send className="w-8 h-8" />,
-    title: 'Отправьте средства',
-    description: 'Переведите средства на указанный адрес',
+    titleKey: 'exchange.steps.step3',
+    descriptionKey: 'exchange.steps.step3Description',
   },
   {
     id: 4,
     icon: <CheckCircle className="w-8 h-8" />,
-    title: 'Получите валюту',
-    description: 'Средства поступят на ваш счет за 5-30 минут',
+    titleKey: 'exchange.steps.step4',
+    descriptionKey: 'exchange.steps.step4Description',
   },
 ];
 
 export const ExchangeSteps: React.FC = () => {
+  const { t } = useTranslation();
+  
   return (
     <section className="py-20 px-4 bg-dark-50 dark:bg-dark-800/50">
       <div className="container mx-auto">
         <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold mb-4">Как работает обмен</h2>
+          <h2 className="text-3xl font-bold mb-4">{t('exchange.steps.title')}</h2>
           <p className="text-dark-600 dark:text-dark-400">
-            Простой процесс обмена в 4 шага
+            {t('exchange.steps.subtitle')}
           </p>
         </div>
 
@@ -61,9 +64,9 @@ export const ExchangeSteps: React.FC = () => {
                 <div className="absolute -top-2 -right-2 w-8 h-8 rounded-full bg-primary-500 text-white flex items-center justify-center font-bold text-sm">
                   {step.id}
                 </div>
-                <h3 className="font-semibold text-lg mb-2">{step.title}</h3>
+                <h3 className="font-semibold text-lg mb-2">{t(step.titleKey)}</h3>
                 <p className="text-dark-600 dark:text-dark-400 text-sm">
-                  {step.description}
+                  {t(step.descriptionKey)}
                 </p>
               </div>
             </div>
@@ -77,11 +80,9 @@ export const ExchangeSteps: React.FC = () => {
                 <CheckCircle className="w-6 h-6 text-primary-500" />
               </div>
               <div className="text-left">
-                <h4 className="font-semibold mb-2">Гарантия безопасности</h4>
+                <h4 className="font-semibold mb-2">{t('exchange.steps.securityTitle')}</h4>
                 <p className="text-sm text-dark-600 dark:text-dark-400">
-                  Все операции защищены SSL-шифрованием. Мы не храним ваши приватные ключи
-                  и не имеем доступа к вашим кошелькам. Ваши средства в полной безопасности
-                  на каждом этапе обмена.
+                  {t('exchange.steps.securityDescription')}
                 </p>
               </div>
             </div>

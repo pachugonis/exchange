@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ChevronDown, Check } from 'lucide-react';
 import { CurrencyIcon } from './CurrencyIcon';
+import { useTranslation } from '../../hooks/useTranslation';
 import type { Currency } from '../../types';
 
 interface CurrencySelectProps {
@@ -22,6 +23,7 @@ export const CurrencySelect: React.FC<CurrencySelectProps> = ({
   error,
   className = '',
 }) => {
+  const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const selectedCurrency = currencies.find((c) => c.id === value);
@@ -68,7 +70,7 @@ export const CurrencySelect: React.FC<CurrencySelectProps> = ({
                 </span>
               </>
             ) : (
-              <span className="text-dark-500">Выберите валюту</span>
+              <span className="text-dark-500">{t('exchange.selectCurrency')}</span>
             )}
           </div>
           <ChevronDown

@@ -10,11 +10,13 @@ import { Testimonials, PopularDirections } from '../components/home';
 import { ExchangeSteps } from '../components/exchange';
 import { useAnnouncementStore } from '../store/announcementStore';
 import { useSiteSettingsStore } from '../store/siteSettingsStore';
+import { useTranslation } from '../hooks/useTranslation';
 import { currencies } from '../data/currencies';
 
 export const Home: React.FC = () => {
   const { getActiveAnnouncement } = useAnnouncementStore();
   const { settings } = useSiteSettingsStore();
+  const { t } = useTranslation();
   const [showAnnouncement, setShowAnnouncement] = useState(true);
   const activeAnnouncement = getActiveAnnouncement();
   
@@ -53,7 +55,7 @@ export const Home: React.FC = () => {
               <button
                 onClick={() => setShowAnnouncement(false)}
                 className="p-1 hover:bg-white/20 rounded transition flex-shrink-0"
-                aria-label="Закрыть"
+                aria-label={t('home.announcement.close')}
               >
                 <X className="w-5 h-5" />
               </button>
@@ -73,7 +75,7 @@ export const Home: React.FC = () => {
           </p>
           <Link to="/exchange">
             <Button size="lg" className="gap-2">
-              Начать обмен <ArrowRight className="w-5 h-5" />
+              {t('home.startExchange')} <ArrowRight className="w-5 h-5" />
             </Button>
           </Link>
           
@@ -100,7 +102,7 @@ export const Home: React.FC = () => {
       {settings.showFeatures && (
         <section className="py-20 px-4 bg-dark-50 dark:bg-dark-800/50">
           <div className="container mx-auto">
-            <h2 className="text-3xl font-bold text-center mb-12">Почему выбирают нас</h2>
+            <h2 className="text-3xl font-bold text-center mb-12">{t('home.whyChooseUs')}</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               <Card>
                 <Zap className="w-10 h-10 text-primary-500 mb-4" />
@@ -177,7 +179,7 @@ export const Home: React.FC = () => {
                 </Card>
               </div>
               <p className="text-center text-xs text-dark-400 mt-4">
-                🔄 Курсы обновляются автоматически с CoinGecko API
+                {t('home.cryptoRates.updateInfo')}
               </p>
             </div>
           )}
