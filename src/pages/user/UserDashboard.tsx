@@ -29,12 +29,14 @@ import { useUserStore } from '../../store/userStore';
 import { useOrderStore } from '../../store/orderStore';
 import { useReviewStore } from '../../store/reviewStore';
 import { useFavoriteStore } from '../../store/favoriteStore';
+import { useTranslation } from '../../hooks/useTranslation';
 import { formatDate } from '../../utils/formatters';
 import toast from 'react-hot-toast';
 import type { Order } from '../../types';
 
 export const UserDashboard: React.FC = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { user, isAuthenticated, logout, resendVerificationEmail } = useUserStore();
   const { orders, getOrderById } = useOrderStore();
   const { getOrderReview } = useReviewStore();
@@ -54,7 +56,7 @@ export const UserDashboard: React.FC = () => {
 
   const handleLogout = () => {
     logout();
-    toast.success('Вы вышли из аккаунта');
+    toast.success(t('user.dashboard.logoutSuccess'));
     // Use window.location for hard redirect to ensure clean state
     window.location.href = '/';
   };
@@ -65,9 +67,9 @@ export const UserDashboard: React.FC = () => {
     setResendingEmail(false);
     
     if (result.success) {
-      toast.success('Письмо отправлено на вашу почту!');
+      toast.success(t('user.dashboard.emailSent'));
     } else {
-      toast.error(result.error || 'Ошибка отправки письма');
+      toast.error(result.error || t('user.dashboard.emailError'));
     }
   };
 
@@ -93,29 +95,29 @@ export const UserDashboard: React.FC = () => {
   const stats = [
     {
       icon: ArrowUpDown,
-      label: 'Всего обменов',
+      label: t('user.dashboard.stats.totalExchanges'),
       value: orders.filter(o => o.userId === user.id).length,
       color: 'text-blue-500',
       bg: 'bg-blue-100 dark:bg-blue-900/30',
     },
     {
       icon: TrendingUp,
-      label: 'Объем обменов',
+      label: t('user.dashboard.stats.exchangeVolume'),
       value: `$${totalVolume.toFixed(2)}`,
       color: 'text-green-500',
       bg: 'bg-green-100 dark:bg-green-900/30',
     },
     {
       icon: Star,
-      label: 'Избранное',
+      label: t('user.dashboard.stats.favorites'),
       value: favorites.length,
       color: 'text-yellow-500',
       bg: 'bg-yellow-100 dark:bg-yellow-900/30',
     },
     {
       icon: Calendar,
-      label: 'С нами',
-      value: `${registeredDays} дн.`,
+      label: t('user.dashboard.stats.withUs'),
+      value: `${registeredDays} ${t('user.dashboard.stats.days')}`,
       color: 'text-purple-500',
       bg: 'bg-purple-100 dark:bg-purple-900/30',
     },
@@ -128,27 +130,27 @@ export const UserDashboard: React.FC = () => {
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h1 className="text-3xl font-bold mb-2">Личный кабинет</h1>
+              <h1 className="text-3xl font-bold mb-2">{t('user.dashboard.title')}</h1>
               <p className="text-dark-600 dark:text-dark-400">
-                Добро пожаловать, {user.name}!
+                {t('user.dashboard.welcome')}, {user.name}!
               </p>
             </div>
             <div className="flex gap-3">
               <Link to="/">
                 <Button variant="outline" className="gap-2">
                   <Home className="w-4 h-4" />
-                  На главную
+                  {t('navigation.home')}
                 </Button>
               </Link>
               <Link to="/user/settings">
                 <Button variant="outline" className="gap-2">
                   <Settings className="w-4 h-4" />
-                  Настройки
+                  {t('navigation.settings')}
                 </Button>
               </Link>
               <Button variant="outline" onClick={handleLogout} className="gap-2">
                 <LogOut className="w-4 h-4" />
-                Выход
+                {t('navigation.logout')}
               </Button>
             </div>
           </div>
@@ -156,7 +158,7 @@ export const UserDashboard: React.FC = () => {
           {!user.emailVerified && (
             <Alert variant="warning">
               <div className="flex items-center justify-between">
-                <span>Ваш email не подтвержден. Проверьте почту для подтверждения аккаунта.</span>
+                <span>{t('user.dashboard.emailNotVerified')}</span>
                 <Button
                   size="sm"
                   variant="outline"
@@ -164,7 +166,7 @@ export const UserDashboard: React.FC = () => {
                   disabled={resendingEmail}
                   className="ml-4"
                 >
-                  {resendingEmail ? 'Отправка...' : 'Отправить снова'}
+                  {resendingEmail ? t('user.dashboard.sending') : t('user.dashboard.resendEmail')}
                 </Button>
               </div>
             </Alert>
@@ -213,7 +215,7 @@ export const UserDashboard: React.FC = () => {
                     <span className="text-sm">Email</span>
                   </div>
                   <Badge variant={user.emailVerified ? 'success' : 'warning'}>
-                    {user.emailVerified ? 'Подтвержден' : 'Не подтвержден'}
+                    {user.emailVerified ? t('user.dashboard.status.verified') : t('user.dashboard.status.notVerified')}
                   </Badge>
                 </div>
 
@@ -242,7 +244,7 @@ export const UserDashboard: React.FC = () => {
                 <div className="flex items-center justify-between p-3 bg-dark-50 dark:bg-dark-700 rounded-lg">
                   <div className="flex items-center gap-2">
                     <Calendar className="w-4 h-4 text-dark-500" />
-                    <span className="text-sm">Регистрация</span>
+                    <span className="text-sm">{t('user.dashboard.status.registration')}</span>
                   </div>
                   <span className="text-sm font-medium">
                     {formatDate(user.createdAt)}
@@ -252,7 +254,7 @@ export const UserDashboard: React.FC = () => {
 
               <Link to="/user/settings">
                 <Button variant="outline" className="w-full mt-6">
-                  Редактировать профиль
+                  {t('user.dashboard.editProfile')}
                 </Button>
               </Link>
             </Card>
@@ -265,10 +267,10 @@ export const UserDashboard: React.FC = () => {
           <div className="lg:col-span-2">
             <Card>
               <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-semibold">Мои заявки</h3>
+                <h3 className="text-xl font-semibold">{t('user.dashboard.myOrders')}</h3>
                 <Link to="/tracking">
                   <Button variant="outline" size="sm">
-                    Отследить заявку
+                    {t('user.dashboard.trackOrder')}
                   </Button>
                 </Link>
               </div>
@@ -276,12 +278,12 @@ export const UserDashboard: React.FC = () => {
               {userOrders.length === 0 ? (
                 <div className="text-center py-12">
                   <Clock className="w-12 h-12 mx-auto text-dark-300 dark:text-dark-600 mb-3" />
-                  <h4 className="font-semibold mb-2">Нет заявок</h4>
+                  <h4 className="font-semibold mb-2">{t('user.dashboard.noOrders')}</h4>
                   <p className="text-sm text-dark-600 dark:text-dark-400 mb-4">
-                    Вы еще не создали ни одной заявки на обмен
+                    {t('user.dashboard.noOrdersText')}
                   </p>
                   <Link to="/exchange">
-                    <Button>Создать заявку</Button>
+                    <Button>{t('user.dashboard.createOrder')}</Button>
                   </Link>
                 </div>
               ) : (
@@ -314,13 +316,13 @@ export const UserDashboard: React.FC = () => {
                                   className="gap-1"
                                 >
                                   <MessageSquare className="w-3 h-3" />
-                                  Оставить отзыв
+                                  {t('user.dashboard.leaveReview')}
                                 </Button>
                               )}
                               {hasReview && (
                                 <Badge variant="success" className="text-xs gap-1">
                                   <Star className="w-3 h-3" />
-                                  Отзыв оставлен
+                                  {t('user.dashboard.reviewLeft')}
                                 </Badge>
                               )}
                             </div>
@@ -344,7 +346,7 @@ export const UserDashboard: React.FC = () => {
                   <div className="mt-6 pt-6 border-t border-dark-200 dark:border-dark-700">
                     <div className="flex items-center justify-between">
                       <div className="text-sm text-dark-600 dark:text-dark-400">
-                        Показано {startIndex + 1}-{Math.min(endIndex, userOrders.length)} из {userOrders.length} записей
+                        {t('user.dashboard.showingRecords')} {startIndex + 1}-{Math.min(endIndex, userOrders.length)} {t('user.dashboard.of')} {userOrders.length} {t('user.dashboard.records')}
                       </div>
                       <div className="flex items-center gap-2">
                         <Button
@@ -407,7 +409,7 @@ export const UserDashboard: React.FC = () => {
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
             <div className="bg-white dark:bg-dark-800 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
               <div className="sticky top-0 bg-white dark:bg-dark-800 border-b border-dark-200 dark:border-dark-700 p-4 flex items-center justify-between">
-                <h3 className="text-xl font-semibold">Оставить отзыв</h3>
+                <h3 className="text-xl font-semibold">{t('user.dashboard.leaveReview')}</h3>
                 <button
                   onClick={() => setReviewModalOrder(null)}
                   className="p-2 hover:bg-dark-100 dark:hover:bg-dark-700 rounded-lg transition"
@@ -418,7 +420,7 @@ export const UserDashboard: React.FC = () => {
               <div className="p-6">
                 <div className="mb-4 p-3 bg-dark-50 dark:bg-dark-700 rounded-lg">
                   <div className="text-sm text-dark-600 dark:text-dark-400 mb-1">
-                    Заявка: <span className="font-medium text-dark-900 dark:text-dark-100">{reviewModalOrder.id}</span>
+                    {t('user.dashboard.order')}: <span className="font-medium text-dark-900 dark:text-dark-100">{reviewModalOrder.id}</span>
                   </div>
                   <div className="text-sm text-dark-600 dark:text-dark-400">
                     {reviewModalOrder.fromAmount} {reviewModalOrder.fromCurrency.code} ({reviewModalOrder.fromCurrency.name}) → {reviewModalOrder.toAmount} {reviewModalOrder.toCurrency.code} ({reviewModalOrder.toCurrency.name})

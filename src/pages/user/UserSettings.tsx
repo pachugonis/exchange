@@ -7,11 +7,13 @@ import { Button } from '../../components/ui/Button';
 import { Alert } from '../../components/ui/Alert';
 import { Tabs, TabPanel } from '../../components/ui/Tabs';
 import { useUserStore } from '../../store/userStore';
+import { useTranslation } from '../../hooks/useTranslation';
 import { generateQRCodeURL, formatSecret } from '../../utils/twoFactor';
 import toast from 'react-hot-toast';
 
 export const UserSettings: React.FC = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { user, isAuthenticated, updateProfile, enable2FA, verify2FA, disable2FA } = useUserStore();
   const [activeTab, setActiveTab] = useState('profile');
   const [formData, setFormData] = useState({
@@ -42,7 +44,7 @@ export const UserSettings: React.FC = () => {
       phone: formData.phone,
       telegram: formData.telegram,
     });
-    toast.success('Профиль обновлен успешно!');
+    toast.success(t('user.settings.profileUpdated'));
   };
 
   const handleChange = (field: string, value: string) => {
@@ -58,39 +60,39 @@ export const UserSettings: React.FC = () => {
   const handleVerify2FA = async () => {
     const result = await verify2FA(verificationCode);
     if (result.success) {
-      toast.success('2FA успешно включен!');
+      toast.success(t('user.settings.twoFA.enabled'));
       setShow2FASetup(false);
       setVerificationCode('');
       setTwoFactorSecret('');
     } else {
-      toast.error(result.error || 'Ошибка проверки');
+      toast.error(result.error || t('user.settings.twoFA.verificationError'));
     }
   };
 
   const handleDisable2FA = async () => {
     const result = await disable2FA(disableCode);
     if (result.success) {
-      toast.success('2FA отключен');
+      toast.success(t('user.settings.twoFA.disabled'));
       setDisableCode('');
     } else {
-      toast.error(result.error || 'Ошибка отключения');
+      toast.error(result.error || t('user.settings.twoFA.disableError'));
     }
   };
 
   const handleChangePassword = () => {
     if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-      toast.error('Пароли не совпадают');
+      toast.error(t('user.settings.passwordMismatch'));
       return;
     }
 
     if (passwordForm.newPassword.length < 6) {
-      toast.error('Пароль должен содержать минимум 6 символов');
+      toast.error(t('user.settings.passwordTooShort'));
       return;
     }
 
     // In a real app, this would verify the current password on the backend
     // For now, we'll show a message to use the forgot password flow
-    toast.success('Для смены пароля используйте функцию восстановления пароля');
+    toast.success(t('user.settings.useForgotPassword'));
     setPasswordForm({
       currentPassword: '',
       newPassword: '',
@@ -107,18 +109,18 @@ export const UserSettings: React.FC = () => {
             className="inline-flex items-center gap-2 text-primary-500 hover:text-primary-600 mb-4"
           >
             <ArrowLeft className="w-4 h-4" />
-            Назад в кабинет
+            {t('user.settings.backToDashboard')}
           </Link>
-          <h1 className="text-3xl font-bold">Настройки</h1>
+          <h1 className="text-3xl font-bold">{t('navigation.settings')}</h1>
           <p className="text-dark-600 dark:text-dark-400">
-            Управление профилем и настройками аккаунта
+            {t('user.settings.description')}
           </p>
         </div>
 
         <Tabs
           tabs={[
-            { id: 'profile', label: 'Профиль', icon: <User className="w-4 h-4" /> },
-            { id: 'security', label: 'Безопасность', icon: <Mail className="w-4 h-4" /> },
+            { id: 'profile', label: t('user.settings.profile'), icon: <User className="w-4 h-4" /> },
+            { id: 'security', label: t('user.settings.security'), icon: <Mail className="w-4 h-4" /> },
           ]}
           activeTab={activeTab}
           onChange={setActiveTab}
@@ -127,11 +129,11 @@ export const UserSettings: React.FC = () => {
 
         <TabPanel isActive={activeTab === 'profile'}>
           <Card>
-            <h3 className="text-xl font-semibold mb-6">Информация профиля</h3>
+            <h3 className="text-xl font-semibold mb-6">{t('user.settings.profileInfo')}</h3>
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-2">Имя</label>
+                <label className="block text-sm font-medium mb-2">{t('user.settings.name')}</label>
                 <div className="relative">
                   <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-dark-400" />
                   <Input
@@ -144,7 +146,7 @@ export const UserSettings: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2">Email</label>
+                <label className="block text-sm font-medium mb-2">{t('user.settings.email')}</label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-dark-400" />
                   <Input
@@ -155,13 +157,13 @@ export const UserSettings: React.FC = () => {
                   />
                 </div>
                 <p className="text-xs text-dark-500 dark:text-dark-400 mt-1">
-                  Email нельзя изменить
+                  {t('user.settings.emailCannotChange')}
                 </p>
               </div>
 
               <div>
                 <label className="block text-sm font-medium mb-2">
-                  Телефон (опционально)
+                  {t('user.settings.phoneOptional')}
                 </label>
                 <div className="relative">
                   <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-dark-400" />
@@ -177,7 +179,7 @@ export const UserSettings: React.FC = () => {
 
               <div>
                 <label className="block text-sm font-medium mb-2">
-                  Telegram (опционально)
+                  {t('user.settings.telegramOptional')}
                 </label>
                 <div className="relative">
                   <MessageSquare className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-dark-400" />
@@ -193,7 +195,7 @@ export const UserSettings: React.FC = () => {
 
               <Button onClick={handleSave} className="gap-2">
                 <Save className="w-4 h-4" />
-                Сохранить изменения
+                {t('user.settings.saveChanges')}
               </Button>
             </div>
           </Card>
@@ -202,7 +204,7 @@ export const UserSettings: React.FC = () => {
         <TabPanel isActive={activeTab === 'security'}>
           <div className="space-y-6">
             <Card>
-              <h3 className="text-xl font-semibold mb-4">Безопасность аккаунта</h3>
+              <h3 className="text-xl font-semibold mb-4">{t('user.settings.accountSecurity')}</h3>
 
               <div className="space-y-4">
                 {/* Password Change Section */}
@@ -211,9 +213,9 @@ export const UserSettings: React.FC = () => {
                     <div className="flex items-center gap-3">
                       <Lock className="w-6 h-6 text-primary-500" />
                       <div>
-                        <h4 className="font-medium">Смена пароля</h4>
+                        <h4 className="font-medium">{t('user.settings.changePassword')}</h4>
                         <p className="text-sm text-dark-600 dark:text-dark-400">
-                          Измените пароль для входа в систему
+                          {t('user.settings.changePasswordDescription')}
                         </p>
                       </div>
                     </div>
@@ -221,20 +223,20 @@ export const UserSettings: React.FC = () => {
 
                   <div className="space-y-4">
                     <Alert variant="info">
-                      Для безопасной смены пароля используйте функцию{' '}
+                      {t('user.settings.passwordResetInfo')}{' '}
                       <Link 
                         to="/user/forgot-password" 
                         className="text-primary-500 hover:text-primary-600 font-medium underline"
                       >
-                        восстановления пароля
+                        {t('user.settings.passwordRecovery')}
                       </Link>
-                      . Вам будет отправлена ссылка на email.
+                      . {t('user.settings.emailLinkSent')}
                     </Alert>
 
                     <Link to="/user/forgot-password">
                       <Button variant="outline" className="gap-2 w-full sm:w-auto">
                         <Lock className="w-4 h-4" />
-                        Изменить пароль
+                        {t('user.settings.changePassword')}
                       </Button>
                     </Link>
                   </div>
@@ -246,19 +248,19 @@ export const UserSettings: React.FC = () => {
                     <div className="flex items-center gap-3">
                       <Shield className="w-6 h-6 text-primary-500" />
                       <div>
-                        <h4 className="font-medium">Двухфакторная аутентификация</h4>
+                        <h4 className="font-medium">{t('user.settings.twoFactorAuth')}</h4>
                         <p className="text-sm text-dark-600 dark:text-dark-400">
-                          Повысьте безопасность аккаунта с помощью 2FA
+                          {t('user.settings.twoFactorDesc')}
                         </p>
                       </div>
                     </div>
                     {user.twoFactorEnabled ? (
                       <span className="px-3 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-sm rounded-full">
-                        Включено
+                        {t('user.settings.enabled')}
                       </span>
                     ) : (
                       <span className="px-3 py-1 bg-dark-200 dark:bg-dark-600 text-dark-600 dark:text-dark-300 text-sm rounded-full">
-                        Выключено
+                        {t('user.settings.disabled')}
                       </span>
                     )}
                   </div>
@@ -267,12 +269,12 @@ export const UserSettings: React.FC = () => {
                     !show2FASetup ? (
                       <Button onClick={handleEnable2FA} className="gap-2">
                         <Shield className="w-4 h-4" />
-                        Включить 2FA
+                        {t('user.settings.enable2FA')}
                       </Button>
                     ) : (
                       <div className="space-y-4 mt-4">
                         <Alert variant="info">
-                          Скачайте приложение-аутентификатор (например, Google Authenticator или Authy) и отсканируйте QR-код.
+                          {t('user.settings.downloadAuthApp')}
                         </Alert>
 
                         <div className="flex flex-col items-center gap-4 p-4 bg-white dark:bg-dark-800 rounded-lg">
@@ -286,7 +288,7 @@ export const UserSettings: React.FC = () => {
                           
                           <div className="text-center">
                             <p className="text-sm text-dark-600 dark:text-dark-400 mb-2">
-                              Или введите ключ вручную:
+                              {t('user.settings.orEnterManually')}
                             </p>
                             <code className="px-4 py-2 bg-dark-100 dark:bg-dark-700 rounded text-sm font-mono">
                               {formatSecret(twoFactorSecret)}
@@ -296,7 +298,7 @@ export const UserSettings: React.FC = () => {
 
                         <div>
                           <label className="block text-sm font-medium mb-2">
-                            Введите 6-значный код для подтверждения
+                            {t('user.settings.enterCodeToConfirm')}
                           </label>
                           <Input
                             type="text"
@@ -315,7 +317,7 @@ export const UserSettings: React.FC = () => {
                             className="gap-2"
                           >
                             <Key className="w-4 h-4" />
-                            Подтвердить
+                            {t('user.settings.confirm')}
                           </Button>
                           <Button 
                             onClick={() => {
@@ -325,7 +327,7 @@ export const UserSettings: React.FC = () => {
                             }}
                             variant="outline"
                           >
-                            Отмена
+                            {t('user.settings.cancel')}
                           </Button>
                         </div>
                       </div>
@@ -333,12 +335,12 @@ export const UserSettings: React.FC = () => {
                   ) : (
                     <div className="space-y-4 mt-4">
                       <Alert variant="success">
-                        2FA успешно включен. Теперь при входе в систему вам потребуется вводить код из приложения-аутентификатора.
+                        {t('user.settings.twoFactorSuccess')}
                       </Alert>
 
                       <div>
                         <label className="block text-sm font-medium mb-2">
-                          Введите код для отключения 2FA
+                          {t('user.settings.enterCodeToDisable')}
                         </label>
                         <Input
                           type="text"
@@ -357,7 +359,7 @@ export const UserSettings: React.FC = () => {
                         className="gap-2"
                       >
                         <Shield className="w-4 h-4" />
-                        Отключить 2FA
+                        {t('user.settings.disable2FA')}
                       </Button>
                     </div>
                   )}
@@ -368,31 +370,31 @@ export const UserSettings: React.FC = () => {
                     <div className="flex items-center gap-3">
                       <Shield className="w-6 h-6 text-primary-500" />
                       <div>
-                        <h4 className="font-medium">KYC Верификация</h4>
+                        <h4 className="font-medium">{t('user.settings.kycVerification')}</h4>
                         <p className="text-sm text-dark-600 dark:text-dark-400">
-                          Пройдите верификацию для увеличения лимитов
+                          {t('user.settings.kycDesc')}
                         </p>
                       </div>
                     </div>
                     {user.kycStatus === 'verified' ? (
                       <span className="px-3 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-sm rounded-full flex items-center gap-1">
                         <CheckCircle className="w-3 h-3" />
-                        Уровень {user.kycLevel}
+                        {t('user.settings.level')} {user.kycLevel}
                       </span>
                     ) : user.kycStatus === 'pending' ? (
                       <span className="px-3 py-1 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 text-sm rounded-full flex items-center gap-1">
                         <Clock className="w-3 h-3" />
-                        На проверке
+                        {t('user.settings.underReview')}
                       </span>
                     ) : user.kycStatus === 'rejected' ? (
                       <span className="px-3 py-1 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 text-sm rounded-full flex items-center gap-1">
                         <XCircle className="w-3 h-3" />
-                        Отклонена
+                        {t('user.settings.rejected')}
                       </span>
                     ) : (
                       <span className="px-3 py-1 bg-dark-200 dark:bg-dark-600 text-dark-600 dark:text-dark-300 text-sm rounded-full flex items-center gap-1">
                         <AlertCircle className="w-3 h-3" />
-                        Не пройдена
+                        {t('user.settings.notPassed')}
                       </span>
                     )}
                   </div>
@@ -400,10 +402,10 @@ export const UserSettings: React.FC = () => {
                     <Button variant="outline" size="sm" className="gap-2">
                       <Shield className="w-4 h-4" />
                       {user.kycStatus === 'verified' 
-                        ? 'Повысить уровень' 
+                        ? t('user.settings.increaseLevel') 
                         : user.kycStatus === 'pending'
-                        ? 'Просмотреть статус'
-                        : 'Пройти верификацию'}
+                        ? t('user.settings.viewStatus')
+                        : t('user.settings.passVerification')}
                       <ArrowRight className="w-4 h-4" />
                     </Button>
                   </Link>

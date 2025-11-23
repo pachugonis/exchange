@@ -7,6 +7,7 @@ import { CurrencyIcon } from '../ui/CurrencyIcon';
 import { useFavoriteStore } from '../../store/favoriteStore';
 import { useExchangeStore } from '../../store/exchangeStore';
 import { useExchangeFlowStore } from '../../store/exchangeFlowStore';
+import { useTranslation } from '../../hooks/useTranslation';
 import toast from 'react-hot-toast';
 
 interface FavoritesListProps {
@@ -19,6 +20,7 @@ export const FavoritesList: React.FC<FavoritesListProps> = ({
   className = '',
 }) => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { favorites, removeFavorite } = useFavoriteStore();
   const { currencies } = useExchangeStore();
   const { setFromCurrency, setToCurrency, resetFlow } = useExchangeFlowStore();
@@ -32,7 +34,7 @@ export const FavoritesList: React.FC<FavoritesListProps> = ({
     const toCurrency = getCurrencyByCode(toCode);
     
     if (!fromCurrency || !toCurrency) {
-      toast.error('Не удалось найти валюты');
+      toast.error(t('exchange.favorites.currencyNotFound'));
       return;
     }
 
@@ -45,14 +47,14 @@ export const FavoritesList: React.FC<FavoritesListProps> = ({
       setFromCurrency(fromCurrency);
       setToCurrency(toCurrency);
       navigate('/exchange');
-      toast.success(`Переход к обмену: ${fromCode} → ${toCode}`);
+      toast.success(t('exchange.favorites.navigating') + `: ${fromCode} → ${toCode}`);
     }
   };
 
   const handleRemove = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     removeFavorite(id);
-    toast.success('Удалено из избранного');
+    toast.success(t('exchange.favorites.removed'));
   };
 
   if (favorites.length === 0) {
@@ -60,9 +62,9 @@ export const FavoritesList: React.FC<FavoritesListProps> = ({
       <Card className={className}>
         <div className="text-center py-8">
           <Star className="w-12 h-12 mx-auto text-dark-300 dark:text-dark-600 mb-3" />
-          <h3 className="font-semibold mb-2">Нет избранных направлений</h3>
+          <h3 className="font-semibold mb-2">{t('exchange.favorites.empty')}</h3>
           <p className="text-sm text-dark-600 dark:text-dark-400">
-            Добавьте часто используемые пары для быстрого доступа
+            {t('exchange.favorites.emptyDescription')}
           </p>
         </div>
       </Card>
@@ -73,7 +75,7 @@ export const FavoritesList: React.FC<FavoritesListProps> = ({
     <Card className={className}>
       <div className="flex items-center gap-2 mb-4">
         <Star className="w-5 h-5 text-yellow-500 fill-current" />
-        <h3 className="font-semibold">Избранные направления</h3>
+        <h3 className="font-semibold">{t('exchange.favorites.title')}</h3>
         <Badge variant="info">{favorites.length}</Badge>
       </div>
 

@@ -1,5 +1,6 @@
 import React from 'react';
 import { Clock, CheckCircle, AlertCircle, XCircle, Loader } from 'lucide-react';
+import { useTranslation } from '../../hooks/useTranslation';
 import type { OrderStatus } from '../../types/order';
 
 interface ExchangeStatusProps {
@@ -7,69 +8,71 @@ interface ExchangeStatusProps {
   className?: string;
 }
 
-const statusConfig: Record<
-  OrderStatus,
-  {
-    icon: React.ReactNode;
-    label: string;
-    color: string;
-    bgColor: string;
-  }
-> = {
-  waiting_payment: {
-    icon: <Clock className="w-5 h-5" />,
-    label: 'Ожидает оплаты',
-    color: 'text-yellow-600 dark:text-yellow-400',
-    bgColor: 'bg-yellow-100 dark:bg-yellow-900/30 border-yellow-500/20',
-  },
-  payment_pending: {
-    icon: <Loader className="w-5 h-5 animate-spin" />,
-    label: 'Оплата обрабатывается',
-    color: 'text-blue-600 dark:text-blue-400',
-    bgColor: 'bg-blue-100 dark:bg-blue-900/30 border-blue-500/20',
-  },
-  payment_received: {
-    icon: <CheckCircle className="w-5 h-5" />,
-    label: 'Оплата получена',
-    color: 'text-green-600 dark:text-green-400',
-    bgColor: 'bg-green-100 dark:bg-green-900/30 border-green-500/20',
-  },
-  verification: {
-    icon: <Loader className="w-5 h-5 animate-spin" />,
-    label: 'Проверка',
-    color: 'text-blue-600 dark:text-blue-400',
-    bgColor: 'bg-blue-100 dark:bg-blue-900/30 border-blue-500/20',
-  },
-  sending: {
-    icon: <Loader className="w-5 h-5 animate-spin" />,
-    label: 'Отправка',
-    color: 'text-blue-600 dark:text-blue-400',
-    bgColor: 'bg-blue-100 dark:bg-blue-900/30 border-blue-500/20',
-  },
-  completed: {
-    icon: <CheckCircle className="w-5 h-5" />,
-    label: 'Завершен',
-    color: 'text-green-600 dark:text-green-400',
-    bgColor: 'bg-green-100 dark:bg-green-900/30 border-green-500/20',
-  },
-  cancelled: {
-    icon: <AlertCircle className="w-5 h-5" />,
-    label: 'Отменен',
-    color: 'text-gray-600 dark:text-gray-400',
-    bgColor: 'bg-gray-100 dark:bg-gray-900/30 border-gray-500/20',
-  },
-  refund: {
-    icon: <XCircle className="w-5 h-5" />,
-    label: 'Возврат',
-    color: 'text-red-600 dark:text-red-400',
-    bgColor: 'bg-red-100 dark:bg-red-900/30 border-red-500/20',
-  },
-};
-
 export const ExchangeStatus: React.FC<ExchangeStatusProps> = ({
   status,
   className = '',
 }) => {
+  const { t } = useTranslation();
+  
+  const statusConfig: Record<
+    OrderStatus,
+    {
+      icon: React.ReactNode;
+      labelKey: string;
+      color: string;
+      bgColor: string;
+    }
+  > = {
+    waiting_payment: {
+      icon: <Clock className="w-5 h-5" />,
+      labelKey: 'orders.status.waiting_payment',
+      color: 'text-yellow-600 dark:text-yellow-400',
+      bgColor: 'bg-yellow-100 dark:bg-yellow-900/30 border-yellow-500/20',
+    },
+    payment_pending: {
+      icon: <Loader className="w-5 h-5 animate-spin" />,
+      labelKey: 'orders.status.payment_pending',
+      color: 'text-blue-600 dark:text-blue-400',
+      bgColor: 'bg-blue-100 dark:bg-blue-900/30 border-blue-500/20',
+    },
+    payment_received: {
+      icon: <CheckCircle className="w-5 h-5" />,
+      labelKey: 'orders.status.payment_received',
+      color: 'text-green-600 dark:text-green-400',
+      bgColor: 'bg-green-100 dark:bg-green-900/30 border-green-500/20',
+    },
+    verification: {
+      icon: <Loader className="w-5 h-5 animate-spin" />,
+      labelKey: 'orders.status.verification',
+      color: 'text-blue-600 dark:text-blue-400',
+      bgColor: 'bg-blue-100 dark:bg-blue-900/30 border-blue-500/20',
+    },
+    sending: {
+      icon: <Loader className="w-5 h-5 animate-spin" />,
+      labelKey: 'orders.status.sending',
+      color: 'text-blue-600 dark:text-blue-400',
+      bgColor: 'bg-blue-100 dark:bg-blue-900/30 border-blue-500/20',
+    },
+    completed: {
+      icon: <CheckCircle className="w-5 h-5" />,
+      labelKey: 'orders.status.completed',
+      color: 'text-green-600 dark:text-green-400',
+      bgColor: 'bg-green-100 dark:bg-green-900/30 border-green-500/20',
+    },
+    cancelled: {
+      icon: <AlertCircle className="w-5 h-5" />,
+      labelKey: 'orders.status.cancelled',
+      color: 'text-gray-600 dark:text-gray-400',
+      bgColor: 'bg-gray-100 dark:bg-gray-900/30 border-gray-500/20',
+    },
+    refund: {
+      icon: <XCircle className="w-5 h-5" />,
+      labelKey: 'orders.status.refund',
+      color: 'text-red-600 dark:text-red-400',
+      bgColor: 'bg-red-100 dark:bg-red-900/30 border-red-500/20',
+    },
+  };
+  
   const config = statusConfig[status];
 
   return (
@@ -77,7 +80,7 @@ export const ExchangeStatus: React.FC<ExchangeStatusProps> = ({
       className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg border ${config.bgColor} ${config.color} ${className}`}
     >
       {config.icon}
-      <span className="font-medium">{config.label}</span>
+      <span className="font-medium">{t(config.labelKey)}</span>
     </div>
   );
 };
@@ -87,17 +90,19 @@ interface ExchangeProgressProps {
   currentStep?: number;
 }
 
-const progressSteps = [
-  { id: 1, label: 'Заявка создана', statuses: ['waiting_payment'] },
-  { id: 2, label: 'Средства получены', statuses: ['payment_pending', 'payment_received'] },
-  { id: 3, label: 'Обработка', statuses: ['verification', 'sending'] },
-  { id: 4, label: 'Отправлено', statuses: ['completed', 'cancelled', 'refund'] },
-];
-
 export const ExchangeProgress: React.FC<ExchangeProgressProps> = ({
   status,
   currentStep = 1,
 }) => {
+  const { t } = useTranslation();
+  
+  const progressSteps = [
+    { id: 1, labelKey: 'orders.progress.created', statuses: ['waiting_payment'] },
+    { id: 2, labelKey: 'orders.progress.received', statuses: ['payment_pending', 'payment_received'] },
+    { id: 3, labelKey: 'orders.progress.processing', statuses: ['verification', 'sending'] },
+    { id: 4, labelKey: 'orders.progress.sent', statuses: ['completed', 'cancelled', 'refund'] },
+  ];
+  
   const getStepStatus = (stepId: number): 'completed' | 'current' | 'upcoming' => {
     if (status === 'completed') return stepId <= 4 ? 'completed' : 'upcoming';
     if (status === 'refund' || status === 'cancelled') {
@@ -138,7 +143,7 @@ export const ExchangeProgress: React.FC<ExchangeProgressProps> = ({
                       : 'text-dark-700 dark:text-dark-200'
                   }`}
                 >
-                  {step.label}
+                  {t(step.labelKey)}
                 </span>
               </div>
               {index < progressSteps.length - 1 && (

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Star } from 'lucide-react';
 import { useFavoriteStore } from '../../store/favoriteStore';
+import { useTranslation } from '../../hooks/useTranslation';
 import toast from 'react-hot-toast';
 
 interface FavoriteButtonProps {
@@ -16,15 +17,16 @@ export const FavoriteButton: React.FC<FavoriteButtonProps> = ({
   className = '',
   showLabel = false,
 }) => {
+  const { t } = useTranslation();
   const { isFavorite, toggleFavorite } = useFavoriteStore();
   const favorite = isFavorite(fromCurrency, toCurrency);
 
   const handleToggle = () => {
     toggleFavorite(fromCurrency, toCurrency);
     if (!favorite) {
-      toast.success('Добавлено в избранное');
+      toast.success(t('exchange.favorites.added'));
     } else {
-      toast.success('Удалено из избранного');
+      toast.success(t('exchange.favorites.removed'));
     }
   };
 
@@ -36,7 +38,7 @@ export const FavoriteButton: React.FC<FavoriteButtonProps> = ({
           ? 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-300 dark:border-yellow-700 text-yellow-600 dark:text-yellow-400 hover:bg-yellow-100 dark:hover:bg-yellow-900/30'
           : 'bg-white dark:bg-dark-800 border-dark-200 dark:border-dark-700 text-dark-600 dark:text-dark-400 hover:bg-dark-50 dark:hover:bg-dark-700'
       } ${className}`}
-      title={favorite ? 'Удалить из избранного' : 'Добавить в избранное'}
+      title={favorite ? t('exchange.favorites.remove') : t('exchange.favorites.add')}
     >
       <Star
         className={`w-5 h-5 ${
@@ -45,7 +47,7 @@ export const FavoriteButton: React.FC<FavoriteButtonProps> = ({
       />
       {showLabel && (
         <span className="text-sm font-medium">
-          {favorite ? 'В избранном' : 'В избранное'}
+          {favorite ? t('exchange.favorites.inFavorites') : t('exchange.favorites.toFavorites')}
         </span>
       )}
     </button>

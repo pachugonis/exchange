@@ -8,6 +8,7 @@ import { Alert } from '../../components/ui/Alert';
 import { Badge } from '../../components/ui/Badge';
 import { useUserStore } from '../../store/userStore';
 import { useKYCStore } from '../../store/kycStore';
+import { useTranslation } from '../../hooks/useTranslation';
 import type { KYCLevel, KYCLevelInfo } from '../../types/kyc';
 import toast from 'react-hot-toast';
 
@@ -56,6 +57,7 @@ const KYC_LEVELS: KYCLevelInfo[] = [
 
 export const UserKYC: React.FC = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { user, isAuthenticated, updateProfile } = useUserStore();
   const { submitKYC, getKYCData, uploadDocument } = useKYCStore();
   
@@ -547,14 +549,15 @@ export const UserKYC: React.FC = () => {
         <div className="container mx-auto max-w-2xl">
           <Card className="text-center">
             <CheckCircle className="w-16 h-16 mx-auto mb-4 text-green-500" />
-            <h2 className="text-2xl font-bold mb-2">Верификация пройдена!</h2>
+            <h2 className="text-2xl font-bold mb-2">{t('user.kyc.verifiedTitle')}</h2>
             <p className="text-dark-600 dark:text-dark-400 mb-6">
-              Вы успешно прошли верификацию уровня {kycData.level}. 
-              Ваши лимиты: ${kycData.dailyLimit?.toLocaleString()} в день, 
-              ${kycData.monthlyLimit?.toLocaleString()} в месяц.
+              {t('user.kyc.verifiedText')
+                .replace('{level}', kycData.level.toString())
+                .replace('{dailyLimit}', kycData.dailyLimit?.toLocaleString() || '0')
+                .replace('{monthlyLimit}', kycData.monthlyLimit?.toLocaleString() || '0')}
             </p>
             <Button onClick={() => navigate('/user/dashboard')}>
-              Вернуться в кабинет
+              {t('user.kyc.returnToDashboard')}
             </Button>
           </Card>
         </div>
