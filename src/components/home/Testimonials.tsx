@@ -3,10 +3,12 @@ import { Star, MessageCircle, ArrowRight } from 'lucide-react';
 import { Card } from '../ui/Card';
 import { Alert } from '../ui/Alert';
 import { useReviewStore } from '../../store/reviewStore';
+import { useTranslation } from '../../hooks/useTranslation';
 import { formatDate } from '../../utils/formatters';
 import { Link } from 'react-router-dom';
 
 export const Testimonials: React.FC = () => {
+  const { t } = useTranslation();
   const { getPublishedReviews } = useReviewStore();
   const allReviews = getPublishedReviews();
   
@@ -22,9 +24,9 @@ export const Testimonials: React.FC = () => {
     <section className="py-20 px-4">
       <div className="container mx-auto">
         <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold mb-4">Отзывы наших клиентов</h2>
+          <h2 className="text-3xl font-bold mb-4">{t('reviews.title')}</h2>
           <p className="text-dark-600 dark:text-dark-400">
-            Более 15 000 довольных пользователей доверяют нам свои средства
+            {t('reviews.subtitle')}
           </p>
         </div>
 
@@ -33,9 +35,9 @@ export const Testimonials: React.FC = () => {
             <Alert variant="info">
               <div className="text-center">
                 <MessageCircle className="w-12 h-12 mx-auto mb-3 text-primary-500" />
-                <p className="font-medium mb-2">Пока нет отзывов</p>
+                <p className="font-medium mb-2">{t('reviews.noReviews')}</p>
                 <p className="text-sm text-dark-600 dark:text-dark-400">
-                  Станьте первым, кто оставит отзыв о нашем сервисе после успешного обмена!
+                  {t('reviews.noReviewsDescription')}
                 </p>
               </div>
             </Alert>
@@ -98,7 +100,7 @@ export const Testimonials: React.FC = () => {
                   {review.isVerified && (
                     <div className="mt-3 pt-3 border-t border-dark-200 dark:border-dark-700">
                       <span className="text-xs text-green-600 dark:text-green-400 font-medium">
-                        ✓ Проверенный обмен
+                        ✓ {t('reviews.verified')}
                       </span>
                     </div>
                   )}
@@ -111,14 +113,14 @@ export const Testimonials: React.FC = () => {
                 <Star className="w-5 h-5 fill-yellow-400 text-yellow-400" />
                 <span className="font-semibold">{avgRating}</span>
                 <span className="text-dark-600 dark:text-dark-400">
-                  из 5 на основе {allReviews.length} {allReviews.length === 1 ? 'отзыва' : allReviews.length < 5 ? 'отзывов' : 'отзывов'}
+                  {t('reviews.outOf5')} {allReviews.length} {t('reviews.reviews')}
                 </span>
               </div>
               
               {allReviews.length > 6 && (
                 <Link to="/reviews">
                   <button className="text-primary-500 hover:text-primary-600 font-medium text-sm transition">
-                    Посмотреть все отзывы →
+                    {t('reviews.viewAll')} →
                   </button>
                 </Link>
               )}

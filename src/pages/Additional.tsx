@@ -4,6 +4,7 @@ import { Card } from '../components/ui/Card';
 import { Alert } from '../components/ui/Alert';
 import { Button } from '../components/ui/Button';
 import { useReviewStore } from '../store/reviewStore';
+import { useTranslation } from '../hooks/useTranslation';
 import { formatDate } from '../utils/formatters';
 
 export const Rules: React.FC = () => {
@@ -64,6 +65,7 @@ export const Rules: React.FC = () => {
 };
 
 export const Reviews: React.FC = () => {
+  const { t } = useTranslation();
   const { getPublishedReviews } = useReviewStore();
   const reviews = getPublishedReviews();
   const [currentPage, setCurrentPage] = useState(1);
@@ -145,9 +147,9 @@ export const Reviews: React.FC = () => {
     <div className="min-h-screen py-12 px-4">
       <div className="container mx-auto max-w-4xl">
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold mb-4">Отзывы</h1>
+          <h1 className="text-4xl font-bold mb-4">{t('reviews.pageTitle')}</h1>
           <p className="text-dark-600 dark:text-dark-400">
-            Отзывы наших клиентов о работе сервиса
+            {t('reviews.pageSubtitle')}
           </p>
           {reviews.length > 0 && (
             <div className="mt-4 flex items-center justify-center gap-4">
@@ -160,7 +162,7 @@ export const Reviews: React.FC = () => {
                 ))}
               </div>
               <div className="text-dark-500">
-                {reviews.length} {reviews.length === 1 ? 'отзыв' : reviews.length < 5 ? 'отзыва' : 'отзывов'}
+                {reviews.length} {t('reviews.reviews')}
               </div>
             </div>
           )}
@@ -168,7 +170,7 @@ export const Reviews: React.FC = () => {
         
         {reviews.length === 0 ? (
           <Alert variant="info">
-            Пока нет отзывов. Станьте первым, кто оставит отзыв о нашем сервисе!
+            {t('reviews.noReviewsPage')}
           </Alert>
         ) : (
           <>
@@ -181,7 +183,7 @@ export const Reviews: React.FC = () => {
                         <h3 className="font-semibold text-lg">{review.userName}</h3>
                         {review.isVerified && (
                           <span className="px-2 py-1 text-xs bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-full">
-                            ✓ Проверенный обмен
+                            ✓ {t('reviews.verified')}
                           </span>
                         )}
                       </div>
@@ -222,7 +224,7 @@ export const Reviews: React.FC = () => {
                   {/* Admin Response */}
                   {review.response && (
                     <div className="mt-4 p-4 bg-primary-50 dark:bg-primary-900/20 rounded-lg border-l-4 border-primary-500">
-                      <p className="text-sm font-medium mb-1">Ответ администрации:</p>
+                      <p className="text-sm font-medium mb-1">{t('reviews.adminResponse')}</p>
                       <p className="text-sm text-dark-600 dark:text-dark-400">{review.response.text}</p>
                       <p className="text-xs text-dark-500 mt-1">
                         {review.response.author} • {formatDate(review.response.createdAt)}
@@ -244,7 +246,7 @@ export const Reviews: React.FC = () => {
                   className="gap-1"
                 >
                   <ChevronLeft className="w-4 h-4" />
-                  Назад
+                  {t('reviews.previous')}
                 </Button>
 
                 <div className="flex gap-1">
@@ -273,7 +275,7 @@ export const Reviews: React.FC = () => {
                   disabled={currentPage === totalPages}
                   className="gap-1"
                 >
-                  Вперед
+                  {t('reviews.next')}
                   <ChevronRight className="w-4 h-4" />
                 </Button>
               </div>
@@ -282,7 +284,7 @@ export const Reviews: React.FC = () => {
             {/* Page info */}
             {totalPages > 1 && (
               <div className="mt-4 text-center text-sm text-dark-500">
-                Страница {currentPage} из {totalPages} • Показано {indexOfFirstReview + 1}-{Math.min(indexOfLastReview, reviews.length)} из {reviews.length} отзывов
+                {t('reviews.page')} {currentPage} {t('reviews.of')} {totalPages} • {t('reviews.showing')} {indexOfFirstReview + 1}-{Math.min(indexOfLastReview, reviews.length)} {t('reviews.of')} {reviews.length} {t('reviews.reviews')}
               </div>
             )}
           </>

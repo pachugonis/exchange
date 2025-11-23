@@ -177,6 +177,48 @@ export const translations = {
     },
   },
 
+  // Reviews
+  reviews: {
+    ru: {
+      title: 'Отзывы наших клиентов',
+      subtitle: 'Более 15 000 довольных пользователей доверяют нам свои средства',
+      noReviews: 'Пока нет отзывов',
+      noReviewsDescription: 'Станьте первым, кто оставит отзыв о нашем сервисе после успешного обмена!',
+      noReviewsPage: 'Пока нет отзывов. Станьте первым, кто оставит отзыв о нашем сервисе!',
+      verified: 'Проверенный обмен',
+      outOf5: 'из 5 на основе',
+      reviews: 'отзывов',
+      viewAll: 'Посмотреть все отзывы',
+      pageTitle: 'Отзывы',
+      pageSubtitle: 'Отзывы наших клиентов о работе сервиса',
+      adminResponse: 'Ответ администрации:',
+      previous: 'Назад',
+      next: 'Вперед',
+      page: 'Страница',
+      of: 'из',
+      showing: 'Показано',
+    },
+    en: {
+      title: 'Customer Reviews',
+      subtitle: 'Over 15,000 satisfied users trust us with their funds',
+      noReviews: 'No reviews yet',
+      noReviewsDescription: 'Be the first to leave a review about our service after a successful exchange!',
+      noReviewsPage: 'No reviews yet. Be the first to leave a review about our service!',
+      verified: 'Verified exchange',
+      outOf5: 'out of 5 based on',
+      reviews: 'reviews',
+      viewAll: 'View all reviews',
+      pageTitle: 'Reviews',
+      pageSubtitle: 'Customer reviews about our service',
+      adminResponse: 'Admin Response:',
+      previous: 'Previous',
+      next: 'Next',
+      page: 'Page',
+      of: 'of',
+      showing: 'Showing',
+    },
+  },
+
   // Exchange
   exchange: {
     ru: {
