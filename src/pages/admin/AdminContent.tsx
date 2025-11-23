@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAdminStore } from '../../store/adminStore';
 import { useContentStore, FAQItem } from '../../store/contentStore';
+import { useTranslation } from '../../hooks/useTranslation';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
@@ -12,6 +13,7 @@ import toast from 'react-hot-toast';
 export const AdminContent: React.FC = () => {
   const { isAuthenticated } = useAdminStore();
   const { aboutUs, faqItems, updateAboutUs, addFAQItem, updateFAQItem, deleteFAQItem, updateFAQItems } = useContentStore();
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState('about');
   
   // About Us state
@@ -28,12 +30,12 @@ export const AdminContent: React.FC = () => {
 
   const handleSaveAbout = () => {
     updateAboutUs(aboutContent);
-    toast.success('Страница "О нас" обновлена');
+    toast.success(t('admin.content.messages.aboutUpdated'));
   };
 
   const handleAddFAQ = () => {
     if (!newFAQ.question.trim() || !newFAQ.answer.trim()) {
-      toast.error('Заполните все поля');
+      toast.error(t('admin.content.messages.fillAllFields'));
       return;
     }
     
@@ -45,19 +47,19 @@ export const AdminContent: React.FC = () => {
     
     setNewFAQ({ question: '', answer: '' });
     setShowAddFAQ(false);
-    toast.success('Вопрос добавлен');
+    toast.success(t('admin.content.messages.questionAdded'));
   };
 
   const handleUpdateFAQ = (id: string, updates: Partial<FAQItem>) => {
     updateFAQItem(id, updates);
     setEditingFAQ(null);
-    toast.success('Вопрос обновлен');
+    toast.success(t('admin.content.messages.questionUpdated'));
   };
 
   const handleDeleteFAQ = (id: string) => {
-    if (confirm('Удалить этот вопрос?')) {
+    if (confirm(t('admin.content.messages.confirmDelete'))) {
       deleteFAQItem(id);
-      toast.success('Вопрос удален');
+      toast.success(t('admin.content.messages.questionDeleted'));
     }
   };
 
@@ -80,16 +82,16 @@ export const AdminContent: React.FC = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold mb-2">Управление контентом</h1>
+        <h1 className="text-3xl font-bold mb-2">{t('admin.content.title')}</h1>
         <p className="text-dark-600 dark:text-dark-400">
-          Редактирование страниц "О нас" и "Часто задаваемые вопросы"
+          {t('admin.content.subtitle')}
         </p>
       </div>
 
       <Tabs
         tabs={[
-          { id: 'about', label: 'О нас', icon: <FileText className="w-4 h-4" /> },
-          { id: 'faq', label: 'FAQ', icon: <HelpCircle className="w-4 h-4" /> },
+          { id: 'about', label: t('admin.content.tabs.about'), icon: <FileText className="w-4 h-4" /> },
+          { id: 'faq', label: t('admin.content.tabs.faq'), icon: <HelpCircle className="w-4 h-4" /> },
         ]}
         activeTab={activeTab}
         onChange={setActiveTab}
@@ -98,35 +100,35 @@ export const AdminContent: React.FC = () => {
       {/* About Us Tab */}
       <TabPanel isActive={activeTab === 'about'}>
         <Card>
-          <h2 className="text-xl font-semibold mb-4">Редактирование страницы "О нас"</h2>
+          <h2 className="text-xl font-semibold mb-4">{t('admin.content.about.pageTitle')}</h2>
           
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium mb-2">
-                Содержание страницы (поддерживается Markdown)
+                {t('admin.content.about.contentLabel')}
               </label>
               <textarea
                 value={aboutContent}
                 onChange={(e) => setAboutContent(e.target.value)}
                 rows={15}
                 className="w-full px-4 py-3 bg-white dark:bg-dark-700 border border-dark-300 dark:border-dark-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 font-mono text-sm"
-                placeholder="Введите текст страницы..."
+                placeholder={t('admin.content.about.placeholder')}
               />
               <p className="text-xs text-dark-500 mt-1">
-                Используйте ## для заголовков, - для списков
+                {t('admin.content.about.hint')}
               </p>
             </div>
 
             <div className="flex gap-3">
               <Button onClick={handleSaveAbout} className="gap-2">
                 <Save className="w-4 h-4" />
-                Сохранить изменения
+                {t('admin.content.about.save')}
               </Button>
               <Button 
                 variant="outline" 
                 onClick={() => setAboutContent(aboutUs)}
               >
-                Отменить
+                {t('admin.content.about.cancel')}
               </Button>
             </div>
           </div>
@@ -138,39 +140,39 @@ export const AdminContent: React.FC = () => {
         <div className="space-y-4">
           <Card>
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold">Часто задаваемые вопросы</h2>
+              <h2 className="text-xl font-semibold">{t('admin.content.faq.title')}</h2>
               <Button onClick={() => setShowAddFAQ(true)} className="gap-2">
                 <Plus className="w-4 h-4" />
-                Добавить вопрос
+                {t('admin.content.faq.addButton')}
               </Button>
             </div>
 
             {/* Add FAQ Form */}
             {showAddFAQ && (
               <Card className="mb-4 bg-dark-50 dark:bg-dark-700">
-                <h3 className="font-semibold mb-3">Новый вопрос</h3>
+                <h3 className="font-semibold mb-3">{t('admin.content.faq.newQuestion')}</h3>
                 <div className="space-y-3">
                   <div>
-                    <label className="block text-sm font-medium mb-2">Вопрос</label>
+                    <label className="block text-sm font-medium mb-2">{t('admin.content.faq.questionLabel')}</label>
                     <Input
                       value={newFAQ.question}
                       onChange={(e) => setNewFAQ({ ...newFAQ, question: e.target.value })}
-                      placeholder="Введите вопрос..."
+                      placeholder={t('admin.content.faq.questionPlaceholder')}
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-2">Ответ</label>
+                    <label className="block text-sm font-medium mb-2">{t('admin.content.faq.answerLabel')}</label>
                     <textarea
                       value={newFAQ.answer}
                       onChange={(e) => setNewFAQ({ ...newFAQ, answer: e.target.value })}
                       rows={4}
                       className="w-full px-4 py-3 bg-white dark:bg-dark-800 border border-dark-300 dark:border-dark-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                      placeholder="Введите ответ..."
+                      placeholder={t('admin.content.faq.answerPlaceholder')}
                     />
                   </div>
                   <div className="flex gap-2">
                     <Button onClick={handleAddFAQ} size="sm">
-                      Добавить
+                      {t('admin.content.faq.addAction')}
                     </Button>
                     <Button 
                       variant="outline" 
@@ -180,7 +182,7 @@ export const AdminContent: React.FC = () => {
                         setNewFAQ({ question: '', answer: '' });
                       }}
                     >
-                      Отмена
+                      {t('admin.content.faq.cancel')}
                     </Button>
                   </div>
                 </div>
@@ -190,21 +192,21 @@ export const AdminContent: React.FC = () => {
             {/* FAQ List */}
             <div className="space-y-3">
               {faqItems.length === 0 ? (
-                <p className="text-center text-dark-500 py-8">Нет вопросов</p>
+                <p className="text-center text-dark-500 py-8">{t('admin.content.faq.noQuestions')}</p>
               ) : (
                 faqItems.map((item, index) => (
                   <Card key={item.id} className="bg-dark-50 dark:bg-dark-700">
                     {editingFAQ === item.id ? (
                       <div className="space-y-3">
                         <div>
-                          <label className="block text-sm font-medium mb-2">Вопрос</label>
+                          <label className="block text-sm font-medium mb-2">{t('admin.content.faq.questionLabel')}</label>
                           <Input
                             defaultValue={item.question}
                             onBlur={(e) => handleUpdateFAQ(item.id, { question: e.target.value })}
                           />
                         </div>
                         <div>
-                          <label className="block text-sm font-medium mb-2">Ответ</label>
+                          <label className="block text-sm font-medium mb-2">{t('admin.content.faq.answerLabel')}</label>
                           <textarea
                             defaultValue={item.answer}
                             onBlur={(e) => handleUpdateFAQ(item.id, { answer: e.target.value })}
@@ -217,7 +219,7 @@ export const AdminContent: React.FC = () => {
                           size="sm"
                           onClick={() => setEditingFAQ(null)}
                         >
-                          Готово
+                          {t('admin.content.faq.done')}
                         </Button>
                       </div>
                     ) : (
@@ -234,7 +236,7 @@ export const AdminContent: React.FC = () => {
                               onClick={() => moveFAQUp(index)}
                               disabled={index === 0}
                               className="p-1 hover:bg-dark-200 dark:hover:bg-dark-600 rounded disabled:opacity-30"
-                              title="Переместить вверх"
+                              title={t('admin.content.faq.moveUp')}
                             >
                               <MoveUp className="w-4 h-4" />
                             </button>
@@ -242,21 +244,21 @@ export const AdminContent: React.FC = () => {
                               onClick={() => moveFAQDown(index)}
                               disabled={index === faqItems.length - 1}
                               className="p-1 hover:bg-dark-200 dark:hover:bg-dark-600 rounded disabled:opacity-30"
-                              title="Переместить вниз"
+                              title={t('admin.content.faq.moveDown')}
                             >
                               <MoveDown className="w-4 h-4" />
                             </button>
                             <button
                               onClick={() => setEditingFAQ(item.id)}
                               className="p-1 hover:bg-dark-200 dark:hover:bg-dark-600 rounded"
-                              title="Редактировать"
+                              title={t('admin.content.faq.edit')}
                             >
                               <Edit2 className="w-4 h-4" />
                             </button>
                             <button
                               onClick={() => handleDeleteFAQ(item.id)}
                               className="p-1 hover:bg-red-100 dark:hover:bg-red-900/30 text-red-600 rounded"
-                              title="Удалить"
+                              title={t('admin.content.faq.delete')}
                             >
                               <Trash2 className="w-4 h-4" />
                             </button>

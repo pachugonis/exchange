@@ -7,6 +7,7 @@ import { Alert } from '../../components/ui/Alert';
 import { Badge } from '../../components/ui/Badge';
 import { Modal } from '../../components/ui/Modal';
 import { formatDate } from '../../utils/formatters';
+import { useTranslation } from '../../hooks/useTranslation';
 import toast from 'react-hot-toast';
 
 interface User {
@@ -29,6 +30,7 @@ interface User {
 const USERS_STORAGE_KEY = 'mock-users-db';
 
 export const AdminUsers: React.FC = () => {
+  const { t } = useTranslation();
   const [users, setUsers] = useState<User[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
@@ -53,7 +55,7 @@ export const AdminUsers: React.FC = () => {
       }
     } catch (error) {
       console.error('Error loading users:', error);
-      toast.error('Ошибка загрузки пользователей');
+      toast.error(t('admin.users.messages.loadError'));
     }
   };
 
@@ -80,7 +82,7 @@ export const AdminUsers: React.FC = () => {
       }
     } catch (error) {
       console.error('Error saving users:', error);
-      toast.error('Ошибка сохранения');
+      toast.error(t('admin.users.messages.saveError'));
     }
   };
 
@@ -108,7 +110,7 @@ export const AdminUsers: React.FC = () => {
     );
 
     saveUsers(updatedUsers);
-    toast.success('Пользователь обновлен');
+    toast.success(t('admin.users.messages.updated'));
     setShowEditModal(false);
     setSelectedUser(null);
   };
@@ -130,11 +132,11 @@ export const AdminUsers: React.FC = () => {
         
         const updatedUsers = users.filter(u => u.id !== selectedUser.id);
         setUsers(updatedUsers);
-        toast.success('Пользователь удален');
+        toast.success(t('admin.users.messages.deleted'));
       }
     } catch (error) {
       console.error('Error deleting user:', error);
-      toast.error('Ошибка удаления');
+      toast.error(t('admin.users.messages.deleteError'));
     }
 
     setShowDeleteModal(false);
@@ -148,7 +150,7 @@ export const AdminUsers: React.FC = () => {
         : u
     );
     saveUsers(updatedUsers);
-    toast.success(`Email ${!user.emailVerified ? 'подтвержден' : 'отменен'}`);
+    toast.success(`${t('admin.users.messages.emailVerified')} ${!user.emailVerified ? t('admin.users.messages.emailVerified') : t('admin.users.messages.emailUnverified')}`);
   };
 
   const handleBan = (user: User) => {
@@ -161,7 +163,7 @@ export const AdminUsers: React.FC = () => {
     if (!selectedUser) return;
 
     if (!banReason.trim()) {
-      toast.error('Укажите причину бана');
+      toast.error(t('admin.users.messages.banReasonRequired'));
       return;
     }
 
@@ -177,7 +179,7 @@ export const AdminUsers: React.FC = () => {
         : u
     );
     saveUsers(updatedUsers);
-    toast.success(`Пользователь ${selectedUser.name} заблокирован`);
+    toast.success(`${t('admin.users.messages.userBanned')} ${selectedUser.name} ${t('admin.users.messages.banned')}`);
     setShowBanModal(false);
     setSelectedUser(null);
     setBanReason('');
@@ -196,7 +198,7 @@ export const AdminUsers: React.FC = () => {
         : u
     );
     saveUsers(updatedUsers);
-    toast.success(`Пользователь ${user.name} разблокирован`);
+    toast.success(`${t('admin.users.messages.userBanned')} ${user.name} ${t('admin.users.messages.unbanned')}`);
   };
 
   const filteredUsers = users.filter(user =>
@@ -216,10 +218,10 @@ export const AdminUsers: React.FC = () => {
 
   const getKycStatusText = (status?: string) => {
     switch (status) {
-      case 'verified': return 'Verified';
-      case 'pending': return 'Pending';
-      case 'rejected': return 'Rejected';
-      default: return 'None';
+      case 'verified': return t('admin.users.kycStatuses.verified');
+      case 'pending': return t('admin.users.kycStatuses.pending');
+      case 'rejected': return t('admin.users.kycStatuses.rejected');
+      default: return t('admin.users.kycStatuses.none');
     }
   };
 
@@ -227,9 +229,9 @@ export const AdminUsers: React.FC = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold mb-2">Управление пользователями</h1>
+          <h1 className="text-3xl font-bold mb-2">{t('admin.users.title')}</h1>
           <p className="text-dark-600 dark:text-dark-400">
-            Просмотр и редактирование пользователей системы
+            {t('admin.users.subtitle')}
           </p>
         </div>
       </div>
@@ -239,7 +241,7 @@ export const AdminUsers: React.FC = () => {
         <Card>
           <div className="text-center">
             <div className="text-3xl font-bold text-primary-500">{users.length}</div>
-            <div className="text-sm text-dark-500">Всего пользователей</div>
+            <div className="text-sm text-dark-500">{t('admin.users.stats.total')}</div>
           </div>
         </Card>
         <Card>
@@ -247,7 +249,7 @@ export const AdminUsers: React.FC = () => {
             <div className="text-3xl font-bold text-green-500">
               {users.filter(u => u.emailVerified).length}
             </div>
-            <div className="text-sm text-dark-500">Email подтвержден</div>
+            <div className="text-sm text-dark-500">{t('admin.users.stats.emailVerified')}</div>
           </div>
         </Card>
         <Card>
@@ -255,7 +257,7 @@ export const AdminUsers: React.FC = () => {
             <div className="text-3xl font-bold text-blue-500">
               {users.filter(u => u.kycStatus === 'verified').length}
             </div>
-            <div className="text-sm text-dark-500">KYC верифицировано</div>
+            <div className="text-sm text-dark-500">{t('admin.users.stats.kycVerified')}</div>
           </div>
         </Card>
         <Card>
@@ -263,7 +265,7 @@ export const AdminUsers: React.FC = () => {
             <div className="text-3xl font-bold text-orange-500">
               {users.filter(u => u.twoFactorEnabled).length}
             </div>
-            <div className="text-sm text-dark-500">2FA включен</div>
+            <div className="text-sm text-dark-500">{t('admin.users.stats.twoFaEnabled')}</div>
           </div>
         </Card>
         <Card>
@@ -271,7 +273,7 @@ export const AdminUsers: React.FC = () => {
             <div className="text-3xl font-bold text-red-500">
               {users.filter(u => u.isBanned).length}
             </div>
-            <div className="text-sm text-dark-500">Заблокировано</div>
+            <div className="text-sm text-dark-500">{t('admin.users.stats.banned')}</div>
           </div>
         </Card>
       </div>
@@ -282,7 +284,7 @@ export const AdminUsers: React.FC = () => {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-dark-400" />
           <input
             type="text"
-            placeholder="Поиск по email, имени или ID..."
+            placeholder={t('admin.users.search.placeholder')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-10 pr-4 py-2 bg-white dark:bg-dark-700 border border-dark-300 dark:border-dark-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
@@ -293,7 +295,7 @@ export const AdminUsers: React.FC = () => {
       {/* Users List */}
       {filteredUsers.length === 0 ? (
         <Alert variant="info">
-          {searchQuery ? 'Пользователи не найдены' : 'Пока нет зарегистрированных пользователей'}
+          {searchQuery ? t('admin.users.list.notFound') : t('admin.users.list.noUsers')}
         </Alert>
       ) : (
         <div className="space-y-4">
@@ -324,24 +326,24 @@ export const AdminUsers: React.FC = () => {
 
                     {user.telegram && (
                       <div className="flex items-center gap-2">
-                        <span className="text-dark-400">Telegram:</span>
+                        <span className="text-dark-400">{t('admin.users.list.telegram')}</span>
                         <span>{user.telegram}</span>
                       </div>
                     )}
 
                     <div className="flex items-center gap-2">
                       <Calendar className="w-4 h-4 text-dark-400" />
-                      <span>Регистрация: {formatDate(user.createdAt)}</span>
+                      <span>{t('admin.users.list.registration')} {formatDate(user.createdAt)}</span>
                     </div>
 
                     <div className="flex items-center gap-2">
                       <Shield className="w-4 h-4 text-dark-400" />
-                      <span>KYC:</span>
+                      <span>{t('admin.users.list.kyc')}</span>
                       <Badge variant={getKycBadgeVariant(user.kycStatus)}>
                         {getKycStatusText(user.kycStatus)}
                       </Badge>
                       {user.kycLevel !== undefined && user.kycLevel > 0 && (
-                        <span className="text-xs text-dark-500">(Level {user.kycLevel})</span>
+                        <span className="text-xs text-dark-500">({t('admin.users.list.level')} {user.kycLevel})</span>
                       )}
                     </div>
                   </div>
@@ -349,7 +351,7 @@ export const AdminUsers: React.FC = () => {
                   {user.twoFactorEnabled && (
                     <div className="mt-2">
                       <Badge variant="info" className="text-xs">
-                        🔐 2FA включен
+                        🔐 {t('admin.users.list.twoFaEnabled')}
                       </Badge>
                     </div>
                   )}
@@ -357,16 +359,16 @@ export const AdminUsers: React.FC = () => {
                   {user.isBanned && (
                     <div className="mt-2">
                       <Badge variant="error" className="text-xs">
-                        🚫 Заблокирован
+                        🚫 {t('admin.users.list.banned')}
                       </Badge>
                       {user.banReason && (
                         <p className="text-xs text-red-600 dark:text-red-400 mt-1">
-                          Причина: {user.banReason}
+                          {t('admin.users.list.banReason')} {user.banReason}
                         </p>
                       )}
                       {user.bannedAt && (
                         <p className="text-xs text-dark-500 mt-1">
-                          Дата: {formatDate(user.bannedAt)}
+                          {t('admin.users.list.banDate')} {formatDate(user.bannedAt)}
                         </p>
                       )}
                     </div>
@@ -379,7 +381,7 @@ export const AdminUsers: React.FC = () => {
                     variant="outline"
                     onClick={() => toggleEmailVerified(user)}
                     className="gap-1"
-                    title={user.emailVerified ? 'Отменить подтверждение email' : 'Подтвердить email'}
+                    title={user.emailVerified ? t('admin.users.actions.unverifyEmail') : t('admin.users.actions.verifyEmail')}
                   >
                     {user.emailVerified ? (
                       <XCircle className="w-4 h-4" />
@@ -394,10 +396,10 @@ export const AdminUsers: React.FC = () => {
                       variant="outline"
                       onClick={() => handleUnban(user)}
                       className="gap-1 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20"
-                      title="Разблокировать"
+                      title={t('admin.users.actions.unban')}
                     >
                       <CheckCircle className="w-4 h-4" />
-                      Разблокировать
+                      {t('admin.users.actions.unban')}
                     </Button>
                   ) : (
                     <Button
@@ -405,10 +407,10 @@ export const AdminUsers: React.FC = () => {
                       variant="outline"
                       onClick={() => handleBan(user)}
                       className="gap-1 text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-900/20"
-                      title="Заблокировать"
+                      title={t('admin.users.actions.ban')}
                     >
                       <Ban className="w-4 h-4" />
-                      Бан
+                      {t('admin.users.actions.ban')}
                     </Button>
                   )}
 
@@ -419,7 +421,7 @@ export const AdminUsers: React.FC = () => {
                     className="gap-1"
                   >
                     <Edit2 className="w-4 h-4" />
-                    Изменить
+                    {t('admin.users.actions.edit')}
                   </Button>
 
                   <Button
@@ -429,7 +431,7 @@ export const AdminUsers: React.FC = () => {
                     className="gap-1 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
                   >
                     <Trash2 className="w-4 h-4" />
-                    Удалить
+                    {t('admin.users.actions.delete')}
                   </Button>
                 </div>
               </div>
@@ -442,12 +444,12 @@ export const AdminUsers: React.FC = () => {
       <Modal
         isOpen={showEditModal}
         onClose={() => setShowEditModal(false)}
-        title="Редактировать пользователя"
+        title={t('admin.users.edit.title')}
       >
         {selectedUser && (
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium mb-2">Имя</label>
+              <label className="block text-sm font-medium mb-2">{t('admin.users.edit.name')}</label>
               <Input
                 value={editForm.name || ''}
                 onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
@@ -455,7 +457,7 @@ export const AdminUsers: React.FC = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2">Email</label>
+              <label className="block text-sm font-medium mb-2">{t('admin.users.edit.email')}</label>
               <Input
                 value={editForm.email || ''}
                 onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
@@ -464,7 +466,7 @@ export const AdminUsers: React.FC = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2">Телефон</label>
+              <label className="block text-sm font-medium mb-2">{t('admin.users.edit.phone')}</label>
               <Input
                 value={editForm.phone || ''}
                 onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
@@ -472,7 +474,7 @@ export const AdminUsers: React.FC = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2">Telegram</label>
+              <label className="block text-sm font-medium mb-2">{t('admin.users.edit.telegram')}</label>
               <Input
                 value={editForm.telegram || ''}
                 onChange={(e) => setEditForm({ ...editForm, telegram: e.target.value })}
@@ -480,30 +482,30 @@ export const AdminUsers: React.FC = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2">Статус KYC</label>
+              <label className="block text-sm font-medium mb-2">{t('admin.users.edit.kycStatus')}</label>
               <select
                 value={editForm.kycStatus || 'none'}
                 onChange={(e) => setEditForm({ ...editForm, kycStatus: e.target.value as any })}
                 className="w-full px-4 py-2 bg-white dark:bg-dark-700 border border-dark-300 dark:border-dark-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
               >
-                <option value="none">None</option>
-                <option value="pending">Pending</option>
-                <option value="verified">Verified</option>
-                <option value="rejected">Rejected</option>
+                <option value="none">{t('admin.users.kycStatuses.none')}</option>
+                <option value="pending">{t('admin.users.kycStatuses.pending')}</option>
+                <option value="verified">{t('admin.users.kycStatuses.verified')}</option>
+                <option value="rejected">{t('admin.users.kycStatuses.rejected')}</option>
               </select>
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2">Уровень KYC</label>
+              <label className="block text-sm font-medium mb-2">{t('admin.users.edit.kycLevel')}</label>
               <select
                 value={editForm.kycLevel || 0}
                 onChange={(e) => setEditForm({ ...editForm, kycLevel: parseInt(e.target.value) })}
                 className="w-full px-4 py-2 bg-white dark:bg-dark-700 border border-dark-300 dark:border-dark-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
               >
-                <option value="0">0 - None</option>
-                <option value="1">1 - Basic</option>
-                <option value="2">2 - Intermediate</option>
-                <option value="3">3 - Full</option>
+                <option value="0">{t('admin.users.kycLevels.level0')}</option>
+                <option value="1">{t('admin.users.kycLevels.level1')}</option>
+                <option value="2">{t('admin.users.kycLevels.level2')}</option>
+                <option value="3">{t('admin.users.kycLevels.level3')}</option>
               </select>
             </div>
 
@@ -516,16 +518,16 @@ export const AdminUsers: React.FC = () => {
                 className="w-4 h-4 text-primary-500 rounded focus:ring-primary-500"
               />
               <label htmlFor="emailVerified" className="text-sm">
-                Email подтвержден
+                {t('admin.users.edit.emailVerified')}
               </label>
             </div>
 
             <div className="flex gap-3 justify-end pt-4">
               <Button variant="outline" onClick={() => setShowEditModal(false)}>
-                Отмена
+                {t('admin.users.edit.cancel')}
               </Button>
               <Button onClick={handleSaveEdit}>
-                Сохранить
+                {t('admin.users.edit.save')}
               </Button>
             </div>
           </div>
@@ -536,26 +538,26 @@ export const AdminUsers: React.FC = () => {
       <Modal
         isOpen={showDeleteModal}
         onClose={() => setShowDeleteModal(false)}
-        title="Подтвердите удаление"
+        title={t('admin.users.delete.title')}
         size="sm"
       >
         {selectedUser && (
           <div className="space-y-4">
             <p className="text-dark-600 dark:text-dark-400">
-              Вы уверены, что хотите удалить пользователя <strong>{selectedUser.name}</strong> ({selectedUser.email})?
+              {t('admin.users.delete.confirmText')} <strong>{selectedUser.name}</strong> ({selectedUser.email})?
             </p>
             <Alert variant="warning">
-              ⚠️ Это действие необратимо. Все данные пользователя будут удалены.
+              ⚠️ {t('admin.users.delete.warning')}
             </Alert>
             <div className="flex gap-3 justify-end">
               <Button variant="outline" onClick={() => setShowDeleteModal(false)}>
-                Отмена
+                {t('admin.users.delete.cancel')}
               </Button>
               <Button
                 onClick={confirmDelete}
                 className="bg-red-600 hover:bg-red-700 text-white"
               >
-                Удалить
+                {t('admin.users.delete.confirm')}
               </Button>
             </div>
           </div>
@@ -566,41 +568,41 @@ export const AdminUsers: React.FC = () => {
       <Modal
         isOpen={showBanModal}
         onClose={() => setShowBanModal(false)}
-        title="Заблокировать пользователя"
+        title={t('admin.users.ban.title')}
         size="sm"
       >
         {selectedUser && (
           <div className="space-y-4">
             <p className="text-dark-600 dark:text-dark-400">
-              Заблокировать пользователя <strong>{selectedUser.name}</strong> ({selectedUser.email})?
+              {t('admin.users.ban.confirmText')} <strong>{selectedUser.name}</strong> ({selectedUser.email})?
             </p>
             
             <div>
               <label className="block text-sm font-medium mb-2">
-                Причина блокировки *
+                {t('admin.users.ban.reason')}
               </label>
               <textarea
                 value={banReason}
                 onChange={(e) => setBanReason(e.target.value)}
-                placeholder="Укажите причину бана..."
+                placeholder={t('admin.users.ban.reasonPlaceholder')}
                 className="w-full px-4 py-2 bg-white dark:bg-dark-700 border border-dark-300 dark:border-dark-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none"
                 rows={3}
               />
             </div>
 
             <Alert variant="warning">
-              🚫 Пользователь не сможет войти в систему до разблокировки.
+              🚫 {t('admin.users.ban.warning')}
             </Alert>
 
             <div className="flex gap-3 justify-end">
               <Button variant="outline" onClick={() => setShowBanModal(false)}>
-                Отмена
+                {t('admin.users.ban.cancel')}
               </Button>
               <Button
                 onClick={confirmBan}
                 className="bg-orange-600 hover:bg-orange-700 text-white"
               >
-                Заблокировать
+                {t('admin.users.ban.confirm')}
               </Button>
             </div>
           </div>

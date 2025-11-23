@@ -2,13 +2,16 @@ import React from 'react';
 import { Link, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAdminStore } from '../../store/adminStore';
 import { useThemeStore } from '../../store/themeStore';
-import { LayoutDashboard, Settings, ShoppingCart, DollarSign, LogOut, Moon, Sun, Ticket, FileText, Shield, Mail, Star, Megaphone, Users, Globe } from 'lucide-react';
+import { useTranslation } from '../../hooks/useTranslation';
+import { LanguageSelector } from '../ui/LanguageSelector';
+import { LayoutDashboard, Settings, ShoppingCart, DollarSign, LogOut, Moon, Sun, Ticket, FileText, Shield, Mail, Star, Megaphone, Users, Globe, Lock } from 'lucide-react';
 
 export const AdminLayout: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { username, logout } = useAdminStore();
   const { theme, toggleTheme } = useThemeStore();
+  const { t } = useTranslation();
 
   const handleLogout = () => {
     logout();
@@ -16,18 +19,19 @@ export const AdminLayout: React.FC = () => {
   };
 
   const navItems = [
-    { path: '/admin/dashboard', icon: LayoutDashboard, label: 'Панель' },
-    { path: '/admin/orders', icon: ShoppingCart, label: 'Заявки' },
-    { path: '/admin/users', icon: Users, label: 'Пользователи' },
-    { path: '/admin/currencies', icon: DollarSign, label: 'Валюты' },
-    { path: '/admin/promos', icon: Ticket, label: 'Промокоды' },
-    { path: '/admin/kyc', icon: Shield, label: 'KYC' },
-    { path: '/admin/content', icon: FileText, label: 'Контент' },
-    { path: '/admin/announcements', icon: Megaphone, label: 'Объявления' },
-    { path: '/admin/newsletter', icon: Mail, label: 'Рассылки' },
-    { path: '/admin/reviews', icon: Star, label: 'Отзывы' },
-    { path: '/admin/site-settings', icon: Globe, label: 'Настройки сайта' },
-    { path: '/admin/settings', icon: Settings, label: 'Настройки' },
+    { path: '/admin/dashboard', icon: LayoutDashboard, label: t('admin.navigation.dashboard') },
+    { path: '/admin/orders', icon: ShoppingCart, label: t('admin.navigation.orders') },
+    { path: '/admin/users', icon: Users, label: t('admin.navigation.users') },
+    { path: '/admin/currencies', icon: DollarSign, label: t('admin.navigation.currencies') },
+    { path: '/admin/promos', icon: Ticket, label: t('admin.navigation.promos') },
+    { path: '/admin/kyc', icon: Shield, label: t('admin.navigation.kyc') },
+    { path: '/admin/content', icon: FileText, label: t('admin.navigation.content') },
+    { path: '/admin/announcements', icon: Megaphone, label: t('admin.navigation.announcements') },
+    { path: '/admin/newsletter', icon: Mail, label: t('admin.navigation.newsletter') },
+    { path: '/admin/reviews', icon: Star, label: t('admin.navigation.reviews') },
+    { path: '/admin/site-settings', icon: Globe, label: t('admin.navigation.siteSettings') },
+    { path: '/admin/settings', icon: Settings, label: t('admin.navigation.settings') },
+    { path: '/admin/security', icon: Lock, label: t('admin.navigation.security') },
   ];
 
   return (
@@ -45,6 +49,8 @@ export const AdminLayout: React.FC = () => {
                 {username}
               </span>
               
+              <LanguageSelector />
+              
               <button
                 onClick={toggleTheme}
                 className="p-2 rounded-lg hover:bg-dark-100 dark:hover:bg-dark-700 transition"
@@ -58,7 +64,7 @@ export const AdminLayout: React.FC = () => {
                 className="flex items-center gap-2 px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition"
               >
                 <LogOut className="w-4 h-4" />
-                Выход
+                {t('admin.navigation.logout')}
               </button>
             </div>
           </div>
@@ -97,7 +103,7 @@ export const AdminLayout: React.FC = () => {
                   to="/"
                   className="flex items-center gap-2 px-4 py-2 text-sm text-dark-600 dark:text-dark-400 hover:text-primary-500 transition"
                 >
-                  ← Вернуться на сайт
+                  ← {t('admin.navigation.returnToSite')}
                 </Link>
               </div>
             </div>

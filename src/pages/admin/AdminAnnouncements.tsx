@@ -6,6 +6,7 @@ import { Input } from '../../components/ui/Input';
 import { Alert } from '../../components/ui/Alert';
 import { Badge } from '../../components/ui/Badge';
 import { useAnnouncementStore } from '../../store/announcementStore';
+import { useTranslation } from '../../hooks/useTranslation';
 import { formatDate } from '../../utils/formatters';
 import toast from 'react-hot-toast';
 
@@ -17,6 +18,7 @@ export const AdminAnnouncements: React.FC = () => {
     deleteAnnouncement, 
     toggleAnnouncementStatus 
   } = useAnnouncementStore();
+  const { t } = useTranslation();
   
   const announcements = getAllAnnouncements();
   const [showForm, setShowForm] = useState(false);
@@ -29,7 +31,7 @@ export const AdminAnnouncements: React.FC = () => {
     e.preventDefault();
     
     if (!publishDate) {
-      toast.error('Выберите дату публикации');
+      toast.error(t('admin.announcements.selectDate'));
       return;
     }
 
@@ -43,15 +45,15 @@ export const AdminAnnouncements: React.FC = () => {
         publishDate: publishTimestamp,
         endDate: endTimestamp,
       });
-      toast.success('Объявление обновлено');
+      toast.success(t('admin.announcements.updated'));
       setEditingId(null);
     } else {
       // Create new announcement
       const result = createAnnouncement(message, publishTimestamp, endTimestamp);
       if (result.success) {
-        toast.success('Объявление создано');
+        toast.success(t('admin.announcements.created'));
       } else {
-        toast.error(result.error || 'Ошибка создания объявления');
+        toast.error(result.error || t('admin.announcements.createError'));
         return;
       }
     }
@@ -72,15 +74,15 @@ export const AdminAnnouncements: React.FC = () => {
   };
 
   const handleDelete = (id: string) => {
-    if (confirm('Вы уверены, что хотите удалить это объявление?')) {
+    if (confirm(t('admin.announcements.confirmDelete'))) {
       deleteAnnouncement(id);
-      toast.success('Объявление удалено');
+      toast.success(t('admin.announcements.deleted'));
     }
   };
 
   const handleToggleStatus = (id: string) => {
     toggleAnnouncementStatus(id);
-    toast.success('Статус изменен');
+    toast.success(t('admin.announcements.statusChanged'));
   };
 
   const handleCancel = () => {
@@ -99,15 +101,15 @@ export const AdminAnnouncements: React.FC = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold mb-2">Объявления на главной</h1>
+          <h1 className="text-3xl font-bold mb-2">{t('admin.announcements.title')}</h1>
           <p className="text-dark-600 dark:text-dark-400">
-            Управление актуальной информацией на главной странице сайта
+            {t('admin.announcements.subtitle')}
           </p>
         </div>
         {!showForm && (
           <Button onClick={() => setShowForm(true)} className="gap-2">
             <Plus className="w-4 h-4" />
-            Создать объявление
+            {t('admin.announcements.create')}
           </Button>
         )}
       </div>
@@ -117,30 +119,30 @@ export const AdminAnnouncements: React.FC = () => {
         <Card>
           <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
             <Megaphone className="w-5 h-5" />
-            {editingId ? 'Редактировать объявление' : 'Новое объявление'}
+            {editingId ? t('admin.announcements.edit') : t('admin.announcements.new')}
           </h3>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-sm font-medium mb-2">
-                Сообщение <span className="text-red-500">*</span>
+                {t('admin.announcements.message')} <span className="text-red-500">*</span>
               </label>
               <textarea
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
-                placeholder="Введите текст объявления..."
+                placeholder={t('admin.announcements.messagePlaceholder')}
                 className="w-full h-32 px-4 py-2 rounded-lg border border-dark-300 dark:border-dark-600 bg-white dark:bg-dark-800 focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none"
                 required
                 maxLength={500}
               />
               <p className="text-xs text-dark-500 mt-1">
-                {message.length}/500 символов
+                {message.length}/500 {t('admin.announcements.characters')}
               </p>
             </div>
 
             <div>
               <label className="block text-sm font-medium mb-2">
-                Дата и время публикации <span className="text-red-500">*</span>
+                {t('admin.announcements.publishDate')} <span className="text-red-500">*</span>
               </label>
               <Input
                 type="datetime-local"
@@ -150,13 +152,13 @@ export const AdminAnnouncements: React.FC = () => {
                 required
               />
               <p className="text-xs text-dark-500 mt-1">
-                Объявление будет показано после указанной даты
+                {t('admin.announcements.publishNote')}
               </p>
             </div>
 
             <div>
               <label className="block text-sm font-medium mb-2">
-                Дата и время окончания (необязательно)
+                {t('admin.announcements.endDate')}
               </label>
               <Input
                 type="datetime-local"
@@ -165,16 +167,16 @@ export const AdminAnnouncements: React.FC = () => {
                 min={publishDate || getMinDateTime()}
               />
               <p className="text-xs text-dark-500 mt-1">
-                Объявление автоматически скроется после этой даты. Оставьте пустым для бессрочного объявления
+                {t('admin.announcements.endNote')}
               </p>
             </div>
 
             <div className="flex gap-2">
               <Button type="submit">
-                {editingId ? 'Обновить' : 'Создать'}
+                {editingId ? t('admin.announcements.update') : t('common.buttons.add')}
               </Button>
               <Button type="button" variant="outline" onClick={handleCancel}>
-                Отмена
+                {t('common.buttons.cancel')}
               </Button>
             </div>
           </form>
@@ -184,7 +186,7 @@ export const AdminAnnouncements: React.FC = () => {
       {/* Announcements List */}
       {announcements.length === 0 ? (
         <Alert variant="info">
-          Пока нет объявлений. Создайте первое объявление для главной страницы.
+          {t('admin.announcements.noAnnouncements')}
         </Alert>
       ) : (
         <div className="space-y-4">
@@ -200,19 +202,19 @@ export const AdminAnnouncements: React.FC = () => {
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
                       <h3 className="font-semibold">
-                        Объявление #{announcement.id.slice(-6)}
+                        {t('admin.announcements.announcementId')} #{announcement.id.slice(-6)}
                       </h3>
                       {announcement.isActive && isPublished && !isExpired && (
-                        <Badge variant="success">Опубликовано</Badge>
+                        <Badge variant="success">{t('admin.announcements.published')}</Badge>
                       )}
                       {announcement.isActive && isPending && (
-                        <Badge variant="warning">Запланировано</Badge>
+                        <Badge variant="warning">{t('admin.announcements.scheduled')}</Badge>
                       )}
                       {announcement.isActive && isExpired && (
-                        <Badge variant="error">Завершено</Badge>
+                        <Badge variant="error">{t('admin.announcements.expired')}</Badge>
                       )}
                       {!announcement.isActive && (
-                        <Badge variant="default">Скрыто</Badge>
+                        <Badge variant="default">{t('admin.announcements.hidden')}</Badge>
                       )}
                     </div>
                     <p className="text-dark-600 dark:text-dark-300 mb-3">
@@ -220,14 +222,14 @@ export const AdminAnnouncements: React.FC = () => {
                     </p>
                     <div className="flex items-center gap-4 text-xs text-dark-500">
                       <span>
-                        Создано: {formatDate(announcement.createdAt)}
+                        {t('admin.announcements.created')}: {formatDate(announcement.createdAt)}
                       </span>
                       <span>
-                        Публикация: {formatDate(announcement.publishDate)}
+                        {t('admin.announcements.publishDate')}: {formatDate(announcement.publishDate)}
                       </span>
                       {announcement.endDate && (
                         <span>
-                          Окончание: {formatDate(announcement.endDate)}
+                          {t('admin.announcements.endDate')}: {formatDate(announcement.endDate)}
                         </span>
                       )}
                     </div>
@@ -242,7 +244,7 @@ export const AdminAnnouncements: React.FC = () => {
                     className="gap-2"
                   >
                     <Edit2 className="w-4 h-4" />
-                    Редактировать
+                    {t('common.buttons.edit')}
                   </Button>
 
                   <Button
@@ -254,12 +256,12 @@ export const AdminAnnouncements: React.FC = () => {
                     {announcement.isActive ? (
                       <>
                         <EyeOff className="w-4 h-4" />
-                        Скрыть
+                        {t('admin.announcements.hide')}
                       </>
                     ) : (
                       <>
                         <Eye className="w-4 h-4" />
-                        Показать
+                        {t('admin.announcements.show')}
                       </>
                     )}
                   </Button>
@@ -271,7 +273,7 @@ export const AdminAnnouncements: React.FC = () => {
                     className="gap-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
                   >
                     <Trash2 className="w-4 h-4" />
-                    Удалить
+                    {t('common.buttons.delete')}
                   </Button>
                 </div>
               </Card>

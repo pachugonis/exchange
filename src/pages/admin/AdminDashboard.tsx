@@ -1,11 +1,13 @@
 import React, { useEffect } from 'react';
 import { Navigate, Link } from 'react-router-dom';
 import { useAdminStore } from '../../store/adminStore';
+import { useTranslation } from '../../hooks/useTranslation';
 import { Card } from '../../components/ui/Card';
 import { TrendingUp, Clock, CheckCircle, Users, DollarSign, AlertCircle } from 'lucide-react';
 
 export const AdminDashboard: React.FC = () => {
   const { isAuthenticated, stats, loadStats } = useAdminStore();
+  const { t } = useTranslation();
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -19,28 +21,28 @@ export const AdminDashboard: React.FC = () => {
 
   const statCards = [
     {
-      title: 'Всего заявок',
+      title: t('admin.dashboard.stats.totalOrders'),
       value: stats.totalOrders,
       icon: DollarSign,
       color: 'text-blue-600 dark:text-blue-400',
       bgColor: 'bg-blue-100 dark:bg-blue-900',
     },
     {
-      title: 'В обработке',
+      title: t('admin.dashboard.stats.pendingOrders'),
       value: stats.pendingOrders,
       icon: Clock,
       color: 'text-yellow-600 dark:text-yellow-400',
       bgColor: 'bg-yellow-100 dark:bg-yellow-900',
     },
     {
-      title: 'Завершено',
+      title: t('admin.dashboard.stats.completedOrders'),
       value: stats.completedOrders,
       icon: CheckCircle,
       color: 'text-green-600 dark:text-green-400',
       bgColor: 'bg-green-100 dark:bg-green-900',
     },
     {
-      title: 'Активных пользователей',
+      title: t('admin.dashboard.stats.activeUsers'),
       value: stats.activeUsers,
       icon: Users,
       color: 'text-purple-600 dark:text-purple-400',
@@ -51,9 +53,9 @@ export const AdminDashboard: React.FC = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold mb-2">Панель управления</h1>
+        <h1 className="text-3xl font-bold mb-2">{t('admin.dashboard.title')}</h1>
         <p className="text-dark-600 dark:text-dark-400">
-          Обзор активности платформы обмена
+          {t('admin.dashboard.subtitle')}
         </p>
       </div>
 
@@ -85,9 +87,9 @@ export const AdminDashboard: React.FC = () => {
           <Card className="hover:border-primary-500 transition cursor-pointer">
             <div className="text-center py-6">
               <Clock className="w-12 h-12 mx-auto mb-3 text-primary-500" />
-              <h3 className="font-semibold text-lg mb-1">Управление заявками</h3>
+              <h3 className="font-semibold text-lg mb-1">{t('admin.dashboard.quickActions.manageOrders')}</h3>
               <p className="text-sm text-dark-600 dark:text-dark-400">
-                Просмотр и обработка всех заявок
+                {t('admin.dashboard.quickActions.manageOrdersDesc')}
               </p>
             </div>
           </Card>
@@ -97,9 +99,9 @@ export const AdminDashboard: React.FC = () => {
           <Card className="hover:border-primary-500 transition cursor-pointer">
             <div className="text-center py-6">
               <TrendingUp className="w-12 h-12 mx-auto mb-3 text-primary-500" />
-              <h3 className="font-semibold text-lg mb-1">Настройки</h3>
+              <h3 className="font-semibold text-lg mb-1">{t('admin.dashboard.quickActions.settings')}</h3>
               <p className="text-sm text-dark-600 dark:text-dark-400">
-                Комиссии, адреса и параметры
+                {t('admin.dashboard.quickActions.settingsDesc')}
               </p>
             </div>
           </Card>
@@ -109,9 +111,9 @@ export const AdminDashboard: React.FC = () => {
           <Card className="hover:border-primary-500 transition cursor-pointer">
             <div className="text-center py-6">
               <DollarSign className="w-12 h-12 mx-auto mb-3 text-primary-500" />
-              <h3 className="font-semibold text-lg mb-1">Валюты</h3>
+              <h3 className="font-semibold text-lg mb-1">{t('admin.dashboard.quickActions.currencies')}</h3>
               <p className="text-sm text-dark-600 dark:text-dark-400">
-                Управление списком валют
+                {t('admin.dashboard.quickActions.currenciesDesc')}
               </p>
             </div>
           </Card>
@@ -121,14 +123,14 @@ export const AdminDashboard: React.FC = () => {
       {/* Volume Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card>
-          <h3 className="font-semibold text-lg mb-4">Объем за сегодня</h3>
+          <h3 className="font-semibold text-lg mb-4">{t('admin.dashboard.stats.todayVolume')}</h3>
           <div className="text-3xl font-bold text-primary-500">
             ${stats.todayVolume.toLocaleString('en-US', { maximumFractionDigits: 2 })}
           </div>
         </Card>
 
         <Card>
-          <h3 className="font-semibold text-lg mb-4">Общий объем</h3>
+          <h3 className="font-semibold text-lg mb-4">{t('admin.dashboard.stats.totalVolume')}</h3>
           <div className="text-3xl font-bold text-primary-500">
             ${stats.totalVolume.toLocaleString('en-US', { maximumFractionDigits: 2 })}
           </div>

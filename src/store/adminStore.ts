@@ -5,12 +5,18 @@ import type { AdminSettings, AdminStats } from '../types/admin';
 interface AdminState {
   isAuthenticated: boolean;
   username: string | null;
+  password: string;
+  twoFactorEnabled: boolean;
+  twoFactorSecret: string | null;
   settings: AdminSettings;
   stats: AdminStats;
   
   // Actions
-  login: (username: string, password: string) => Promise<boolean>;
+  login: (username: string, password: string, twoFactorCode?: string) => Promise<boolean>;
   logout: () => void;
+  changePassword: (currentPassword: string, newPassword: string) => Promise<boolean>;
+  enableTwoFactor: (secret: string) => void;
+  disableTwoFactor: () => void;
   updateSettings: (settings: Partial<AdminSettings>) => void;
   updatePaymentAddress: (currencyCode: string, address: string) => void;
   updateCommission: (commission: number) => void;
@@ -57,12 +63,31 @@ export const useAdminStore = create<AdminState>()(
     (set, get) => ({
       isAuthenticated: false,
       username: null,
+      password: 'admin123', // Default password
+      twoFactorEnabled: false,
+      twoFactorSecret: null,
       settings: defaultSettings,
       stats: defaultStats,
       
-      login: async (username: string, password: string) => {
-        // Simple demo authentication (in production, use proper backend auth)
-        if (username === 'admin' && password === 'admin123') {
+      login: async (username: string, password: string, twoFactorCode?: string) => {
+        const state = get();
+        
+        // Check username and password
+        if (username === 'admin' && password === state.password) {
+          // If 2FA is enabled, verify the code
+          if (state.twoFactorEnabled && state.twoFactorSecret) {
+            if (!twoFactorCode) {
+              return false; // 2FA code required
+            }
+            
+            // Verify 2FA code
+            const { verifyTOTP } = await import('../utils/twoFactor');
+            const isValid = await verifyTOTP(state.twoFactorSecret, twoFactorCode);
+            if (!isValid) {
+              return false;
+            }
+          }
+          
           set({ isAuthenticated: true, username });
           await get().loadStats();
           return true;
@@ -72,6 +97,23 @@ export const useAdminStore = create<AdminState>()(
       
       logout: () => {
         set({ isAuthenticated: false, username: null });
+      },
+      
+      changePassword: async (currentPassword: string, newPassword: string) => {
+        const state = get();
+        if (currentPassword === state.password) {
+          set({ password: newPassword });
+          return true;
+        }
+        return false;
+      },
+      
+      enableTwoFactor: (secret: string) => {
+        set({ twoFactorEnabled: true, twoFactorSecret: secret });
+      },
+      
+      disableTwoFactor: () => {
+        set({ twoFactorEnabled: false, twoFactorSecret: null });
       },
       
       updateSettings: (newSettings) => {
@@ -136,6 +178,9 @@ export const useAdminStore = create<AdminState>()(
       partialize: (state) => ({
         isAuthenticated: state.isAuthenticated,
         username: state.username,
+        password: state.password,
+        twoFactorEnabled: state.twoFactorEnabled,
+        twoFactorSecret: state.twoFactorSecret,
         settings: state.settings,
       }),
       merge: (persistedState: any, currentState) => {

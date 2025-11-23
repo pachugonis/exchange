@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAdminStore } from '../../store/adminStore';
 import { usePromoStore } from '../../store/promoStore';
+import { useTranslation } from '../../hooks/useTranslation';
 import { Card } from '../../components/ui/Card';
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
@@ -24,6 +25,7 @@ import type { PromoCode } from '../../types/promo';
 export const AdminPromos: React.FC = () => {
   const { isAuthenticated } = useAdminStore();
   const { promoCodes, addPromoCode, updatePromoCode, deletePromoCode } = usePromoStore();
+  const { t } = useTranslation();
   
   const [isCreating, setIsCreating] = useState(false);
   const [editingCode, setEditingCode] = useState<string | null>(null);
@@ -53,30 +55,30 @@ export const AdminPromos: React.FC = () => {
     e.preventDefault();
 
     if (!formData.code || formData.code.trim() === '') {
-      toast.error('Введите код промокода');
+      toast.error(t('admin.promos.messages.enterCode'));
       return;
     }
 
     if (formData.type === 'commission' && (!formData.discount || formData.discount <= 0)) {
-      toast.error('Укажите процент скидки');
+      toast.error(t('admin.promos.messages.enterDiscount'));
       return;
     }
 
     if (formData.type === 'bonus' && (!formData.bonusAmount || formData.bonusAmount <= 0)) {
-      toast.error('Укажите сумму бонуса');
+      toast.error(t('admin.promos.messages.enterBonus'));
       return;
     }
 
     if (editingCode) {
       // Update existing promo
       updatePromoCode(editingCode, formData);
-      toast.success('Промокод обновлен');
+      toast.success(t('admin.promos.messages.updated'));
       setEditingCode(null);
     } else {
       // Check if code already exists
       const exists = promoCodes.find(p => p.code.toLowerCase() === formData.code!.toLowerCase());
       if (exists) {
-        toast.error('Промокод с таким кодом уже существует');
+        toast.error(t('admin.promos.messages.codeExists'));
         return;
       }
 
@@ -95,7 +97,7 @@ export const AdminPromos: React.FC = () => {
       };
 
       addPromoCode(newPromo);
-      toast.success('Промокод создан');
+      toast.success(t('admin.promos.messages.created'));
     }
 
     // Reset form
@@ -117,15 +119,15 @@ export const AdminPromos: React.FC = () => {
   };
 
   const handleDelete = (code: string) => {
-    if (confirm('Вы уверены, что хотите удалить этот промокод?')) {
+    if (confirm(t('admin.promos.messages.confirmDelete'))) {
       deletePromoCode(code);
-      toast.success('Промокод удален');
+      toast.success(t('admin.promos.messages.deleted'));
     }
   };
 
   const handleCopyCode = (code: string) => {
     navigator.clipboard.writeText(code);
-    toast.success('Код скопирован');
+    toast.success(t('admin.promos.messages.codeCopied'));
   };
 
   const formatDate = (timestamp: number) => {
@@ -140,9 +142,9 @@ export const AdminPromos: React.FC = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold mb-2">Промокоды</h1>
+          <h1 className="text-3xl font-bold mb-2">{t('admin.promos.title')}</h1>
           <p className="text-dark-600 dark:text-dark-400">
-            Управление промокодами и акциями
+            {t('admin.promos.subtitle')}
           </p>
         </div>
         <Button
@@ -161,7 +163,7 @@ export const AdminPromos: React.FC = () => {
           className="gap-2"
         >
           <Plus className="w-4 h-4" />
-          {isCreating ? 'Отменить' : 'Создать промокод'}
+          {isCreating ? t('common.buttons.cancel') : t('admin.promos.create')}
         </Button>
       </div>
 
@@ -169,14 +171,14 @@ export const AdminPromos: React.FC = () => {
       {isCreating && (
         <Card>
           <h2 className="text-xl font-semibold mb-6">
-            {editingCode ? 'Редактировать промокод' : 'Новый промокод'}
+            {editingCode ? t('admin.promos.edit') : t('admin.promos.new')}
           </h2>
           
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Code */}
             <div>
               <label className="block text-sm font-medium mb-2">
-                Код промокода <span className="text-red-500">*</span>
+                {t('admin.promos.codeField')} <span className="text-red-500">{t('admin.promos.required')}</span>
               </label>
               <div className="flex gap-2">
                 <Input
@@ -189,7 +191,7 @@ export const AdminPromos: React.FC = () => {
                 />
                 {!editingCode && (
                   <Button type="button" onClick={handleGenerateCode} variant="outline">
-                    Сгенерировать
+                    {t('admin.promos.generate')}
                   </Button>
                 )}
               </div>
@@ -198,7 +200,7 @@ export const AdminPromos: React.FC = () => {
             {/* Type */}
             <div>
               <label className="block text-sm font-medium mb-2">
-                Тип промокода <span className="text-red-500">*</span>
+                {t('admin.promos.type')} <span className="text-red-500">{t('admin.promos.required')}</span>
               </label>
               <div className="grid grid-cols-2 gap-4">
                 <label className="flex items-center gap-3 p-4 border rounded-lg cursor-pointer hover:bg-dark-50 dark:hover:bg-dark-700 transition">
@@ -211,8 +213,8 @@ export const AdminPromos: React.FC = () => {
                     className="w-4 h-4"
                   />
                   <div>
-                    <div className="font-medium">Скидка на комиссию</div>
-                    <div className="text-xs text-dark-500">Процент от комиссии</div>
+                    <div className="font-medium">{t('admin.promos.commissionDiscount')}</div>
+                    <div className="text-xs text-dark-500">{t('admin.promos.percentOfCommission')}</div>
                   </div>
                 </label>
                 <label className="flex items-center gap-3 p-4 border rounded-lg cursor-pointer hover:bg-dark-50 dark:hover:bg-dark-700 transition">
@@ -225,8 +227,8 @@ export const AdminPromos: React.FC = () => {
                     className="w-4 h-4"
                   />
                   <div>
-                    <div className="font-medium">Фиксированный бонус</div>
-                    <div className="text-xs text-dark-500">Сумма в валюте</div>
+                    <div className="font-medium">{t('admin.promos.fixedBonus')}</div>
+                    <div className="text-xs text-dark-500">{t('admin.promos.amountInCurrency')}</div>
                   </div>
                 </label>
               </div>
@@ -237,7 +239,7 @@ export const AdminPromos: React.FC = () => {
               {formData.type === 'commission' ? (
                 <div>
                   <label className="block text-sm font-medium mb-2">
-                    Скидка (%) <span className="text-red-500">*</span>
+                    {t('admin.promos.discountPercent')} <span className="text-red-500">{t('admin.promos.required')}</span>
                   </label>
                   <Input
                     type="number"
@@ -252,7 +254,7 @@ export const AdminPromos: React.FC = () => {
               ) : (
                 <div>
                   <label className="block text-sm font-medium mb-2">
-                    Сумма бонуса <span className="text-red-500">*</span>
+                    {t('admin.promos.bonusAmount')} <span className="text-red-500">{t('admin.promos.required')}</span>
                   </label>
                   <Input
                     type="number"
@@ -267,7 +269,7 @@ export const AdminPromos: React.FC = () => {
 
               <div>
                 <label className="block text-sm font-medium mb-2">
-                  Минимальная сумма обмена
+                  {t('admin.promos.minExchangeAmount')}
                 </label>
                 <Input
                   type="number"
@@ -284,7 +286,7 @@ export const AdminPromos: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium mb-2">
-                  Максимальное количество использований
+                  {t('admin.promos.maxUses')}
                 </label>
                 <Input
                   type="number"
@@ -292,13 +294,13 @@ export const AdminPromos: React.FC = () => {
                   step="1"
                   value={formData.maxUses || ''}
                   onChange={(e) => setFormData({ ...formData, maxUses: e.target.value ? parseInt(e.target.value) : undefined })}
-                  placeholder="Без ограничений"
+                  placeholder={t('admin.promos.unlimited')}
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-medium mb-2">
-                  Срок действия
+                  {t('admin.promos.expiryDate')}
                 </label>
                 <Input
                   type="date"
@@ -321,9 +323,9 @@ export const AdminPromos: React.FC = () => {
                   className="w-5 h-5 rounded border-dark-300 text-primary-500 focus:ring-primary-500"
                 />
                 <div>
-                  <span className="text-sm font-medium">Активен</span>
+                  <span className="text-sm font-medium">{t('admin.promos.active')}</span>
                   <p className="text-xs text-dark-500 dark:text-dark-400">
-                    Промокод будет доступен для использования
+                    {t('admin.promos.activeDescription')}
                   </p>
                 </div>
               </label>
@@ -333,7 +335,7 @@ export const AdminPromos: React.FC = () => {
             <div className="flex gap-3 pt-4 border-t">
               <Button type="submit" className="gap-2">
                 <CheckCircle className="w-4 h-4" />
-                {editingCode ? 'Сохранить изменения' : 'Создать промокод'}
+                {editingCode ? t('admin.promos.saveChanges') : t('admin.promos.create')}
               </Button>
               <Button
                 type="button"
@@ -351,7 +353,7 @@ export const AdminPromos: React.FC = () => {
                   });
                 }}
               >
-                Отмена
+                {t('common.buttons.cancel')}
               </Button>
             </div>
           </form>
@@ -362,15 +364,15 @@ export const AdminPromos: React.FC = () => {
       <Card>
         <div className="flex items-center gap-3 mb-6">
           <Ticket className="w-6 h-6 text-primary-500" />
-          <h2 className="text-xl font-semibold">Все промокоды ({promoCodes.length})</h2>
+          <h2 className="text-xl font-semibold">{t('admin.promos.allPromos')} ({promoCodes.length})</h2>
         </div>
 
         <div className="space-y-4">
           {promoCodes.length === 0 ? (
             <div className="text-center py-12 text-dark-500">
               <Ticket className="w-12 h-12 mx-auto mb-3 opacity-50" />
-              <p>Промокоды не найдены</p>
-              <p className="text-sm mt-1">Создайте первый промокод</p>
+              <p>{t('admin.promos.notFound')}</p>
+              <p className="text-sm mt-1">{t('admin.promos.createFirst')}</p>
             </div>
           ) : (
             promoCodes.map((promo) => (
@@ -387,41 +389,41 @@ export const AdminPromos: React.FC = () => {
                       <button
                         onClick={() => handleCopyCode(promo.code)}
                         className="p-1 hover:bg-dark-200 dark:hover:bg-dark-600 rounded transition"
-                        title="Скопировать код"
+                        title={t('admin.promos.copyCode')}
                       >
                         <Copy className="w-4 h-4" />
                       </button>
                       {promo.isActive ? (
                         <span className="flex items-center gap-1 text-xs text-green-600 dark:text-green-400">
-                          <CheckCircle className="w-3 h-3" /> Активен
+                          <CheckCircle className="w-3 h-3" /> {t('admin.promos.active')}
                         </span>
                       ) : (
                         <span className="flex items-center gap-1 text-xs text-red-600 dark:text-red-400">
-                          <XCircle className="w-3 h-3" /> Неактивен
+                          <XCircle className="w-3 h-3" /> {t('admin.promos.inactive')}
                         </span>
                       )}
                     </div>
 
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                       <div>
-                        <div className="text-dark-500 dark:text-dark-400 text-xs mb-1">Тип</div>
+                        <div className="text-dark-500 dark:text-dark-400 text-xs mb-1">{t('admin.promos.typeLabel')}</div>
                         <div className="flex items-center gap-1">
                           {promo.type === 'commission' ? (
                             <>
                               <Percent className="w-3 h-3" />
-                              <span>Скидка {promo.discount}%</span>
+                              <span>{t('admin.promos.discount')} {promo.discount}%</span>
                             </>
                           ) : (
                             <>
                               <DollarSign className="w-3 h-3" />
-                              <span>Бонус ${promo.bonusAmount}</span>
+                              <span>{t('admin.promos.bonus')} ${promo.bonusAmount}</span>
                             </>
                           )}
                         </div>
                       </div>
 
                       <div>
-                        <div className="text-dark-500 dark:text-dark-400 text-xs mb-1">Использовано</div>
+                        <div className="text-dark-500 dark:text-dark-400 text-xs mb-1">{t('admin.promos.used')}</div>
                         <div className="flex items-center gap-1">
                           <Users className="w-3 h-3" />
                           <span>
@@ -432,12 +434,12 @@ export const AdminPromos: React.FC = () => {
                       </div>
 
                       <div>
-                        <div className="text-dark-500 dark:text-dark-400 text-xs mb-1">Мин. сумма</div>
+                        <div className="text-dark-500 dark:text-dark-400 text-xs mb-1">{t('admin.promos.minAmount')}</div>
                         <div>${promo.minAmount || 0}</div>
                       </div>
 
                       <div>
-                        <div className="text-dark-500 dark:text-dark-400 text-xs mb-1">Срок действия</div>
+                        <div className="text-dark-500 dark:text-dark-400 text-xs mb-1">{t('admin.promos.expiryDate')}</div>
                         <div className="flex items-center gap-1">
                           <Calendar className="w-3 h-3" />
                           {promo.expiresAt ? (
@@ -445,7 +447,7 @@ export const AdminPromos: React.FC = () => {
                               {formatDate(promo.expiresAt)}
                             </span>
                           ) : (
-                            <span className="text-dark-500">Бессрочный</span>
+                            <span className="text-dark-500">{t('admin.promos.permanent')}</span>
                           )}
                         </div>
                       </div>
@@ -456,14 +458,14 @@ export const AdminPromos: React.FC = () => {
                     <button
                       onClick={() => handleEdit(promo)}
                       className="p-2 hover:bg-blue-50 dark:hover:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded transition"
-                      title="Редактировать"
+                      title={t('common.buttons.edit')}
                     >
                       <Edit2 className="w-4 h-4" />
                     </button>
                     <button
                       onClick={() => handleDelete(promo.code)}
                       className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 rounded transition"
-                      title="Удалить"
+                      title={t('common.buttons.delete')}
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>

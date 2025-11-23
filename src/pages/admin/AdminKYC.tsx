@@ -7,12 +7,14 @@ import { Modal } from '../../components/ui/Modal';
 import { Input } from '../../components/ui/Input';
 import { useKYCStore } from '../../store/kycStore';
 import { useUserStore } from '../../store/userStore';
+import { useTranslation } from '../../hooks/useTranslation';
 import { formatDate } from '../../utils/formatters';
 import toast from 'react-hot-toast';
 
 export const AdminKYC: React.FC = () => {
   const { getAllKYCSubmissions, updateKYCStatus } = useKYCStore();
   const { updateProfile } = useUserStore();
+  const { t } = useTranslation();
   const [selectedKYC, setSelectedKYC] = useState<any>(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [showDocumentModal, setShowDocumentModal] = useState(false);
@@ -28,27 +30,27 @@ export const AdminKYC: React.FC = () => {
   const handleApprove = (userId: string, level: number) => {
     updateKYCStatus(userId, 'verified');
     updateProfile({ kycStatus: 'verified', kycLevel: level });
-    toast.success('KYC верификация одобрена');
+    toast.success(t('admin.kyc.approved'));
     setShowDetailsModal(false);
   };
 
   const handleReject = (userId: string) => {
     if (!rejectionReason.trim()) {
-      toast.error('Укажите причину отклонения');
+      toast.error(t('admin.kyc.enterReason'));
       return;
     }
     updateKYCStatus(userId, 'rejected', rejectionReason);
     updateProfile({ kycStatus: 'rejected' });
-    toast.success('KYC верификация отклонена');
+    toast.success(t('admin.kyc.rejected'));
     setRejectionReason('');
     setShowDetailsModal(false);
   };
 
   const getStatusBadge = (status: string) => {
     const config = {
-      pending: { variant: 'warning' as const, icon: Clock, text: 'На проверке' },
-      verified: { variant: 'success' as const, icon: CheckCircle, text: 'Одобрено' },
-      rejected: { variant: 'error' as const, icon: XCircle, text: 'Отклонено' },
+      pending: { variant: 'warning' as const, icon: Clock, text: t('admin.kyc.status.pending') },
+      verified: { variant: 'success' as const, icon: CheckCircle, text: t('admin.kyc.status.verified') },
+      rejected: { variant: 'error' as const, icon: XCircle, text: t('admin.kyc.status.rejected') },
     };
     const { variant, icon: Icon, text } = config[status as keyof typeof config] || config.pending;
     return (
@@ -63,9 +65,9 @@ export const AdminKYC: React.FC = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">KYC Верификация</h1>
+          <h1 className="text-2xl font-bold">{t('admin.kyc.title')}</h1>
           <p className="text-dark-600 dark:text-dark-400">
-            Управление заявками на верификацию пользователей
+            {t('admin.kyc.subtitle')}
           </p>
         </div>
         <Shield className="w-8 h-8 text-primary-500" />
@@ -79,28 +81,28 @@ export const AdminKYC: React.FC = () => {
             size="sm"
             onClick={() => setFilterStatus('all')}
           >
-            Все ({allSubmissions.length})
+            {t('admin.kyc.filters.all')} ({allSubmissions.length})
           </Button>
           <Button
             variant={filterStatus === 'pending' ? 'primary' : 'outline'}
             size="sm"
             onClick={() => setFilterStatus('pending')}
           >
-            На проверке ({allSubmissions.filter(k => k.status === 'pending').length})
+            {t('admin.kyc.filters.pending')} ({allSubmissions.filter(k => k.status === 'pending').length})
           </Button>
           <Button
             variant={filterStatus === 'verified' ? 'primary' : 'outline'}
             size="sm"
             onClick={() => setFilterStatus('verified')}
           >
-            Одобрено ({allSubmissions.filter(k => k.status === 'verified').length})
+            {t('admin.kyc.filters.verified')} ({allSubmissions.filter(k => k.status === 'verified').length})
           </Button>
           <Button
             variant={filterStatus === 'rejected' ? 'primary' : 'outline'}
             size="sm"
             onClick={() => setFilterStatus('rejected')}
           >
-            Отклонено ({allSubmissions.filter(k => k.status === 'rejected').length})
+            {t('admin.kyc.filters.rejected')} ({allSubmissions.filter(k => k.status === 'rejected').length})
           </Button>
         </div>
       </Card>
@@ -111,20 +113,20 @@ export const AdminKYC: React.FC = () => {
           <table className="w-full">
             <thead>
               <tr className="border-b border-dark-200 dark:border-dark-700">
-                <th className="text-left py-3 px-4">ID пользователя</th>
-                <th className="text-left py-3 px-4">Уровень</th>
-                <th className="text-left py-3 px-4">ФИО</th>
-                <th className="text-left py-3 px-4">Страна</th>
-                <th className="text-left py-3 px-4">Дата подачи</th>
-                <th className="text-left py-3 px-4">Статус</th>
-                <th className="text-left py-3 px-4">Действия</th>
+                <th className="text-left py-3 px-4">{t('admin.kyc.table.userId')}</th>
+                <th className="text-left py-3 px-4">{t('admin.kyc.table.level')}</th>
+                <th className="text-left py-3 px-4">{t('admin.kyc.table.fullName')}</th>
+                <th className="text-left py-3 px-4">{t('admin.kyc.table.country')}</th>
+                <th className="text-left py-3 px-4">{t('admin.kyc.table.submitDate')}</th>
+                <th className="text-left py-3 px-4">{t('admin.kyc.table.status')}</th>
+                <th className="text-left py-3 px-4">{t('admin.kyc.table.actions')}</th>
               </tr>
             </thead>
             <tbody>
               {filteredSubmissions.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="text-center py-8 text-dark-500">
-                    Нет заявок для отображения
+                    {t('admin.kyc.noSubmissions')}
                   </td>
                 </tr>
               ) : (
@@ -132,7 +134,7 @@ export const AdminKYC: React.FC = () => {
                   <tr key={kyc.userId} className="border-b border-dark-100 dark:border-dark-800 hover:bg-dark-50 dark:hover:bg-dark-800">
                     <td className="py-3 px-4 font-mono text-sm">{kyc.userId}</td>
                     <td className="py-3 px-4">
-                      <Badge variant="default">Уровень {kyc.level}</Badge>
+                      <Badge variant="default">{t('admin.kyc.level')} {kyc.level}</Badge>
                     </td>
                     <td className="py-3 px-4">
                       {kyc.firstName} {kyc.lastName}
@@ -153,7 +155,7 @@ export const AdminKYC: React.FC = () => {
                         className="gap-1"
                       >
                         <Eye className="w-3 h-3" />
-                        Просмотр
+                        {t('admin.kyc.view')}
                       </Button>
                     </td>
                   </tr>
@@ -171,7 +173,7 @@ export const AdminKYC: React.FC = () => {
           setShowDetailsModal(false);
           setRejectionReason('');
         }}
-        title="Детали KYC заявки"
+        title={t('admin.kyc.detailsTitle')}
         size="lg"
       >
         {selectedKYC && (
@@ -179,33 +181,33 @@ export const AdminKYC: React.FC = () => {
             {/* User Info */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-sm text-dark-600 dark:text-dark-400">ID пользователя</label>
+                <label className="text-sm text-dark-600 dark:text-dark-400">{t('admin.kyc.table.userId')}</label>
                 <p className="font-mono text-sm">{selectedKYC.userId}</p>
               </div>
               <div>
-                <label className="text-sm text-dark-600 dark:text-dark-400">Уровень</label>
-                <p className="font-semibold">Уровень {selectedKYC.level}</p>
+                <label className="text-sm text-dark-600 dark:text-dark-400">{t('admin.kyc.table.level')}</label>
+                <p className="font-semibold">{t('admin.kyc.level')} {selectedKYC.level}</p>
               </div>
             </div>
 
             {/* Personal Info */}
             <div className="border-t border-dark-200 dark:border-dark-700 pt-4">
-              <h3 className="font-semibold mb-3">Персональная информация</h3>
+              <h3 className="font-semibold mb-3">{t('admin.kyc.personalInfo')}</h3>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-sm text-dark-600 dark:text-dark-400">Имя</label>
+                  <label className="text-sm text-dark-600 dark:text-dark-400">{t('admin.kyc.firstName')}</label>
                   <p>{selectedKYC.firstName}</p>
                 </div>
                 <div>
-                  <label className="text-sm text-dark-600 dark:text-dark-400">Фамилия</label>
+                  <label className="text-sm text-dark-600 dark:text-dark-400">{t('admin.kyc.lastName')}</label>
                   <p>{selectedKYC.lastName}</p>
                 </div>
                 <div>
-                  <label className="text-sm text-dark-600 dark:text-dark-400">Дата рождения</label>
+                  <label className="text-sm text-dark-600 dark:text-dark-400">{t('admin.kyc.dateOfBirth')}</label>
                   <p>{selectedKYC.dateOfBirth}</p>
                 </div>
                 <div>
-                  <label className="text-sm text-dark-600 dark:text-dark-400">Страна</label>
+                  <label className="text-sm text-dark-600 dark:text-dark-400">{t('admin.kyc.table.country')}</label>
                   <p>{selectedKYC.country}</p>
                 </div>
               </div>
@@ -214,18 +216,18 @@ export const AdminKYC: React.FC = () => {
             {/* Address (Level 2+) */}
             {selectedKYC.level >= 2 && (
               <div className="border-t border-dark-200 dark:border-dark-700 pt-4">
-                <h3 className="font-semibold mb-3">Адрес</h3>
+                <h3 className="font-semibold mb-3">{t('admin.kyc.address')}</h3>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="col-span-2">
-                    <label className="text-sm text-dark-600 dark:text-dark-400">Адрес</label>
+                    <label className="text-sm text-dark-600 dark:text-dark-400">{t('admin.kyc.address')}</label>
                     <p>{selectedKYC.address}</p>
                   </div>
                   <div>
-                    <label className="text-sm text-dark-600 dark:text-dark-400">Город</label>
+                    <label className="text-sm text-dark-600 dark:text-dark-400">{t('admin.kyc.city')}</label>
                     <p>{selectedKYC.city}</p>
                   </div>
                   <div>
-                    <label className="text-sm text-dark-600 dark:text-dark-400">Индекс</label>
+                    <label className="text-sm text-dark-600 dark:text-dark-400">{t('admin.kyc.postalCode')}</label>
                     <p>{selectedKYC.postalCode || '-'}</p>
                   </div>
                 </div>
@@ -235,7 +237,7 @@ export const AdminKYC: React.FC = () => {
             {/* Documents */}
             {selectedKYC.documents && selectedKYC.documents.length > 0 && (
               <div className="border-t border-dark-200 dark:border-dark-700 pt-4">
-                <h3 className="font-semibold mb-3">Документы</h3>
+                <h3 className="font-semibold mb-3">{t('admin.kyc.documents')}</h3>
                 <div className="space-y-2">
                   {selectedKYC.documents.map((doc: any) => (
                     <div key={doc.id} className="flex items-center justify-between p-3 bg-dark-50 dark:bg-dark-700 rounded-lg">
@@ -244,11 +246,11 @@ export const AdminKYC: React.FC = () => {
                         <div>
                           <p className="font-medium text-sm">{doc.fileName}</p>
                           <p className="text-xs text-dark-500">
-                            {doc.type === 'passport' && 'Паспорт'}
-                            {doc.type === 'id_card' && 'ID карта'}
-                            {doc.type === 'driver_license' && 'Водительские права'}
-                            {doc.type === 'selfie' && 'Селфи'}
-                            {doc.type === 'address_proof' && 'Подтверждение адреса'}
+                            {doc.type === 'passport' && t('admin.kyc.docTypes.passport')}
+                            {doc.type === 'id_card' && t('admin.kyc.docTypes.idCard')}
+                            {doc.type === 'driver_license' && t('admin.kyc.docTypes.driverLicense')}
+                            {doc.type === 'selfie' && t('admin.kyc.docTypes.selfie')}
+                            {doc.type === 'address_proof' && t('admin.kyc.docTypes.addressProof')}
                           </p>
                         </div>
                       </div>
@@ -262,7 +264,7 @@ export const AdminKYC: React.FC = () => {
                         className="gap-1"
                       >
                         <Eye className="w-3 h-3" />
-                        Просмотр
+                        {t('admin.kyc.view')}
                       </Button>
                     </div>
                   ))}
@@ -272,14 +274,14 @@ export const AdminKYC: React.FC = () => {
 
             {/* Limits */}
             <div className="border-t border-dark-200 dark:border-dark-700 pt-4">
-              <h3 className="font-semibold mb-3">Лимиты</h3>
+              <h3 className="font-semibold mb-3">{t('admin.kyc.limits')}</h3>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-sm text-dark-600 dark:text-dark-400">Дневной лимит</label>
+                  <label className="text-sm text-dark-600 dark:text-dark-400">{t('admin.kyc.dailyLimit')}</label>
                   <p className="font-semibold">${selectedKYC.dailyLimit?.toLocaleString()}</p>
                 </div>
                 <div>
-                  <label className="text-sm text-dark-600 dark:text-dark-400">Месячный лимит</label>
+                  <label className="text-sm text-dark-600 dark:text-dark-400">{t('admin.kyc.monthlyLimit')}</label>
                   <p className="font-semibold">${selectedKYC.monthlyLimit?.toLocaleString()}</p>
                 </div>
               </div>
@@ -288,7 +290,7 @@ export const AdminKYC: React.FC = () => {
             {/* Rejection Reason (if rejected) */}
             {selectedKYC.status === 'rejected' && selectedKYC.rejectionReason && (
               <div className="border-t border-dark-200 dark:border-dark-700 pt-4">
-                <h3 className="font-semibold mb-2 text-red-600">Причина отклонения</h3>
+                <h3 className="font-semibold mb-2 text-red-600">{t('admin.kyc.rejectionReason')}</h3>
                 <p className="text-sm">{selectedKYC.rejectionReason}</p>
               </div>
             )}
@@ -298,12 +300,12 @@ export const AdminKYC: React.FC = () => {
               <div className="border-t border-dark-200 dark:border-dark-700 pt-4 space-y-3">
                 <div>
                   <label className="block text-sm font-medium mb-2">
-                    Причина отклонения (если отклоняете)
+                    {t('admin.kyc.rejectionReasonLabel')}
                   </label>
                   <Input
                     value={rejectionReason}
                     onChange={(e) => setRejectionReason(e.target.value)}
-                    placeholder="Укажите причину отклонения"
+                    placeholder={t('admin.kyc.rejectionReasonPlaceholder')}
                   />
                 </div>
                 <div className="flex gap-3">
@@ -312,7 +314,7 @@ export const AdminKYC: React.FC = () => {
                     className="flex-1 gap-2 bg-green-600 hover:bg-green-700"
                   >
                     <CheckCircle className="w-4 h-4" />
-                    Одобрить
+                    {t('admin.kyc.approve')}
                   </Button>
                   <Button
                     onClick={() => handleReject(selectedKYC.userId)}
@@ -320,7 +322,7 @@ export const AdminKYC: React.FC = () => {
                     className="flex-1 gap-2 border-red-300 text-red-600 hover:bg-red-50 dark:border-red-700 dark:text-red-400"
                   >
                     <XCircle className="w-4 h-4" />
-                    Отклонить
+                    {t('admin.kyc.reject')}
                   </Button>
                 </div>
               </div>
@@ -336,7 +338,7 @@ export const AdminKYC: React.FC = () => {
           setShowDocumentModal(false);
           setSelectedDocument(null);
         }}
-        title="Просмотр документа"
+        title={t('admin.kyc.documentPreview')}
         size="xl"
       >
         {selectedDocument && (
@@ -346,11 +348,11 @@ export const AdminKYC: React.FC = () => {
                 {selectedDocument.fileName}
               </p>
               <p className="text-xs text-dark-500 mb-4">
-                {selectedDocument.type === 'passport' && 'Паспорт'}
-                {selectedDocument.type === 'id_card' && 'ID карта'}
-                {selectedDocument.type === 'driver_license' && 'Водительские права'}
-                {selectedDocument.type === 'selfie' && 'Селфи'}
-                {selectedDocument.type === 'address_proof' && 'Подтверждение адреса'}
+                {selectedDocument.type === 'passport' && t('admin.kyc.docTypes.passport')}
+                {selectedDocument.type === 'id_card' && t('admin.kyc.docTypes.idCard')}
+                {selectedDocument.type === 'driver_license' && t('admin.kyc.docTypes.driverLicense')}
+                {selectedDocument.type === 'selfie' && t('admin.kyc.docTypes.selfie')}
+                {selectedDocument.type === 'address_proof' && t('admin.kyc.docTypes.addressProof')}
               </p>
             </div>
             <div className="bg-dark-100 dark:bg-dark-800 rounded-lg p-4 max-h-[600px] overflow-auto">
@@ -368,7 +370,7 @@ export const AdminKYC: React.FC = () => {
                   setSelectedDocument(null);
                 }}
               >
-                Закрыть
+                {t('common.buttons.close')}
               </Button>
             </div>
           </div>

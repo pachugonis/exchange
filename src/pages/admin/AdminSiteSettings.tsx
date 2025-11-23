@@ -7,11 +7,13 @@ import { Input } from '../../components/ui/Input';
 import { Toggle } from '../../components/ui/Toggle';
 import { useAdminStore } from '../../store/adminStore';
 import { useSiteSettingsStore } from '../../store/siteSettingsStore';
+import { useTranslation } from '../../hooks/useTranslation';
 import toast from 'react-hot-toast';
 
 export const AdminSiteSettings: React.FC = () => {
   const { isAuthenticated } = useAdminStore();
   const { settings, updateSettings, addFooterBanner, updateFooterBanner, deleteFooterBanner, resetToDefaults } = useSiteSettingsStore();
+  const { t } = useTranslation();
   const [localSettings, setLocalSettings] = useState(settings);
   const [newBanner, setNewBanner] = useState({ image: '', link: '', title: '' });
   const [showBannerForm, setShowBannerForm] = useState(false);
@@ -40,7 +42,7 @@ export const AdminSiteSettings: React.FC = () => {
         const image = event.target?.result as string;
         if (bannerId) {
           updateFooterBanner(bannerId, { image });
-          toast.success('Изображение баннера обновлено');
+          toast.success(t('admin.siteSettings.messages.bannerImageUpdated'));
         } else {
           setNewBanner({ ...newBanner, image });
         }
@@ -51,45 +53,45 @@ export const AdminSiteSettings: React.FC = () => {
 
   const handleSave = () => {
     updateSettings(localSettings);
-    toast.success('Настройки сохранены');
+    toast.success(t('admin.siteSettings.messages.settingsSaved'));
   };
 
   const handleReset = () => {
-    if (confirm('Вы уверены, что хотите сбросить все настройки к значениям по умолчанию?')) {
+    if (confirm(t('admin.siteSettings.messages.confirmReset'))) {
       resetToDefaults();
       setLocalSettings(settings);
-      toast.success('Настройки сброшены');
+      toast.success(t('admin.siteSettings.messages.settingsReset'));
     }
   };
 
   const handleAddBanner = () => {
     if (!newBanner.image || !newBanner.title) {
-      toast.error('Заполните обязательные поля');
+      toast.error(t('admin.siteSettings.messages.fillRequired'));
       return;
     }
     addFooterBanner(newBanner);
     setNewBanner({ image: '', link: '', title: '' });
     setShowBannerForm(false);
-    toast.success('Баннер добавлен');
+    toast.success(t('admin.siteSettings.messages.bannerAdded'));
   };
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold mb-2">Настройки сайта</h1>
+          <h1 className="text-3xl font-bold mb-2">{t('admin.siteSettings.title')}</h1>
           <p className="text-dark-600 dark:text-dark-400">
-            Управление главной страницей и внешним видом сайта
+            {t('admin.siteSettings.subtitle')}
           </p>
         </div>
         <div className="flex gap-3">
           <Button variant="outline" onClick={handleReset} className="gap-2">
             <RotateCcw className="w-4 h-4" />
-            Сбросить
+            {t('admin.siteSettings.reset')}
           </Button>
           <Button onClick={handleSave} className="gap-2">
             <Save className="w-4 h-4" />
-            Сохранить
+            {t('admin.siteSettings.save')}
           </Button>
         </div>
       </div>
@@ -98,11 +100,11 @@ export const AdminSiteSettings: React.FC = () => {
       <Card>
         <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
           <Settings className="w-5 h-5" />
-          Идентичность сайта
+          {t('admin.siteSettings.identity.title')}
         </h2>
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-2">Название сайта</label>
+            <label className="block text-sm font-medium mb-2">{t('admin.siteSettings.identity.siteName')}</label>
             <Input
               value={localSettings.siteName}
               onChange={(e) => setLocalSettings({ ...localSettings, siteName: e.target.value })}
@@ -111,7 +113,7 @@ export const AdminSiteSettings: React.FC = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2">Логотип</label>
+            <label className="block text-sm font-medium mb-2">{t('admin.siteSettings.identity.logo')}</label>
             {localSettings.siteLogo && (
               <div className="mb-2">
                 <img
@@ -125,7 +127,7 @@ export const AdminSiteSettings: React.FC = () => {
               <label className="flex-1 cursor-pointer">
                 <div className="px-4 py-2 bg-dark-100 dark:bg-dark-700 border border-dark-300 dark:border-dark-600 rounded-lg hover:bg-dark-200 dark:hover:bg-dark-600 transition text-center">
                   <ImageIcon className="w-5 h-5 inline-block mr-2" />
-                  Загрузить логотип
+                  {t('admin.siteSettings.identity.uploadLogo')}
                 </div>
                 <input
                   type="file"
@@ -139,7 +141,7 @@ export const AdminSiteSettings: React.FC = () => {
                   variant="outline"
                   onClick={() => setLocalSettings({ ...localSettings, siteLogo: null })}
                 >
-                  Удалить
+                  {t('admin.siteSettings.identity.remove')}
                 </Button>
               )}
             </div>
@@ -149,17 +151,17 @@ export const AdminSiteSettings: React.FC = () => {
 
       {/* Hero Section */}
       <Card>
-        <h2 className="text-xl font-semibold mb-4">Главный экран (Hero)</h2>
+        <h2 className="text-xl font-semibold mb-4">{t('admin.siteSettings.hero.title')}</h2>
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-2">Заголовок</label>
+            <label className="block text-sm font-medium mb-2">{t('admin.siteSettings.hero.heroTitle')}</label>
             <Input
               value={localSettings.heroTitle}
               onChange={(e) => setLocalSettings({ ...localSettings, heroTitle: e.target.value })}
             />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-2">Подзаголовок</label>
+            <label className="block text-sm font-medium mb-2">{t('admin.siteSettings.hero.heroSubtitle')}</label>
             <textarea
               value={localSettings.heroSubtitle}
               onChange={(e) => setLocalSettings({ ...localSettings, heroSubtitle: e.target.value })}
@@ -173,23 +175,23 @@ export const AdminSiteSettings: React.FC = () => {
       {/* Stats Section */}
       <Card>
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold">Секция статистики</h2>
+          <h2 className="text-xl font-semibold">{t('admin.siteSettings.stats.title')}</h2>
           <Toggle
             checked={localSettings.showStats}
             onChange={(checked) => setLocalSettings({ ...localSettings, showStats: checked })}
-            label={localSettings.showStats ? 'Показывать' : 'Скрыть'}
+            label={localSettings.showStats ? t('admin.siteSettings.stats.show') : t('admin.siteSettings.stats.hide')}
           />
         </div>
         
         {localSettings.showStats && (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <label className="block text-sm font-medium mb-2">Значение 1</label>
+              <label className="block text-sm font-medium mb-2">{t('admin.siteSettings.stats.value')} 1</label>
               <Input
                 value={localSettings.stat1Value}
                 onChange={(e) => setLocalSettings({ ...localSettings, stat1Value: e.target.value })}
               />
-              <label className="block text-sm font-medium mt-2 mb-2">Текст 1</label>
+              <label className="block text-sm font-medium mt-2 mb-2">{t('admin.siteSettings.stats.label')} 1</label>
               <Input
                 value={localSettings.stat1Label}
                 onChange={(e) => setLocalSettings({ ...localSettings, stat1Label: e.target.value })}
@@ -197,12 +199,12 @@ export const AdminSiteSettings: React.FC = () => {
             </div>
             
             <div>
-              <label className="block text-sm font-medium mb-2">Значение 2</label>
+              <label className="block text-sm font-medium mb-2">{t('admin.siteSettings.stats.value')} 2</label>
               <Input
                 value={localSettings.stat2Value}
                 onChange={(e) => setLocalSettings({ ...localSettings, stat2Value: e.target.value })}
               />
-              <label className="block text-sm font-medium mt-2 mb-2">Текст 2</label>
+              <label className="block text-sm font-medium mt-2 mb-2">{t('admin.siteSettings.stats.label')} 2</label>
               <Input
                 value={localSettings.stat2Label}
                 onChange={(e) => setLocalSettings({ ...localSettings, stat2Label: e.target.value })}
@@ -210,12 +212,12 @@ export const AdminSiteSettings: React.FC = () => {
             </div>
             
             <div>
-              <label className="block text-sm font-medium mb-2">Значение 3</label>
+              <label className="block text-sm font-medium mb-2">{t('admin.siteSettings.stats.value')} 3</label>
               <Input
                 value={localSettings.stat3Value}
                 onChange={(e) => setLocalSettings({ ...localSettings, stat3Value: e.target.value })}
               />
-              <label className="block text-sm font-medium mt-2 mb-2">Текст 3</label>
+              <label className="block text-sm font-medium mt-2 mb-2">{t('admin.siteSettings.stats.label')} 3</label>
               <Input
                 value={localSettings.stat3Label}
                 onChange={(e) => setLocalSettings({ ...localSettings, stat3Label: e.target.value })}
@@ -228,11 +230,11 @@ export const AdminSiteSettings: React.FC = () => {
       {/* Features Section */}
       <Card>
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold">Преимущества</h2>
+          <h2 className="text-xl font-semibold">{t('admin.siteSettings.features.title')}</h2>
           <Toggle
             checked={localSettings.showFeatures}
             onChange={(checked) => setLocalSettings({ ...localSettings, showFeatures: checked })}
-            label={localSettings.showFeatures ? 'Показывать' : 'Скрыть'}
+            label={localSettings.showFeatures ? t('admin.siteSettings.features.show') : t('admin.siteSettings.features.hide')}
           />
         </div>
         
@@ -240,12 +242,12 @@ export const AdminSiteSettings: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {[1, 2, 3, 4].map((num) => (
               <div key={num} className="space-y-2">
-                <label className="block text-sm font-medium">Преимущество {num} - Заголовок</label>
+                <label className="block text-sm font-medium">{t('admin.siteSettings.features.featureTitle').replace('{num}', String(num))}</label>
                 <Input
                   value={localSettings[`feature${num}Title` as keyof typeof localSettings] as string}
                   onChange={(e) => setLocalSettings({ ...localSettings, [`feature${num}Title`]: e.target.value })}
                 />
-                <label className="block text-sm font-medium">Преимущество {num} - Описание</label>
+                <label className="block text-sm font-medium">{t('admin.siteSettings.features.featureDescription').replace('{num}', String(num))}</label>
                 <Input
                   value={localSettings[`feature${num}Description` as keyof typeof localSettings] as string}
                   onChange={(e) => setLocalSettings({ ...localSettings, [`feature${num}Description`]: e.target.value })}
@@ -258,10 +260,10 @@ export const AdminSiteSettings: React.FC = () => {
 
       {/* Other Sections Visibility */}
       <Card>
-        <h2 className="text-xl font-semibold mb-4">Видимость секций</h2>
+        <h2 className="text-xl font-semibold mb-4">{t('admin.siteSettings.visibility.title')}</h2>
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <span>Курсы криптовалют</span>
+            <span>{t('admin.siteSettings.visibility.cryptoRates')}</span>
             <Toggle
               checked={localSettings.showCryptoRates}
               onChange={(checked) => setLocalSettings({ ...localSettings, showCryptoRates: checked })}
@@ -270,7 +272,7 @@ export const AdminSiteSettings: React.FC = () => {
           
           {localSettings.showCryptoRates && (
             <div className="ml-8 mt-2">
-              <label className="block text-sm font-medium mb-2">Заголовок секции</label>
+              <label className="block text-sm font-medium mb-2">{t('admin.siteSettings.visibility.cryptoRatesTitle')}</label>
               <Input
                 value={localSettings.cryptoRatesTitle}
                 onChange={(e) => setLocalSettings({ ...localSettings, cryptoRatesTitle: e.target.value })}
@@ -279,7 +281,7 @@ export const AdminSiteSettings: React.FC = () => {
           )}
           
           <div className="flex items-center justify-between">
-            <span>Призыв к действию (CTA)</span>
+            <span>{t('admin.siteSettings.visibility.cta')}</span>
             <Toggle
               checked={localSettings.showCTA}
               onChange={(checked) => setLocalSettings({ ...localSettings, showCTA: checked })}
@@ -289,21 +291,21 @@ export const AdminSiteSettings: React.FC = () => {
           {localSettings.showCTA && (
             <div className="ml-8 mt-2 space-y-2">
               <div>
-                <label className="block text-sm font-medium mb-2">Заголовок</label>
+                <label className="block text-sm font-medium mb-2">{t('admin.siteSettings.visibility.ctaTitle')}</label>
                 <Input
                   value={localSettings.ctaTitle}
                   onChange={(e) => setLocalSettings({ ...localSettings, ctaTitle: e.target.value })}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-2">Описание</label>
+                <label className="block text-sm font-medium mb-2">{t('admin.siteSettings.visibility.ctaDescription')}</label>
                 <Input
                   value={localSettings.ctaDescription}
                   onChange={(e) => setLocalSettings({ ...localSettings, ctaDescription: e.target.value })}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-2">Текст кнопки</label>
+                <label className="block text-sm font-medium mb-2">{t('admin.siteSettings.visibility.ctaButtonText')}</label>
                 <Input
                   value={localSettings.ctaButtonText}
                   onChange={(e) => setLocalSettings({ ...localSettings, ctaButtonText: e.target.value })}
@@ -313,7 +315,7 @@ export const AdminSiteSettings: React.FC = () => {
           )}
           
           <div className="flex items-center justify-between">
-            <span>Популярные направления</span>
+            <span>{t('admin.siteSettings.visibility.popularDirections')}</span>
             <Toggle
               checked={localSettings.showPopularDirections}
               onChange={(checked) => setLocalSettings({ ...localSettings, showPopularDirections: checked })}
@@ -321,7 +323,7 @@ export const AdminSiteSettings: React.FC = () => {
           </div>
           
           <div className="flex items-center justify-between">
-            <span>Шаги обмена</span>
+            <span>{t('admin.siteSettings.visibility.exchangeSteps')}</span>
             <Toggle
               checked={localSettings.showExchangeSteps}
               onChange={(checked) => setLocalSettings({ ...localSettings, showExchangeSteps: checked })}
@@ -329,7 +331,7 @@ export const AdminSiteSettings: React.FC = () => {
           </div>
           
           <div className="flex items-center justify-between">
-            <span>Отзывы</span>
+            <span>{t('admin.siteSettings.visibility.testimonials')}</span>
             <Toggle
               checked={localSettings.showTestimonials}
               onChange={(checked) => setLocalSettings({ ...localSettings, showTestimonials: checked })}
@@ -340,10 +342,10 @@ export const AdminSiteSettings: React.FC = () => {
 
       {/* Footer Settings */}
       <Card>
-        <h2 className="text-xl font-semibold mb-4">Настройки подвала</h2>
+        <h2 className="text-xl font-semibold mb-4">{t('admin.siteSettings.footer.title')}</h2>
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-2">Описание</label>
+            <label className="block text-sm font-medium mb-2">{t('admin.siteSettings.footer.description')}</label>
             <Input
               value={localSettings.footerDescription}
               onChange={(e) => setLocalSettings({ ...localSettings, footerDescription: e.target.value })}
@@ -352,7 +354,7 @@ export const AdminSiteSettings: React.FC = () => {
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium mb-2">Email</label>
+              <label className="block text-sm font-medium mb-2">{t('admin.siteSettings.footer.email')}</label>
               <Input
                 value={localSettings.footerEmail}
                 onChange={(e) => setLocalSettings({ ...localSettings, footerEmail: e.target.value })}
@@ -360,7 +362,7 @@ export const AdminSiteSettings: React.FC = () => {
             </div>
             
             <div>
-              <label className="block text-sm font-medium mb-2">Telegram</label>
+              <label className="block text-sm font-medium mb-2">{t('admin.siteSettings.footer.telegram')}</label>
               <Input
                 value={localSettings.footerTelegram}
                 onChange={(e) => setLocalSettings({ ...localSettings, footerTelegram: e.target.value })}
@@ -369,7 +371,7 @@ export const AdminSiteSettings: React.FC = () => {
           </div>
           
           <div>
-            <label className="block text-sm font-medium mb-2">Копирайт</label>
+            <label className="block text-sm font-medium mb-2">{t('admin.siteSettings.footer.copyright')}</label>
             <Input
               value={localSettings.footerCopyright}
               onChange={(e) => setLocalSettings({ ...localSettings, footerCopyright: e.target.value })}
@@ -381,35 +383,35 @@ export const AdminSiteSettings: React.FC = () => {
       {/* Footer Banners */}
       <Card>
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold">Баннеры в подвале (88x31 px)</h2>
+          <h2 className="text-xl font-semibold">{t('admin.siteSettings.banners.title')}</h2>
           <Button onClick={() => setShowBannerForm(!showBannerForm)} className="gap-2">
             <Plus className="w-4 h-4" />
-            Добавить баннер
+            {t('admin.siteSettings.banners.addBanner')}
           </Button>
         </div>
 
         {showBannerForm && (
           <div className="mb-4 p-4 bg-dark-50 dark:bg-dark-700 rounded-lg space-y-3">
             <div>
-              <label className="block text-sm font-medium mb-2">Название *</label>
+              <label className="block text-sm font-medium mb-2">{t('admin.siteSettings.banners.bannerName')} *</label>
               <Input
                 value={newBanner.title}
                 onChange={(e) => setNewBanner({ ...newBanner, title: e.target.value })}
-                placeholder="Название баннера"
+                placeholder={t('admin.siteSettings.banners.bannerNamePlaceholder')}
               />
             </div>
             
             <div>
-              <label className="block text-sm font-medium mb-2">Ссылка</label>
+              <label className="block text-sm font-medium mb-2">{t('admin.siteSettings.banners.link')}</label>
               <Input
                 value={newBanner.link}
                 onChange={(e) => setNewBanner({ ...newBanner, link: e.target.value })}
-                placeholder="https://example.com"
+                placeholder={t('admin.siteSettings.banners.linkPlaceholder')}
               />
             </div>
             
             <div>
-              <label className="block text-sm font-medium mb-2">Изображение (88x31 px) *</label>
+              <label className="block text-sm font-medium mb-2">{t('admin.siteSettings.banners.image')} *</label>
               {newBanner.image && (
                 <div className="mb-2">
                   <img src={newBanner.image} alt="Preview" className="h-[31px] w-[88px] object-cover border border-dark-300 dark:border-dark-600 rounded" />
@@ -418,7 +420,7 @@ export const AdminSiteSettings: React.FC = () => {
               <label className="cursor-pointer block">
                 <div className="px-4 py-2 bg-dark-100 dark:bg-dark-700 border border-dark-300 dark:border-dark-600 rounded-lg hover:bg-dark-200 dark:hover:bg-dark-600 transition text-center">
                   <ImageIcon className="w-5 h-5 inline-block mr-2" />
-                  Загрузить изображение
+                  {t('admin.siteSettings.banners.uploadImage')}
                 </div>
                 <input
                   type="file"
@@ -430,12 +432,12 @@ export const AdminSiteSettings: React.FC = () => {
             </div>
             
             <div className="flex gap-2">
-              <Button onClick={handleAddBanner}>Добавить</Button>
+              <Button onClick={handleAddBanner}>{t('admin.siteSettings.banners.add')}</Button>
               <Button variant="outline" onClick={() => {
                 setShowBannerForm(false);
                 setNewBanner({ image: '', link: '', title: '' });
               }}>
-                Отмена
+                {t('admin.siteSettings.banners.cancel')}
               </Button>
             </div>
           </div>
@@ -459,7 +461,7 @@ export const AdminSiteSettings: React.FC = () => {
               <div className="flex gap-2">
                 <label className="flex-1 cursor-pointer">
                   <div className="px-3 py-1 text-sm bg-dark-100 dark:bg-dark-600 border border-dark-300 dark:border-dark-500 rounded hover:bg-dark-200 dark:hover:bg-dark-500 transition text-center">
-                    Изменить изображение
+                    {t('admin.siteSettings.banners.changeImage')}
                   </div>
                   <input
                     type="file"
@@ -473,9 +475,9 @@ export const AdminSiteSettings: React.FC = () => {
                   size="sm"
                   variant="outline"
                   onClick={() => {
-                    if (confirm('Удалить баннер?')) {
+                    if (confirm(t('admin.siteSettings.messages.confirmDeleteBanner'))) {
                       deleteFooterBanner(banner.id);
-                      toast.success('Баннер удален');
+                      toast.success(t('admin.siteSettings.messages.bannerDeleted'));
                     }
                   }}
                   className="text-red-600"
@@ -488,7 +490,7 @@ export const AdminSiteSettings: React.FC = () => {
         </div>
         
         {settings.footerBanners.length === 0 && !showBannerForm && (
-          <p className="text-center text-dark-500 py-8">Баннеры не добавлены</p>
+          <p className="text-center text-dark-500 py-8">{t('admin.siteSettings.banners.noBanners')}</p>
         )}
       </Card>
     </div>

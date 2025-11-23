@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAdminStore } from '../../store/adminStore';
+import { useTranslation } from '../../hooks/useTranslation';
 import { Card } from '../../components/ui/Card';
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
@@ -9,6 +10,7 @@ import toast from 'react-hot-toast';
 
 export const AdminSettings: React.FC = () => {
   const { isAuthenticated, settings, updateSettings, updatePaymentAddress, updateCommission } = useAdminStore();
+  const { t } = useTranslation();
   const [localSettings, setLocalSettings] = useState(settings);
   const [showSmtpPassword, setShowSmtpPassword] = useState(false);
 
@@ -18,34 +20,34 @@ export const AdminSettings: React.FC = () => {
 
   const handleSaveCommission = () => {
     updateCommission(localSettings.commission);
-    toast.success('Комиссия обновлена');
+    toast.success(t('admin.settings.messages.commissionUpdated'));
   };
 
   const handleSaveAllSettings = () => {
     updateSettings(localSettings);
-    toast.success('Все настройки сохранены');
+    toast.success(t('admin.settings.messages.allSaved'));
   };
 
   const handleTestSmtp = async () => {
     if (!localSettings.smtpEnabled) {
-      toast.error('Сначала включите SMTP');
+      toast.error(t('admin.settings.smtp.enableFirst'));
       return;
     }
 
     if (!localSettings.smtpHost || !localSettings.smtpUser) {
-      toast.error('Заполните обязательные поля SMTP');
+      toast.error(t('admin.settings.smtp.fillRequired'));
       return;
     }
 
-    toast.success('SMTP настройки сохранены. В продакшене будет отправлено тестовое письмо');
+    toast.success(t('admin.settings.messages.smtpSaved'));
   };
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold mb-2">Настройки</h1>
+        <h1 className="text-3xl font-bold mb-2">{t('admin.settings.title')}</h1>
         <p className="text-dark-600 dark:text-dark-400">
-          Управление комиссиями и платежными адресами
+          {t('admin.settings.subtitle')}
         </p>
       </div>
 
@@ -53,13 +55,13 @@ export const AdminSettings: React.FC = () => {
       <Card>
         <div className="flex items-center gap-3 mb-6">
           <Percent className="w-6 h-6 text-primary-500" />
-          <h2 className="text-xl font-semibold">Комиссия обмена</h2>
+          <h2 className="text-xl font-semibold">{t('admin.settings.commission.title')}</h2>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
             <label className="block text-sm font-medium mb-2">
-              Текущая комиссия (%)
+              {t('admin.settings.commission.current')}
             </label>
             <Input
               type="number"
@@ -75,13 +77,13 @@ export const AdminSettings: React.FC = () => {
               }
             />
             <p className="text-xs text-dark-500 mt-1">
-              Диапазон: {(localSettings.minCommission * 100).toFixed(1)}% - {(localSettings.maxCommission * 100).toFixed(1)}%
+              {t('admin.settings.commission.range')} {(localSettings.minCommission * 100).toFixed(1)}% - {(localSettings.maxCommission * 100).toFixed(1)}%
             </p>
           </div>
 
           <div>
             <label className="block text-sm font-medium mb-2">
-              Минимальная комиссия (%)
+              {t('admin.settings.commission.minimum')}
             </label>
             <Input
               type="number"
@@ -98,7 +100,7 @@ export const AdminSettings: React.FC = () => {
 
           <div>
             <label className="block text-sm font-medium mb-2">
-              Максимальная комиссия (%)
+              {t('admin.settings.commission.maximum')}
             </label>
             <Input
               type="number"
@@ -115,18 +117,18 @@ export const AdminSettings: React.FC = () => {
         </div>
 
         <Button onClick={handleSaveCommission} className="mt-4 gap-2">
-          <Save className="w-4 h-4" /> Сохранить комиссию
+          <Save className="w-4 h-4" /> {t('admin.settings.commission.save')}
         </Button>
       </Card>
 
       {/* General Settings */}
       <Card>
-        <h2 className="text-xl font-semibold mb-6">Общие настройки</h2>
+        <h2 className="text-xl font-semibold mb-6">{t('admin.settings.general.title')}</h2>
 
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium mb-2">
-              Email поддержки
+              {t('admin.settings.general.supportEmail')}
             </label>
             <Input
               type="email"
@@ -142,7 +144,7 @@ export const AdminSettings: React.FC = () => {
 
           <div>
             <label className="block text-sm font-medium mb-2">
-              Telegram поддержки
+              {t('admin.settings.general.supportTelegram')}
             </label>
             <Input
               type="text"
@@ -158,7 +160,7 @@ export const AdminSettings: React.FC = () => {
 
           <div>
             <label className="block text-sm font-medium mb-2">
-              Порог автоподтверждения ($)
+              {t('admin.settings.general.autoConfirmThreshold')}
             </label>
             <Input
               type="number"
@@ -171,7 +173,7 @@ export const AdminSettings: React.FC = () => {
               }
             />
             <p className="text-xs text-dark-500 mt-1">
-              Заявки на сумму ниже этого порога будут подтверждаться автоматически
+              {t('admin.settings.general.autoConfirmNote')}
             </p>
           </div>
 
@@ -189,13 +191,13 @@ export const AdminSettings: React.FC = () => {
               className="w-4 h-4"
             />
             <label htmlFor="maintenance" className="text-sm font-medium cursor-pointer">
-              Режим технического обслуживания
+              {t('admin.settings.general.maintenanceMode')}
             </label>
           </div>
         </div>
 
         <Button onClick={handleSaveAllSettings} size="lg" className="mt-6 gap-2">
-          <Save className="w-4 h-4" /> Сохранить все настройки
+          <Save className="w-4 h-4" /> {t('admin.settings.general.save')}
         </Button>
       </Card>
 
@@ -203,7 +205,7 @@ export const AdminSettings: React.FC = () => {
       <Card>
         <div className="flex items-center gap-3 mb-6">
           <Server className="w-6 h-6 text-primary-500" />
-          <h2 className="text-xl font-semibold">SMTP настройки</h2>
+          <h2 className="text-xl font-semibold">{t('admin.settings.smtp.title')}</h2>
         </div>
 
         <div className="space-y-4">
@@ -221,7 +223,7 @@ export const AdminSettings: React.FC = () => {
               className="w-4 h-4"
             />
             <label htmlFor="smtpEnabled" className="text-sm font-medium cursor-pointer">
-              Включить SMTP (отправка реальных email)
+              {t('admin.settings.smtp.enabled')}
             </label>
           </div>
 
@@ -230,11 +232,11 @@ export const AdminSettings: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium mb-2">
-                    SMTP хост <span className="text-red-500">*</span>
+                    {t('admin.settings.smtp.host')} <span className="text-red-500">*</span>
                   </label>
                   <Input
                     type="text"
-                    placeholder="smtp.gmail.com"
+                    placeholder={t('admin.settings.smtp.hostPlaceholder')}
                     value={localSettings.smtpHost}
                     onChange={(e) =>
                       setLocalSettings({
@@ -244,13 +246,13 @@ export const AdminSettings: React.FC = () => {
                     }
                   />
                   <p className="text-xs text-dark-500 mt-1">
-                    Например: smtp.gmail.com, smtp.mail.ru
+                    {t('admin.settings.smtp.hostNote')}
                   </p>
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium mb-2">
-                    SMTP порт
+                    {t('admin.settings.smtp.port')}
                   </label>
                   <Input
                     type="number"
@@ -263,7 +265,7 @@ export const AdminSettings: React.FC = () => {
                     }
                   />
                   <p className="text-xs text-dark-500 mt-1">
-                    587 (TLS) или 465 (SSL)
+                    {t('admin.settings.smtp.portNote')}
                   </p>
                 </div>
               </div>
@@ -282,18 +284,18 @@ export const AdminSettings: React.FC = () => {
                   className="w-4 h-4"
                 />
                 <label htmlFor="smtpSecure" className="text-sm cursor-pointer">
-                  Использовать SSL/TLS (рекомендуется)
+                  {t('admin.settings.smtp.secure')}
                 </label>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium mb-2">
-                    Пользователь (Email) <span className="text-red-500">*</span>
+                    {t('admin.settings.smtp.user')} <span className="text-red-500">*</span>
                   </label>
                   <Input
                     type="email"
-                    placeholder="your@email.com"
+                    placeholder={t('admin.settings.smtp.userPlaceholder')}
                     value={localSettings.smtpUser}
                     onChange={(e) =>
                       setLocalSettings({
@@ -306,12 +308,12 @@ export const AdminSettings: React.FC = () => {
 
                 <div>
                   <label className="block text-sm font-medium mb-2">
-                    Пароль <span className="text-red-500">*</span>
+                    {t('admin.settings.smtp.password')} <span className="text-red-500">*</span>
                   </label>
                   <div className="relative">
                     <Input
                       type={showSmtpPassword ? 'text' : 'password'}
-                      placeholder="********"
+                      placeholder={t('admin.settings.smtp.passwordPlaceholder')}
                       value={localSettings.smtpPassword}
                       onChange={(e) =>
                         setLocalSettings({
@@ -339,11 +341,11 @@ export const AdminSettings: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium mb-2">
-                    Email отправителя
+                    {t('admin.settings.smtp.fromEmail')}
                   </label>
                   <Input
                     type="email"
-                    placeholder="noreply@4ex.com"
+                    placeholder={t('admin.settings.smtp.fromEmailPlaceholder')}
                     value={localSettings.smtpFromEmail}
                     onChange={(e) =>
                       setLocalSettings({
@@ -356,11 +358,11 @@ export const AdminSettings: React.FC = () => {
 
                 <div>
                   <label className="block text-sm font-medium mb-2">
-                    Имя отправителя
+                    {t('admin.settings.smtp.fromName')}
                   </label>
                   <Input
                     type="text"
-                    placeholder="4EX"
+                    placeholder={t('admin.settings.smtp.fromNamePlaceholder')}
                     value={localSettings.smtpFromName}
                     onChange={(e) =>
                       setLocalSettings({
@@ -375,11 +377,11 @@ export const AdminSettings: React.FC = () => {
               <div className="flex gap-2 pt-4">
                 <Button onClick={handleTestSmtp} variant="outline" className="gap-2">
                   <Mail className="w-4 h-4" />
-                  Тестировать SMTP
+                  {t('admin.settings.smtp.test')}
                 </Button>
                 <Button onClick={handleSaveAllSettings} className="gap-2">
                   <Save className="w-4 h-4" />
-                  Сохранить SMTP
+                  {t('admin.settings.smtp.save')}
                 </Button>
               </div>
             </div>
@@ -388,8 +390,7 @@ export const AdminSettings: React.FC = () => {
           {!localSettings.smtpEnabled && (
             <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
               <p className="text-sm text-yellow-800 dark:text-yellow-200">
-                <strong>Внимание:</strong> SMTP отключен. Письма будут только логироваться в консоль. 
-                Для реальной отправки email включите SMTP и настройте параметры.
+                <strong>{t('common.messages.warning')}</strong> {t('admin.settings.smtp.disabledWarning')}
               </p>
             </div>
           )}

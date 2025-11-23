@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAdminStore } from '../../store/adminStore';
+import { useTranslation } from '../../hooks/useTranslation';
 import { Card } from '../../components/ui/Card';
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
@@ -19,6 +20,7 @@ import { getCryptoRussianName } from '../../utils/cryptoTranslations';
 
 export const AdminCurrencies: React.FC = () => {
   const { isAuthenticated } = useAdminStore();
+  const { t } = useTranslation();
   const [currencies, setCurrencies] = useState<Currency[]>(() => {
     const stored = localStorage.getItem('currencies-data');
     if (stored) {
@@ -104,7 +106,7 @@ export const AdminCurrencies: React.FC = () => {
       setAvailableCoins(coinsWithIcons);
     } catch (error) {
       console.error('Failed to load coins list:', error);
-      toast.error('Не удалось загрузить список криптовалют. Попробуйте позже.');
+      toast.error(t('admin.currencies.messages.loadCoinsError'));
     } finally {
       setIsLoadingCoins(false);
     }
@@ -133,11 +135,11 @@ export const AdminCurrencies: React.FC = () => {
           setSelectedNetworks(details.networks.length === 1 ? details.networks : [details.networks[0]]);
         }
       } else {
-        toast.error('Не удалось загрузить данные криптовалюты');
+        toast.error(t('admin.currencies.messages.loadDetailsError'));
       }
     } catch (error) {
       console.error('Failed to load coin details:', error);
-      toast.error('Ошибка при загрузке данных криптовалюты');
+      toast.error(t('admin.currencies.messages.loadDetailsError'));
     } finally {
       setIsLoadingDetails(false);
     }
@@ -167,7 +169,7 @@ export const AdminCurrencies: React.FC = () => {
   const saveCurrencies = (newCurrencies: Currency[]) => {
     setCurrencies(newCurrencies);
     localStorage.setItem('currencies-data', JSON.stringify(newCurrencies));
-    toast.success('Изменения сохранены');
+    toast.success(t('admin.currencies.messages.saved'));
   };
 
   const handleToggleActive = (id: string) => {
@@ -205,38 +207,38 @@ export const AdminCurrencies: React.FC = () => {
   const handleAddCurrency = () => {
     // Validate required fields
     if (!newCurrency.code || !newCurrency.name || !newCurrency.nameEn) {
-      toast.error('Заполните все обязательные поля');
+      toast.error(t('admin.currencies.messages.fillRequired'));
       return;
     }
 
     // Additional validation for crypto type
     if (newCurrency.type === 'crypto') {
       if (!selectedCoin) {
-        toast.error('Выберите криптовалюту');
+        toast.error(t('admin.currencies.form.selectCrypto'));
         return;
       }
       if (coinDetails && coinDetails.networks.length > 1 && selectedNetworks.length === 0) {
-        toast.error('Выберите хотя бы одну сеть');
+        toast.error(t('admin.currencies.form.selectNetworks'));
         return;
       }
     }
 
     // Check if code already exists
     if (currencies.some(c => c.code === newCurrency.code)) {
-      toast.error('Валюта с таким кодом уже существует');
+      toast.error(t('admin.common.messages.saveError'));
       return;
     }
 
     // Validate decimals
     if (newCurrency.decimals !== undefined && (newCurrency.decimals < 0 || newCurrency.decimals > 18)) {
-      toast.error('Количество знаков после запятой должно быть от 0 до 18');
+      toast.error(t('admin.common.messages.saveError'));
       return;
     }
 
     // Validate amounts
     if (newCurrency.minAmount !== undefined && newCurrency.maxAmount !== undefined && 
         newCurrency.minAmount >= newCurrency.maxAmount) {
-      toast.error('Минимальная сумма должна быть меньше максимальной');
+      toast.error(t('admin.common.messages.saveError'));
       return;
     }
 
@@ -325,11 +327,11 @@ export const AdminCurrencies: React.FC = () => {
 
   const getCurrencyTypeLabel = (type: string): string => {
     const labels: Record<string, string> = {
-      crypto: 'Криптовалюта',
-      ewallet: 'Электронный кошелек',
-      card: 'Банковская карта',
-      cash: 'Наличные',
-      custom: 'Пользовательская',
+      crypto: t('admin.currencies.modal.cryptocurrency'),
+      ewallet: t('admin.currencies.modal.ewallet'),
+      card: t('admin.currencies.modal.bankCard'),
+      cash: t('admin.currencies.modal.cash'),
+      custom: t('admin.currencies.modal.custom'),
     };
     return labels[type] || type;
   };
@@ -349,13 +351,13 @@ export const AdminCurrencies: React.FC = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold mb-2">Управление валютами</h1>
+          <h1 className="text-3xl font-bold mb-2">{t('admin.currencies.title')}</h1>
           <p className="text-dark-600 dark:text-dark-400">
-            Настройка доступных валют для обмена
+            {t('admin.currencies.subtitle')}
           </p>
         </div>
         <Button onClick={() => setShowAddModal(true)} className="gap-2">
-          <Plus className="w-4 h-4" /> Добавить валюту
+          <Plus className="w-4 h-4" /> {t('admin.currencies.addNew')}
         </Button>
       </div>
 
@@ -364,12 +366,12 @@ export const AdminCurrencies: React.FC = () => {
         <div className="space-y-4">
           {/* Search */}
           <div>
-            <label className="block text-sm font-medium mb-2">Поиск</label>
+            <label className="block text-sm font-medium mb-2">{t('admin.common.buttons.search')}</label>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-dark-400" />
               <input
                 type="text"
-                placeholder="Код, название на русском или английском..."
+                placeholder={t('admin.currencies.search')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 bg-white dark:bg-dark-700 border border-dark-300 dark:border-dark-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
@@ -379,7 +381,7 @@ export const AdminCurrencies: React.FC = () => {
           
           {/* Type Filter */}
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-sm font-medium">Тип:</span>
+            <span className="text-sm font-medium">{t('admin.currencies.filters.type')}:</span>
             {['all', 'crypto', 'ewallet', 'card', 'cash', 'custom'].map((type) => (
               <button
                 key={type}
@@ -390,7 +392,10 @@ export const AdminCurrencies: React.FC = () => {
                     : 'bg-dark-100 dark:bg-dark-700 hover:bg-dark-200 dark:hover:bg-dark-600'
                 }`}
               >
-                {type === 'all' ? 'Все' : getCurrencyTypeLabel(type)}
+                {type === 'all' ? t('admin.currencies.filters.allTypes') : 
+                 type === 'crypto' ? t('admin.currencies.filters.crypto') :
+                 type === 'ewallet' ? t('admin.currencies.filters.ewallet') :
+                 type === 'custom' ? t('admin.currencies.filters.custom') : type}
               </button>
             ))}
           </div>
@@ -404,8 +409,8 @@ export const AdminCurrencies: React.FC = () => {
             <div className="text-center py-12">
               <p className="text-dark-500">
                 {searchQuery || filterType !== 'all' 
-                  ? 'Валюты не найдены. Попробуйте изменить фильтры.'
-                  : 'Валюты не найдены'
+                  ? t('admin.common.messages.noData')
+                  : t('admin.common.messages.noData')
                 }
               </p>
             </div>
@@ -414,7 +419,7 @@ export const AdminCurrencies: React.FC = () => {
           <>
             {searchQuery && (
               <div className="text-sm text-dark-600 dark:text-dark-400">
-                Найдено: {filteredCurrencies.length} валют{filteredCurrencies.length === 1 ? 'а' : filteredCurrencies.length > 1 && filteredCurrencies.length < 5 ? 'ы' : ''}
+                {t('admin.currencies.found')} {filteredCurrencies.length} {t('admin.currencies.currencies')}
               </div>
             )}
             {filteredCurrencies.map((currency) => {
@@ -444,7 +449,7 @@ export const AdminCurrencies: React.FC = () => {
                   <div className="flex items-center gap-2">
                     <div className="flex items-center gap-2">
                       <span className="text-sm text-dark-600 dark:text-dark-400">
-                        Активна:
+                        {t('admin.common.labels.active')}:
                       </span>
                       <Toggle
                         checked={currency.isActive}
@@ -461,7 +466,7 @@ export const AdminCurrencies: React.FC = () => {
                           onClick={() => handleEdit(currency)}
                           className="gap-2"
                         >
-                          <Edit2 className="w-4 h-4" /> Редактировать
+                          <Edit2 className="w-4 h-4" /> {t('admin.common.buttons.edit')}
                         </Button>
                         {currency.isCustom && (
                           <Button
@@ -470,7 +475,7 @@ export const AdminCurrencies: React.FC = () => {
                             onClick={() => handleDeleteCurrency(currency.id)}
                             className="gap-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
                           >
-                            <Trash2 className="w-4 h-4" /> Удалить
+                            <Trash2 className="w-4 h-4" /> {t('admin.common.buttons.delete')}
                           </Button>
                         )}
                       </>
@@ -481,7 +486,7 @@ export const AdminCurrencies: React.FC = () => {
                           onClick={handleSaveEdit}
                           className="gap-2"
                         >
-                          <Save className="w-4 h-4" /> Сохранить
+                          <Save className="w-4 h-4" /> {t('admin.common.buttons.save')}
                         </Button>
                         <Button
                           size="sm"
@@ -489,7 +494,7 @@ export const AdminCurrencies: React.FC = () => {
                           onClick={handleCancelEdit}
                           className="gap-2"
                         >
-                          <X className="w-4 h-4" /> Отмена
+                          <X className="w-4 h-4" /> {t('admin.common.buttons.cancel')}
                         </Button>
                       </div>
                     )}
@@ -500,7 +505,7 @@ export const AdminCurrencies: React.FC = () => {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-dark-200 dark:border-dark-700">
                   <div>
                     <label className="block text-xs text-dark-500 mb-1">
-                      Минимальная сумма
+                      {t('admin.currencies.fields.minAmount')}
                     </label>
                     {isEditing ? (
                       <Input
@@ -518,7 +523,7 @@ export const AdminCurrencies: React.FC = () => {
 
                   <div>
                     <label className="block text-xs text-dark-500 mb-1">
-                      Максимальная сумма
+                      {t('admin.currencies.fields.maxAmount')}
                     </label>
                     {isEditing ? (
                       <Input
@@ -536,7 +541,7 @@ export const AdminCurrencies: React.FC = () => {
 
                   <div>
                     <label className="block text-xs text-dark-500 mb-1">
-                      Резерв
+                      {t('admin.currencies.fields.reserve')}
                     </label>
                     {isEditing ? (
                       <Input
@@ -554,7 +559,7 @@ export const AdminCurrencies: React.FC = () => {
 
                   <div>
                     <label className="block text-xs text-dark-500 mb-1">
-                      Символ
+                      {t('admin.currencies.fields.symbol')}
                     </label>
                     {isEditing ? (
                       <Input
@@ -570,7 +575,7 @@ export const AdminCurrencies: React.FC = () => {
 
                   <div>
                     <label className="block text-xs text-dark-500 mb-1">
-                      Знаков после запятой
+                      {t('admin.currencies.fields.decimals')}
                     </label>
                     {isEditing ? (
                       <Input
@@ -589,7 +594,7 @@ export const AdminCurrencies: React.FC = () => {
                   {currency.networks && (
                     <div>
                       <label className="block text-xs text-dark-500 mb-1">
-                        Сети
+                        {t('admin.currencies.fields.networks')}
                       </label>
                       <p className="font-medium text-sm">
                         {currency.networks.join(', ')}
@@ -601,7 +606,7 @@ export const AdminCurrencies: React.FC = () => {
                     <>
                       <div>
                         <label className="block text-xs text-dark-500 mb-1">
-                          Фиксированный курс
+                          {t('admin.currencies.fields.fixedRate')}
                         </label>
                         {isEditing ? (
                           <Input
@@ -621,7 +626,7 @@ export const AdminCurrencies: React.FC = () => {
 
                       <div>
                         <label className="block text-xs text-dark-500 mb-1">
-                          Комиссия (%)
+                          {t('admin.currencies.fields.commission')}
                         </label>
                         {isEditing ? (
                           <Input
@@ -647,7 +652,7 @@ export const AdminCurrencies: React.FC = () => {
                 {/* Payment Address */}
                 <div className="pt-4 border-t border-dark-200 dark:border-dark-700">
                   <label className="block text-xs text-dark-500 mb-2">
-                    Адрес для оплаты / получения
+                    {t('admin.currencies.fields.paymentAddress')}
                   </label>
                   {isEditing ? (
                     <Input
@@ -675,14 +680,14 @@ export const AdminCurrencies: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <p className="text-sm text-dark-600 dark:text-dark-400 mb-1">
-            Всего валют
+            {t('admin.currencies.stats.total')}
           </p>
           <p className="text-2xl font-bold">{currencies.length}</p>
         </Card>
 
         <Card>
           <p className="text-sm text-dark-600 dark:text-dark-400 mb-1">
-            Активных
+            {t('admin.currencies.stats.active')}
           </p>
           <p className="text-2xl font-bold text-green-600 dark:text-green-400">
             {currencies.filter((c) => c.isActive).length}
@@ -691,7 +696,7 @@ export const AdminCurrencies: React.FC = () => {
 
         <Card>
           <p className="text-sm text-dark-600 dark:text-dark-400 mb-1">
-            Криптовалют
+            {t('admin.currencies.stats.crypto')}
           </p>
           <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
             {currencies.filter((c) => c.type === 'crypto').length}
@@ -700,7 +705,7 @@ export const AdminCurrencies: React.FC = () => {
 
         <Card>
           <p className="text-sm text-dark-600 dark:text-dark-400 mb-1">
-            Неактивных
+            {t('admin.currencies.stats.inactive')}
           </p>
           <p className="text-2xl font-bold text-red-600 dark:text-red-400">
             {currencies.filter((c) => !c.isActive).length}
@@ -715,13 +720,13 @@ export const AdminCurrencies: React.FC = () => {
           setShowAddModal(false);
           resetNewCurrency();
         }}
-        title="Добавить новую валюту"
+        title={t('admin.currencies.modal.addTitle')}
       >
         <div className="space-y-4">
           {/* Type Selection */}
           <div>
             <label className="block text-sm font-medium mb-2">
-              Тип
+              {t('admin.currencies.modal.type')}
             </label>
             <select
               className="w-full px-4 py-2.5 bg-white dark:bg-dark-700 border border-dark-300 dark:border-dark-600 rounded-lg"
@@ -736,11 +741,11 @@ export const AdminCurrencies: React.FC = () => {
                 }
               }}
             >
-              <option value="custom">Пользовательская</option>
-              <option value="crypto">Криптовалюта</option>
-              <option value="ewallet">Электронный кошелек</option>
-              <option value="card">Банковская карта</option>
-              <option value="cash">Наличные</option>
+              <option value="custom">{t('admin.currencies.modal.custom')}</option>
+              <option value="crypto">{t('admin.currencies.modal.cryptocurrency')}</option>
+              <option value="ewallet">{t('admin.currencies.modal.ewallet')}</option>
+              <option value="card">{t('admin.currencies.modal.bankCard')}</option>
+              <option value="cash">{t('admin.currencies.modal.cash')}</option>
             </select>
           </div>
 
@@ -758,24 +763,24 @@ export const AdminCurrencies: React.FC = () => {
               {coinDetails && (
                 <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
                   <h4 className="text-sm font-semibold mb-3 text-blue-900 dark:text-blue-100">
-                    Автоматически загруженная информация
+                    {t('admin.currencies.modal.autoInfo')}
                   </h4>
                   <div className="grid grid-cols-2 gap-3 text-sm">
                     <div>
-                      <span className="text-blue-700 dark:text-blue-300">Код:</span>
+                      <span className="text-blue-700 dark:text-blue-300">{t('admin.currencies.modal.code')}</span>
                       <Badge variant="blue" className="ml-2">{coinDetails.symbol}</Badge>
                     </div>
                     <div>
-                      <span className="text-blue-700 dark:text-blue-300">Знаков:</span>
+                      <span className="text-blue-700 dark:text-blue-300">{t('admin.currencies.modal.decimalsLabel')}</span>
                       <span className="ml-2 font-medium">{coinDetails.decimals}</span>
                     </div>
                     <div className="col-span-2">
-                      <span className="text-blue-700 dark:text-blue-300">Название:</span>
+                      <span className="text-blue-700 dark:text-blue-300">{t('admin.currencies.modal.name')}</span>
                       <span className="ml-2 font-medium">{coinDetails.name} ({coinDetails.nameRu})</span>
                     </div>
                     {coinDetails.currentPrice && (
                       <div className="col-span-2">
-                        <span className="text-blue-700 dark:text-blue-300">Текущий курс:</span>
+                        <span className="text-blue-700 dark:text-blue-300">{t('admin.currencies.modal.currentRate')}</span>
                         <span className="ml-2 font-medium">
                           ${coinDetails.currentPrice.usd.toFixed(2)} / ₽{coinDetails.currentPrice.rub.toFixed(2)}
                         </span>
@@ -802,7 +807,7 @@ export const AdminCurrencies: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium mb-2">
-                    Код валюты <span className="text-red-500">*</span>
+                    {t('admin.currencies.modal.currencyCode')} <span className="text-red-500">*</span>
                   </label>
                   <Input
                     type="text"
@@ -814,7 +819,7 @@ export const AdminCurrencies: React.FC = () => {
 
                 <div>
                   <label className="block text-sm font-medium mb-2">
-                    Символ
+                    {t('admin.currencies.fields.symbol')}
                   </label>
                   <Input
                     type="text"
@@ -828,7 +833,7 @@ export const AdminCurrencies: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium mb-2">
-                    Название (RU) <span className="text-red-500">*</span>
+                    {t('admin.currencies.modal.nameRu')} <span className="text-red-500">*</span>
                   </label>
                   <Input
                     type="text"
@@ -840,7 +845,7 @@ export const AdminCurrencies: React.FC = () => {
 
                 <div>
                   <label className="block text-sm font-medium mb-2">
-                    Название (EN) <span className="text-red-500">*</span>
+                    {t('admin.currencies.modal.nameEn')} <span className="text-red-500">*</span>
                   </label>
                   <Input
                     type="text"
@@ -855,7 +860,7 @@ export const AdminCurrencies: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium mb-2">
-                    Иконка (символ)
+                    {t('admin.currencies.modal.iconSymbol')}
                   </label>
                   <Input
                     type="text"
@@ -867,15 +872,27 @@ export const AdminCurrencies: React.FC = () => {
 
                 <div>
                   <label className="block text-sm font-medium mb-2">
-                    Или загрузить изображение
+                    {t('admin.currencies.modal.uploadImage')}
                   </label>
                   <div className="flex gap-2">
-                    <Input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleIconUpload}
-                      className="flex-1"
-                    />
+                    <div className="flex-1 relative">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleIconUpload}
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                        id="icon-upload"
+                      />
+                      <label
+                        htmlFor="icon-upload"
+                        className="flex items-center justify-center gap-2 w-full px-4 py-2 bg-white dark:bg-dark-700 border border-dark-300 dark:border-dark-600 rounded-lg cursor-pointer hover:bg-dark-50 dark:hover:bg-dark-600 transition"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                        </svg>
+                        <span className="text-sm">{t('admin.currencies.modal.chooseFile')}</span>
+                      </label>
+                    </div>
                     {newCurrency.iconUrl && (
                       <img src={newCurrency.iconUrl} alt="Icon" className="w-10 h-10 rounded" />
                     )}
@@ -890,7 +907,7 @@ export const AdminCurrencies: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium mb-2">
-                Мин. сумма
+                {t('admin.currencies.modal.minAmount')}
               </label>
               <Input
                 type="number"
@@ -902,7 +919,7 @@ export const AdminCurrencies: React.FC = () => {
 
             <div>
               <label className="block text-sm font-medium mb-2">
-                Макс. сумма
+                {t('admin.currencies.modal.maxAmount')}
               </label>
               <Input
                 type="number"
@@ -914,7 +931,7 @@ export const AdminCurrencies: React.FC = () => {
 
             <div>
               <label className="block text-sm font-medium mb-2">
-                Резерв
+                {t('admin.currencies.modal.reserve')}
               </label>
               <Input
                 type="number"
@@ -931,7 +948,7 @@ export const AdminCurrencies: React.FC = () => {
             {newCurrency.type !== 'crypto' && (
               <div>
                 <label className="block text-sm font-medium mb-2">
-                  Символ
+                  {t('admin.currencies.modal.symbolField')}
                 </label>
                 <Input
                   type="text"
@@ -944,7 +961,7 @@ export const AdminCurrencies: React.FC = () => {
 
             <div>
               <label className="block text-sm font-medium mb-2">
-                Знаков после запятой
+                {t('admin.currencies.modal.decimalsField')}
               </label>
               <Input
                 type="number"
@@ -954,14 +971,14 @@ export const AdminCurrencies: React.FC = () => {
               />
               {newCurrency.type === 'crypto' && (
                 <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
-                  Авто-заполнено из CoinGecko (можно изменить)
+                  {t('admin.currencies.modal.autoFilled')}
                 </p>
               )}
             </div>
 
             <div>
               <label className="block text-sm font-medium mb-2">
-                Активна
+                {t('admin.currencies.modal.active')}
               </label>
               <div className="flex items-center h-10">
                 <Toggle
@@ -976,33 +993,33 @@ export const AdminCurrencies: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium mb-2">
-                Фиксированный курс
+                {t('admin.currencies.modal.fixedRate')}
               </label>
               <Input
                 type="number"
                 step="0.0001"
                 value={newCurrency.customRate || ''}
                 onChange={(e) => setNewCurrency({ ...newCurrency, customRate: parseFloat(e.target.value) })}
-                placeholder="Не указан (использовать API)"
+                placeholder={t('admin.currencies.modal.fixedRatePlaceholder')}
               />
               <p className="text-xs text-dark-500 mt-1">
-                Если указан, будет использоваться вместо API курса
+                {t('admin.currencies.modal.fixedRateHint')}
               </p>
             </div>
 
             <div>
               <label className="block text-sm font-medium mb-2">
-                Комиссия (%)
+                {t('admin.currencies.modal.commissionField')}
               </label>
               <Input
                 type="number"
                 step="0.01"
                 value={newCurrency.customCommission ? newCurrency.customCommission * 100 : ''}
                 onChange={(e) => setNewCurrency({ ...newCurrency, customCommission: parseFloat(e.target.value) / 100 })}
-                placeholder="Использовать общую комиссию"
+                placeholder={t('admin.currencies.modal.commissionPlaceholder')}
               />
               <p className="text-xs text-dark-500 mt-1">
-                Если не указана, используется общая комиссия
+                {t('admin.currencies.modal.commissionHint')}
               </p>
             </div>
           </div>
@@ -1010,13 +1027,13 @@ export const AdminCurrencies: React.FC = () => {
           {/* Payment Address */}
           <div>
             <label className="block text-sm font-medium mb-2">
-              Адрес для оплаты/получения
+              {t('admin.currencies.modal.paymentAddressField')}
             </label>
             <Input
               type="text"
               value={newCurrency.paymentAddress || ''}
               onChange={(e) => setNewCurrency({ ...newCurrency, paymentAddress: e.target.value })}
-              placeholder="Введите адрес"
+              placeholder={t('admin.currencies.modal.paymentAddressPlaceholder')}
               className="font-mono"
             />
           </div>
@@ -1030,10 +1047,10 @@ export const AdminCurrencies: React.FC = () => {
                 resetNewCurrency();
               }}
             >
-              Отмена
+              {t('admin.currencies.modal.cancel')}
             </Button>
             <Button onClick={handleAddCurrency} className="gap-2">
-              <Plus className="w-4 h-4" /> Добавить
+              <Plus className="w-4 h-4" /> {t('admin.currencies.modal.add')}
             </Button>
           </div>
         </div>

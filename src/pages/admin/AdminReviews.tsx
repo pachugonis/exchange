@@ -5,12 +5,14 @@ import { Button } from '../../components/ui/Button';
 import { Alert } from '../../components/ui/Alert';
 import { useReviewStore } from '../../store/reviewStore';
 import { useAdminStore } from '../../store/adminStore';
+import { useTranslation } from '../../hooks/useTranslation';
 import { formatDate } from '../../utils/formatters';
 import toast from 'react-hot-toast';
 
 export const AdminReviews: React.FC = () => {
   const { getAllReviews, updateReviewStatus, addAdminResponse, deleteReview } = useReviewStore();
   const { username } = useAdminStore();
+  const { t } = useTranslation();
   const reviews = getAllReviews();
   
   const [responseText, setResponseText] = useState<{ [key: string]: string }>({});
@@ -18,27 +20,27 @@ export const AdminReviews: React.FC = () => {
 
   const handleTogglePublish = (reviewId: string, currentStatus: boolean) => {
     updateReviewStatus(reviewId, !currentStatus);
-    toast.success(currentStatus ? 'Отзыв скрыт' : 'Отзыв опубликован');
+    toast.success(currentStatus ? t('admin.reviews.hidden') : t('admin.reviews.published'));
   };
 
   const handleDelete = (reviewId: string) => {
-    if (confirm('Вы уверены, что хотите удалить этот отзыв?')) {
+    if (confirm(t('admin.reviews.confirmDelete'))) {
       deleteReview(reviewId);
-      toast.success('Отзыв удален');
+      toast.success(t('admin.reviews.deleted'));
     }
   };
 
   const handleAddResponse = (reviewId: string) => {
     const text = responseText[reviewId]?.trim();
     if (!text) {
-      toast.error('Введите текст ответа');
+      toast.error(t('admin.reviews.enterResponse'));
       return;
     }
 
     addAdminResponse(reviewId, text, username || 'Admin');
     setResponseText({ ...responseText, [reviewId]: '' });
     setShowResponseForm({ ...showResponseForm, [reviewId]: false });
-    toast.success('Ответ добавлен');
+    toast.success(t('admin.reviews.responseAdded'));
   };
 
   const stats = {
@@ -52,9 +54,9 @@ export const AdminReviews: React.FC = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold mb-2">Управление отзывами</h1>
+        <h1 className="text-3xl font-bold mb-2">{t('admin.reviews.title')}</h1>
         <p className="text-dark-600 dark:text-dark-400">
-          Просмотр, модерация и ответы на отзывы клиентов
+          {t('admin.reviews.subtitle')}
         </p>
       </div>
 
@@ -63,19 +65,19 @@ export const AdminReviews: React.FC = () => {
         <Card>
           <div className="text-center">
             <div className="text-3xl font-bold text-primary-500">{stats.total}</div>
-            <div className="text-sm text-dark-500">Всего отзывов</div>
+            <div className="text-sm text-dark-500">{t('admin.reviews.stats.total')}</div>
           </div>
         </Card>
         <Card>
           <div className="text-center">
             <div className="text-3xl font-bold text-green-500">{stats.published}</div>
-            <div className="text-sm text-dark-500">Опубликовано</div>
+            <div className="text-sm text-dark-500">{t('admin.reviews.stats.published')}</div>
           </div>
         </Card>
         <Card>
           <div className="text-center">
             <div className="text-3xl font-bold text-yellow-500">{stats.avgRating}</div>
-            <div className="text-sm text-dark-500">Средняя оценка</div>
+            <div className="text-sm text-dark-500">{t('admin.reviews.stats.avgRating')}</div>
           </div>
         </Card>
       </div>
@@ -83,7 +85,7 @@ export const AdminReviews: React.FC = () => {
       {/* Reviews List */}
       {reviews.length === 0 ? (
         <Alert variant="info">
-          Пока нет отзывов
+          {t('admin.reviews.noReviews')}
         </Alert>
       ) : (
         <div className="space-y-4">
@@ -96,12 +98,12 @@ export const AdminReviews: React.FC = () => {
                     <h3 className="font-semibold text-lg">{review.userName}</h3>
                     {review.isVerified && (
                       <span className="px-2 py-1 text-xs bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-full">
-                        ✓ Проверенный обмен
+                        ✓ {t('admin.reviews.verified')}
                       </span>
                     )}
                     {!review.isPublished && (
                       <span className="px-2 py-1 text-xs bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 rounded-full">
-                        Скрыт
+                        {t('admin.reviews.hiddenBadge')}
                       </span>
                     )}
                   </div>
@@ -110,7 +112,7 @@ export const AdminReviews: React.FC = () => {
                     <span>•</span>
                     <span>{formatDate(review.createdAt)}</span>
                     <span>•</span>
-                    <span>ID заявки: {review.orderId}</span>
+                    <span>{t('admin.reviews.orderId')}: {review.orderId}</span>
                   </div>
                 </div>
                 <div className="flex gap-1 text-yellow-400 text-xl">
@@ -129,7 +131,7 @@ export const AdminReviews: React.FC = () => {
               {/* Exchange Direction */}
               {review.exchangeDirection && (
                 <div className="mb-4 pb-4 border-b border-dark-200 dark:border-dark-700">
-                  <p className="text-xs text-dark-500 mb-2">Направление обмена:</p>
+                  <p className="text-xs text-dark-500 mb-2">{t('admin.reviews.exchangeDirection')}</p>
                   <div className="flex items-center gap-2 text-sm">
                     <span className="font-medium text-primary-600 dark:text-primary-400">
                       {review.exchangeDirection.fromAmount} {review.exchangeDirection.fromCurrency}
@@ -151,7 +153,7 @@ export const AdminReviews: React.FC = () => {
               {/* Existing Admin Response */}
               {review.response && (
                 <div className="mb-4 p-4 bg-primary-50 dark:bg-primary-900/20 rounded-lg border-l-4 border-primary-500">
-                  <p className="text-sm font-medium mb-1">Ваш ответ:</p>
+                  <p className="text-sm font-medium mb-1">{t('admin.reviews.yourResponse')}</p>
                   <p className="text-sm text-dark-600 dark:text-dark-400">{review.response.text}</p>
                   <p className="text-xs text-dark-500 mt-1">
                     {review.response.author} • {formatDate(review.response.createdAt)}
@@ -162,11 +164,11 @@ export const AdminReviews: React.FC = () => {
               {/* Response Form */}
               {!review.response && showResponseForm[review.id] && (
                 <div className="mb-4 p-4 bg-dark-50 dark:bg-dark-800 rounded-lg">
-                  <label className="block text-sm font-medium mb-2">Ответ на отзыв</label>
+                  <label className="block text-sm font-medium mb-2">{t('admin.reviews.responseLabel')}</label>
                   <textarea
                     value={responseText[review.id] || ''}
                     onChange={(e) => setResponseText({ ...responseText, [review.id]: e.target.value })}
-                    placeholder="Введите ваш ответ..."
+                    placeholder={t('admin.reviews.responsePlaceholder')}
                     className="w-full h-24 px-4 py-2 rounded-lg border border-dark-300 dark:border-dark-600 bg-white dark:bg-dark-700 focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none mb-2"
                   />
                   <div className="flex gap-2">
@@ -176,14 +178,14 @@ export const AdminReviews: React.FC = () => {
                       className="gap-2"
                     >
                       <Send className="w-4 h-4" />
-                      Отправить
+                      {t('admin.reviews.send')}
                     </Button>
                     <Button
                       size="sm"
                       variant="outline"
                       onClick={() => setShowResponseForm({ ...showResponseForm, [review.id]: false })}
                     >
-                      Отмена
+                      {t('common.buttons.cancel')}
                     </Button>
                   </div>
                 </div>
@@ -200,12 +202,12 @@ export const AdminReviews: React.FC = () => {
                   {review.isPublished ? (
                     <>
                       <EyeOff className="w-4 h-4" />
-                      Скрыть
+                      {t('admin.reviews.hide')}
                     </>
                   ) : (
                     <>
                       <Eye className="w-4 h-4" />
-                      Опубликовать
+                      {t('admin.reviews.publish')}
                     </>
                   )}
                 </Button>
@@ -218,7 +220,7 @@ export const AdminReviews: React.FC = () => {
                     className="gap-2"
                   >
                     <MessageSquare className="w-4 h-4" />
-                    Ответить
+                    {t('admin.reviews.reply')}
                   </Button>
                 )}
 
@@ -229,7 +231,7 @@ export const AdminReviews: React.FC = () => {
                   className="gap-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
                 >
                   <Trash2 className="w-4 h-4" />
-                  Удалить
+                  {t('common.buttons.delete')}
                 </Button>
               </div>
             </Card>

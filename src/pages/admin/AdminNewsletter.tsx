@@ -7,6 +7,7 @@ import { Badge } from '../../components/ui/Badge';
 import { Modal } from '../../components/ui/Modal';
 import { Tabs, TabPanel } from '../../components/ui/Tabs';
 import { useNewsletterStore } from '../../store/newsletterStore';
+import { useTranslation } from '../../hooks/useTranslation';
 import { getEmailLogs } from '../../api/emailAPI';
 import { formatDate } from '../../utils/formatters';
 import toast from 'react-hot-toast';
@@ -23,6 +24,7 @@ export const AdminNewsletter: React.FC = () => {
     deleteCampaign,
     sendCampaign,
   } = useNewsletterStore();
+  const { t } = useTranslation();
 
   const [activeTab, setActiveTab] = useState('subscribers');
   const [newEmail, setNewEmail] = useState('');
@@ -43,33 +45,33 @@ export const AdminNewsletter: React.FC = () => {
 
     const result = await addSubscriber(newEmail, newName);
     if (result.success) {
-      toast.success('Подписчик добавлен!');
+      toast.success(t('admin.newsletter.subscriberAdded'));
       setNewEmail('');
       setNewName('');
     } else {
-      toast.error(result.error || 'Ошибка добавления');
+      toast.error(result.error || t('admin.newsletter.addError'));
     }
   };
 
   const handleRemoveSubscriber = (id: string) => {
-    if (confirm('Вы уверены, что хотите удалить подписчика?')) {
+    if (confirm(t('admin.newsletter.confirmRemove'))) {
       removeSubscriber(id);
-      toast.success('Подписчик удален');
+      toast.success(t('admin.newsletter.subscriberRemoved'));
     }
   };
 
   const handleCreateCampaign = () => {
     if (!campaignForm.title || !campaignForm.subject || !campaignForm.body) {
-      toast.error('Заполните все поля');
+      toast.error(t('admin.newsletter.fillAllFields'));
       return;
     }
 
     if (editingCampaign) {
       updateCampaign(editingCampaign, campaignForm);
-      toast.success('Кампания обновлена!');
+      toast.success(t('admin.newsletter.campaignUpdated'));
     } else {
       createCampaign(campaignForm);
-      toast.success('Кампания создана!');
+      toast.success(t('admin.newsletter.campaignCreated'));
     }
 
     setShowCampaignModal(false);
@@ -88,17 +90,17 @@ export const AdminNewsletter: React.FC = () => {
   };
 
   const handleSendCampaign = async (id: string) => {
-    if (!confirm(`Отправить рассылку ${activeSubscribers} подписчикам?`)) {
+    if (!confirm(`${t('admin.newsletter.confirmSend')} ${activeSubscribers} ${t('admin.newsletter.subscribers')}?`)) {
       return;
     }
 
-    toast.loading('Отправка рассылки...');
+    toast.loading(t('admin.newsletter.sending'));
     const result = await sendCampaign(id);
     
     if (result.success) {
-      toast.success(`Рассылка отправлена ${result.sent} подписчикам!`);
+      toast.success(`${t('admin.newsletter.sentTo')} ${result.sent} ${t('admin.newsletter.subscribers')}!`);
     } else {
-      toast.error(result.error || 'Ошибка отправки');
+      toast.error(result.error || t('admin.newsletter.sendError'));
     }
   };
 
@@ -106,9 +108,9 @@ export const AdminNewsletter: React.FC = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold mb-2">Email рассылки</h1>
+          <h1 className="text-3xl font-bold mb-2">{t('admin.newsletter.title')}</h1>
           <p className="text-dark-600 dark:text-dark-400">
-            Управление подписчиками и рассылками
+            {t('admin.newsletter.subtitle')}
           </p>
         </div>
       </div>
@@ -123,7 +125,7 @@ export const AdminNewsletter: React.FC = () => {
             <div>
               <div className="text-2xl font-bold">{activeSubscribers}</div>
               <div className="text-sm text-dark-600 dark:text-dark-400">
-                Активных подписчиков
+                {t('admin.newsletter.stats.activeSubscribers')}
               </div>
             </div>
           </div>
@@ -139,7 +141,7 @@ export const AdminNewsletter: React.FC = () => {
                 {campaigns.filter((c) => c.status === 'sent').length}
               </div>
               <div className="text-sm text-dark-600 dark:text-dark-400">
-                Отправлено кампаний
+                {t('admin.newsletter.stats.campaignsSent')}
               </div>
             </div>
           </div>
@@ -155,7 +157,7 @@ export const AdminNewsletter: React.FC = () => {
                 {campaigns.filter((c) => c.status === 'draft').length}
               </div>
               <div className="text-sm text-dark-600 dark:text-dark-400">
-                Черновики
+                {t('admin.newsletter.stats.drafts')}
               </div>
             </div>
           </div>
@@ -169,7 +171,7 @@ export const AdminNewsletter: React.FC = () => {
             <div>
               <div className="text-2xl font-bold">{emailLogs.length}</div>
               <div className="text-sm text-dark-600 dark:text-dark-400">
-                Отправлено писем
+                {t('admin.newsletter.stats.emailsSent')}
               </div>
             </div>
           </div>
@@ -180,9 +182,9 @@ export const AdminNewsletter: React.FC = () => {
       <Card>
         <Tabs
           tabs={[
-            { id: 'subscribers', label: 'Подписчики' },
-            { id: 'campaigns', label: 'Кампании' },
-            { id: 'logs', label: 'Логи отправки' },
+            { id: 'subscribers', label: t('admin.newsletter.tabs.subscribers') },
+            { id: 'campaigns', label: t('admin.newsletter.tabs.campaigns') },
+            { id: 'logs', label: t('admin.newsletter.tabs.logs') },
           ]}
           activeTab={activeTab}
           onChange={setActiveTab}
@@ -194,21 +196,21 @@ export const AdminNewsletter: React.FC = () => {
             <div className="flex gap-2">
               <Input
                 type="email"
-                placeholder="Email"
+                placeholder={t('admin.newsletter.emailPlaceholder')}
                 value={newEmail}
                 onChange={(e) => setNewEmail(e.target.value)}
                 className="flex-1"
               />
               <Input
                 type="text"
-                placeholder="Имя (опционально)"
+                placeholder={t('admin.newsletter.namePlaceholder')}
                 value={newName}
                 onChange={(e) => setNewName(e.target.value)}
                 className="flex-1"
               />
               <Button onClick={handleAddSubscriber} className="gap-2">
                 <Plus className="w-4 h-4" />
-                Добавить
+                {t('common.buttons.add')}
               </Button>
             </div>
 
@@ -216,18 +218,18 @@ export const AdminNewsletter: React.FC = () => {
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-dark-200 dark:border-dark-700">
-                    <th className="text-left py-3 px-4">Email</th>
-                    <th className="text-left py-3 px-4">Имя</th>
-                    <th className="text-left py-3 px-4">Дата подписки</th>
-                    <th className="text-left py-3 px-4">Статус</th>
-                    <th className="text-right py-3 px-4">Действия</th>
+                    <th className="text-left py-3 px-4">{t('admin.newsletter.table.email')}</th>
+                    <th className="text-left py-3 px-4">{t('admin.newsletter.table.name')}</th>
+                    <th className="text-left py-3 px-4">{t('admin.newsletter.table.subscribeDate')}</th>
+                    <th className="text-left py-3 px-4">{t('admin.newsletter.table.status')}</th>
+                    <th className="text-right py-3 px-4">{t('admin.newsletter.table.actions')}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {subscribers.length === 0 ? (
                     <tr>
                       <td colSpan={5} className="text-center py-8 text-dark-500">
-                        Нет подписчиков
+                        {t('admin.newsletter.noSubscribers')}
                       </td>
                     </tr>
                   ) : (
@@ -243,7 +245,7 @@ export const AdminNewsletter: React.FC = () => {
                         </td>
                         <td className="py-3 px-4">
                           <Badge variant={subscriber.isActive ? 'success' : 'default'}>
-                            {subscriber.isActive ? 'Активен' : 'Неактивен'}
+                            {subscriber.isActive ? t('admin.newsletter.active') : t('admin.newsletter.inactive')}
                           </Badge>
                         </td>
                         <td className="py-3 px-4">
@@ -253,7 +255,7 @@ export const AdminNewsletter: React.FC = () => {
                               variant="outline"
                               onClick={() => toggleSubscriberStatus(subscriber.id)}
                             >
-                              {subscriber.isActive ? 'Деактивировать' : 'Активировать'}
+                              {subscriber.isActive ? t('admin.newsletter.deactivate') : t('admin.newsletter.activate')}
                             </Button>
                             <Button
                               size="sm"
@@ -278,13 +280,13 @@ export const AdminNewsletter: React.FC = () => {
           <div className="space-y-4">
             <Button onClick={() => setShowCampaignModal(true)} className="gap-2">
               <Plus className="w-4 h-4" />
-              Создать кампанию
+              {t('admin.newsletter.createCampaign')}
             </Button>
 
             <div className="grid gap-4">
               {campaigns.length === 0 ? (
                 <div className="text-center py-8 text-dark-500">
-                  Нет кампаний. Создайте первую!
+                  {t('admin.newsletter.noCampaigns')}
                 </div>
               ) : (
                 campaigns.map((campaign) => (
@@ -303,19 +305,19 @@ export const AdminNewsletter: React.FC = () => {
                             }
                           >
                             {campaign.status === 'sent'
-                              ? 'Отправлено'
+                              ? t('admin.newsletter.sent')
                               : campaign.status === 'scheduled'
-                              ? 'Запланировано'
-                              : 'Черновик'}
+                              ? t('admin.newsletter.scheduled')
+                              : t('admin.newsletter.draft')}
                           </Badge>
                         </div>
                         <p className="text-sm text-dark-600 dark:text-dark-400 mb-2">
-                          Тема: {campaign.subject}
+                          {t('admin.newsletter.subject')}: {campaign.subject}
                         </p>
                         {campaign.sentAt && (
                           <p className="text-xs text-dark-500">
-                            Отправлено: {formatDate(campaign.sentAt)} ({campaign.recipientsCount}{' '}
-                            получателей)
+                            {t('admin.newsletter.sentAt')}: {formatDate(campaign.sentAt)} ({campaign.recipientsCount}{' '}
+                            {t('admin.newsletter.recipients')})
                           </p>
                         )}
                       </div>
@@ -341,9 +343,9 @@ export const AdminNewsletter: React.FC = () => {
                           size="sm"
                           variant="outline"
                           onClick={() => {
-                            if (confirm('Удалить кампанию?')) {
+                            if (confirm(t('admin.newsletter.confirmDeleteCampaign'))) {
                               deleteCampaign(campaign.id);
-                              toast.success('Кампания удалена');
+                              toast.success(t('admin.newsletter.campaignDeleted'));
                             }
                           }}
                         >
@@ -364,18 +366,18 @@ export const AdminNewsletter: React.FC = () => {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-dark-200 dark:border-dark-700">
-                  <th className="text-left py-3 px-4">Получатель</th>
-                  <th className="text-left py-3 px-4">Тема</th>
-                  <th className="text-left py-3 px-4">Тип</th>
-                  <th className="text-left py-3 px-4">Статус</th>
-                  <th className="text-left py-3 px-4">Дата</th>
+                  <th className="text-left py-3 px-4">{t('admin.newsletter.logs.recipient')}</th>
+                  <th className="text-left py-3 px-4">{t('admin.newsletter.logs.subject')}</th>
+                  <th className="text-left py-3 px-4">{t('admin.newsletter.logs.type')}</th>
+                  <th className="text-left py-3 px-4">{t('admin.newsletter.logs.status')}</th>
+                  <th className="text-left py-3 px-4">{t('admin.newsletter.logs.date')}</th>
                 </tr>
               </thead>
               <tbody>
                 {emailLogs.length === 0 ? (
                   <tr>
                     <td colSpan={5} className="text-center py-8 text-dark-500">
-                      Нет логов
+                      {t('admin.newsletter.noLogs')}
                     </td>
                   </tr>
                 ) : (
@@ -424,39 +426,39 @@ export const AdminNewsletter: React.FC = () => {
           setCampaignForm({ title: '', subject: '', body: '' });
           setEditingCampaign(null);
         }}
-        title={editingCampaign ? 'Редактировать кампанию' : 'Создать кампанию'}
+        title={editingCampaign ? t('admin.newsletter.editCampaign') : t('admin.newsletter.createCampaign')}
       >
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-2">Название кампании</label>
+            <label className="block text-sm font-medium mb-2">{t('admin.newsletter.form.campaignName')}</label>
             <Input
               value={campaignForm.title}
               onChange={(e) =>
                 setCampaignForm({ ...campaignForm, title: e.target.value })
               }
-              placeholder="Например: Новые возможности платформы"
+              placeholder={t('admin.newsletter.form.campaignNamePlaceholder')}
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2">Тема письма</label>
+            <label className="block text-sm font-medium mb-2">{t('admin.newsletter.form.emailSubject')}</label>
             <Input
               value={campaignForm.subject}
               onChange={(e) =>
                 setCampaignForm({ ...campaignForm, subject: e.target.value })
               }
-              placeholder="Тема, которую увидят получатели"
+              placeholder={t('admin.newsletter.form.emailSubjectPlaceholder')}
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2">Текст письма</label>
+            <label className="block text-sm font-medium mb-2">{t('admin.newsletter.form.emailBody')}</label>
             <textarea
               value={campaignForm.body}
               onChange={(e) =>
                 setCampaignForm({ ...campaignForm, body: e.target.value })
               }
-              placeholder="Содержимое письма..."
+              placeholder={t('admin.newsletter.form.emailBodyPlaceholder')}
               className="w-full h-48 px-4 py-2 rounded-lg border border-dark-300 dark:border-dark-600 bg-white dark:bg-dark-800 focus:outline-none focus:ring-2 focus:ring-primary-500"
             />
           </div>
@@ -470,10 +472,10 @@ export const AdminNewsletter: React.FC = () => {
                 setEditingCampaign(null);
               }}
             >
-              Отмена
+              {t('common.buttons.cancel')}
             </Button>
             <Button onClick={handleCreateCampaign}>
-              {editingCampaign ? 'Сохранить' : 'Создать'}
+              {editingCampaign ? t('common.buttons.save') : t('common.buttons.create')}
             </Button>
           </div>
         </div>

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAdminStore } from '../../store/adminStore';
 import { useOrderStore } from '../../store/orderStore';
+import { useTranslation } from '../../hooks/useTranslation';
 import { Card } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
@@ -12,6 +13,7 @@ import toast from 'react-hot-toast';
 export const AdminOrders: React.FC = () => {
   const { isAuthenticated } = useAdminStore();
   const { orders, updateOrderStatus } = useOrderStore();
+  const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<OrderStatus | 'all'>('all');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
@@ -89,17 +91,7 @@ export const AdminOrders: React.FC = () => {
   };
 
   const getStatusText = (status: OrderStatus): string => {
-    const texts: Record<OrderStatus, string> = {
-      waiting_payment: 'Ожидание оплаты',
-      payment_pending: 'Проверка оплаты',
-      payment_received: 'Оплата получена',
-      verification: 'Проверка',
-      sending: 'Отправка',
-      completed: 'Завершено',
-      cancelled: 'Отменено',
-      refund: 'Возврат',
-    };
-    return texts[status] || status;
+    return t(`orders.status.${status}`);
   };
 
   const handleShowDetails = (order: Order) => {
@@ -114,7 +106,7 @@ export const AdminOrders: React.FC = () => {
 
   const handleStatusChange = (orderId: string, newStatus: OrderStatus) => {
     updateOrderStatus(orderId, newStatus);
-    toast.success(`Статус заявки обновлен на "${getStatusText(newStatus)}"`);
+    toast.success(`${t('admin.orders.messages.statusUpdated')} "${getStatusText(newStatus)}"`);
   };
 
   // Update selectedOrder when orders change
@@ -130,13 +122,13 @@ export const AdminOrders: React.FC = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold mb-2">Управление заявками</h1>
+        <h1 className="text-3xl font-bold mb-2">{t('admin.orders.title')}</h1>
         <div className="flex items-center justify-between">
           <p className="text-dark-600 dark:text-dark-400">
-            Просмотр и управление всеми заявками обмена
+            {t('admin.orders.subtitle')}
           </p>
           <p className="text-xs text-dark-500">
-            Обновлено: {new Date(lastUpdateTime).toLocaleTimeString('ru-RU')}
+            {t('admin.orders.updated')} {new Date(lastUpdateTime).toLocaleTimeString('ru-RU')}
           </p>
         </div>
       </div>
@@ -145,12 +137,12 @@ export const AdminOrders: React.FC = () => {
       <Card>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium mb-2">Поиск</label>
+            <label className="block text-sm font-medium mb-2">{t('admin.orders.search')}</label>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-dark-400" />
               <input
                 type="text"
-                placeholder="ID заявки или email..."
+                placeholder={t('admin.orders.searchPlaceholder')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 bg-white dark:bg-dark-700 border border-dark-300 dark:border-dark-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
@@ -159,21 +151,21 @@ export const AdminOrders: React.FC = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2">Статус</label>
+            <label className="block text-sm font-medium mb-2">{t('admin.orders.filters.status')}</label>
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value as OrderStatus | 'all')}
               className="w-full px-4 py-2 bg-white dark:bg-dark-700 border border-dark-300 dark:border-dark-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
             >
-              <option value="all">Все статусы</option>
-              <option value="waiting_payment">Ожидание оплаты</option>
-              <option value="payment_pending">Проверка оплаты</option>
-              <option value="payment_received">Оплата получена</option>
-              <option value="verification">Проверка</option>
-              <option value="sending">Отправка</option>
-              <option value="completed">Завершено</option>
-              <option value="cancelled">Отменено</option>
-              <option value="refund">Возврат</option>
+              <option value="all">{t('admin.orders.filters.allStatuses')}</option>
+              <option value="waiting_payment">{t('orders.status.waiting_payment')}</option>
+              <option value="payment_pending">{t('orders.status.payment_pending')}</option>
+              <option value="payment_received">{t('orders.status.payment_received')}</option>
+              <option value="verification">{t('orders.status.verification')}</option>
+              <option value="sending">{t('orders.status.sending')}</option>
+              <option value="completed">{t('orders.status.completed')}</option>
+              <option value="cancelled">{t('orders.status.cancelled')}</option>
+              <option value="refund">{t('orders.status.refund')}</option>
             </select>
           </div>
         </div>
@@ -184,7 +176,7 @@ export const AdminOrders: React.FC = () => {
         {filteredOrders.length === 0 ? (
           <Card>
             <div className="text-center py-12">
-              <p className="text-dark-500">Заявки не найдены</p>
+              <p className="text-dark-500">{t('admin.orders.messages.notFound')}</p>
             </div>
           </Card>
         ) : (
@@ -211,7 +203,7 @@ export const AdminOrders: React.FC = () => {
                       <span className="font-medium">{order.contactInfo.email}</span>
                     </p>
                     <p>
-                      <span className="text-dark-500">Обмен:</span>{' '}
+                      <span className="text-dark-500">{t('admin.orders.table.exchange')}</span>{' '}
                       <span className="font-medium">
                         {order.fromAmount} {order.fromCurrency.code} ({order.fromCurrency.name || order.fromCurrency.code}) → {order.toAmount}{' '}
                         {order.toCurrency.code} ({order.toCurrency.name || order.toCurrency.code})
@@ -222,11 +214,11 @@ export const AdminOrders: React.FC = () => {
 
                 {/* Wallets */}
                 <div className="text-sm">
-                  <p className="text-dark-500 text-xs mb-1">Кошелек отправителя:</p>
+                  <p className="text-dark-500 text-xs mb-1">{t('admin.orders.table.senderWallet')}</p>
                   <p className="font-mono text-xs break-all mb-2">
                     {order.paymentDetails.fromWallet}
                   </p>
-                  <p className="text-dark-500 text-xs mb-1">Кошелек получателя:</p>
+                  <p className="text-dark-500 text-xs mb-1">{t('admin.orders.table.receiverWallet')}</p>
                   <p className="font-mono text-xs break-all">
                     {order.paymentDetails.toWallet}
                   </p>
@@ -241,14 +233,14 @@ export const AdminOrders: React.FC = () => {
                         variant="outline"
                         onClick={() => handleStatusChange(order.id, 'completed')}
                       >
-                        Подтвердить
+                        {t('admin.orders.buttons.confirm')}
                       </Button>
                       <Button 
                         size="sm" 
                         variant="outline"
                         onClick={() => handleStatusChange(order.id, 'cancelled')}
                       >
-                        Отменить
+                        {t('admin.orders.buttons.cancel')}
                       </Button>
                     </>
                   )}
@@ -257,7 +249,7 @@ export const AdminOrders: React.FC = () => {
                     variant="ghost"
                     onClick={() => handleShowDetails(order)}
                   >
-                    Подробнее
+                    {t('admin.orders.buttons.details')}
                   </Button>
                 </div>
               </div>
@@ -271,7 +263,7 @@ export const AdminOrders: React.FC = () => {
         <Card>
           <div className="flex items-center justify-between">
             <div className="text-sm text-dark-600 dark:text-dark-400">
-              Показано {startIndex + 1}-{Math.min(endIndex, filteredOrders.length)} из {filteredOrders.length} записей
+              {t('admin.common.pagination.showing')} {startIndex + 1}-{Math.min(endIndex, filteredOrders.length)} {t('admin.common.pagination.of')} {filteredOrders.length} {t('admin.common.pagination.records')}
             </div>
             <div className="flex items-center gap-2">
               <Button
@@ -333,7 +325,7 @@ export const AdminOrders: React.FC = () => {
               <p className="text-2xl font-bold">
                 {orders.filter((o) => o.status === 'waiting_payment').length}
               </p>
-              <p className="text-sm text-dark-500">Ожидают оплаты</p>
+              <p className="text-sm text-dark-500">{t('admin.orders.summary.waitingPayment')}</p>
             </div>
           </div>
         </Card>
@@ -349,7 +341,7 @@ export const AdminOrders: React.FC = () => {
                   ).length
                 }
               </p>
-              <p className="text-sm text-dark-500">В обработке</p>
+              <p className="text-sm text-dark-500">{t('admin.orders.summary.inProcessing')}</p>
             </div>
           </div>
         </Card>
@@ -361,7 +353,7 @@ export const AdminOrders: React.FC = () => {
               <p className="text-2xl font-bold">
                 {orders.filter((o) => o.status === 'completed').length}
               </p>
-              <p className="text-sm text-dark-500">Завершено</p>
+              <p className="text-sm text-dark-500">{t('admin.orders.summary.completed')}</p>
             </div>
           </div>
         </Card>
@@ -372,7 +364,7 @@ export const AdminOrders: React.FC = () => {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white dark:bg-dark-800 rounded-lg max-w-3xl w-full max-h-[90vh] overflow-y-auto">
             <div className="sticky top-0 bg-white dark:bg-dark-800 border-b border-dark-200 dark:border-dark-700 p-6 flex items-center justify-between">
-              <h2 className="text-2xl font-bold">Детали заявки #{selectedOrder.id}</h2>
+              <h2 className="text-2xl font-bold">{t('admin.orders.details.title')} #{selectedOrder.id}</h2>
               <button
                 onClick={handleCloseDetails}
                 className="p-2 hover:bg-dark-100 dark:hover:bg-dark-700 rounded-lg transition-colors"
@@ -384,39 +376,39 @@ export const AdminOrders: React.FC = () => {
             <div className="p-6 space-y-6">
               {/* Status */}
               <div>
-                <label className="block text-sm font-medium mb-2">Статус заявки</label>
+                <label className="block text-sm font-medium mb-2">{t('admin.orders.details.currentStatus')}</label>
                 <select
                   value={selectedOrder.status}
                   onChange={(e) => handleStatusChange(selectedOrder.id, e.target.value as OrderStatus)}
                   className="w-full px-4 py-2 bg-white dark:bg-dark-700 border border-dark-300 dark:border-dark-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
                 >
-                  <option value="waiting_payment">Ожидание оплаты</option>
-                  <option value="payment_pending">Проверка оплаты</option>
-                  <option value="payment_received">Оплата получена</option>
-                  <option value="verification">Проверка</option>
-                  <option value="sending">Отправка</option>
-                  <option value="completed">Завершено</option>
-                  <option value="cancelled">Отменено</option>
-                  <option value="refund">Возврат</option>
+                  <option value="waiting_payment">{t('orders.status.waiting_payment')}</option>
+                  <option value="payment_pending">{t('orders.status.payment_pending')}</option>
+                  <option value="payment_received">{t('orders.status.payment_received')}</option>
+                  <option value="verification">{t('orders.status.verification')}</option>
+                  <option value="sending">{t('orders.status.sending')}</option>
+                  <option value="completed">{t('orders.status.completed')}</option>
+                  <option value="cancelled">{t('orders.status.cancelled')}</option>
+                  <option value="refund">{t('orders.status.refund')}</option>
                 </select>
               </div>
 
               {/* General Info */}
               <Card>
-                <h3 className="font-semibold mb-4">Общая информация</h3>
+                <h3 className="font-semibold mb-4">{t('admin.orders.details.generalInfo')}</h3>
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
-                    <p className="text-dark-500">ID заявки</p>
+                    <p className="text-dark-500">{t('admin.orders.details.orderId')}</p>
                     <p className="font-mono font-medium">{selectedOrder.id}</p>
                   </div>
                   <div>
-                    <p className="text-dark-500">Дата создания</p>
+                    <p className="text-dark-500">{t('admin.orders.details.createdDate')}</p>
                     <p className="font-medium">
                       {new Date(selectedOrder.createdAt).toLocaleString('ru-RU')}
                     </p>
                   </div>
                   <div>
-                    <p className="text-dark-500">Текущий статус</p>
+                    <p className="text-dark-500">{t('admin.orders.details.currentStatus')}</p>
                     <div className={`inline-block px-3 py-1 rounded-full text-sm font-medium border mt-1 ${getStatusBgColor(selectedOrder.status)}`}>
                       {getStatusText(selectedOrder.status)}
                     </div>
@@ -426,26 +418,26 @@ export const AdminOrders: React.FC = () => {
 
               {/* Exchange Details */}
               <Card>
-                <h3 className="font-semibold mb-4">Детали обмена</h3>
+                <h3 className="font-semibold mb-4">{t('admin.orders.details.exchangeDetails')}</h3>
                 <div className="space-y-3 text-sm">
                   <div className="flex justify-between">
-                    <span className="text-dark-500">Отдаете:</span>
+                    <span className="text-dark-500">{t('admin.orders.details.youSend')}</span>
                     <span className="font-medium">
                       {selectedOrder.fromAmount} {selectedOrder.fromCurrency.code} ({selectedOrder.fromCurrency.name || selectedOrder.fromCurrency.code})
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-dark-500">Получаете:</span>
+                    <span className="text-dark-500">{t('admin.orders.details.youReceive')}</span>
                     <span className="font-medium">
                       {selectedOrder.toAmount} {selectedOrder.toCurrency.code} ({selectedOrder.toCurrency.name || selectedOrder.toCurrency.code})
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-dark-500">Курс:</span>
+                    <span className="text-dark-500">{t('admin.orders.details.rate')}</span>
                     <span className="font-medium">{selectedOrder.rate.toFixed(6)}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-dark-500">Комиссия:</span>
+                    <span className="text-dark-500">{t('admin.orders.details.commission')}</span>
                     <span className="font-medium">{(selectedOrder.commission * 100).toFixed(2)}%</span>
                   </div>
                 </div>
@@ -453,7 +445,7 @@ export const AdminOrders: React.FC = () => {
 
               {/* Contact Info */}
               <Card>
-                <h3 className="font-semibold mb-4">Контактная информация</h3>
+                <h3 className="font-semibold mb-4">{t('admin.orders.details.contactInfo')}</h3>
                 <div className="space-y-3 text-sm">
                   <div>
                     <p className="text-dark-500">Email</p>
@@ -461,13 +453,13 @@ export const AdminOrders: React.FC = () => {
                   </div>
                   {selectedOrder.contactInfo.telegram && (
                     <div>
-                      <p className="text-dark-500">Telegram</p>
+                      <p className="text-dark-500">{t('admin.orders.details.telegram')}</p>
                       <p className="font-medium">{selectedOrder.contactInfo.telegram}</p>
                     </div>
                   )}
                   {selectedOrder.contactInfo.promoCode && (
                     <div>
-                      <p className="text-dark-500">Промокод</p>
+                      <p className="text-dark-500">{t('admin.orders.details.promoCode')}</p>
                       <p className="font-medium">{selectedOrder.contactInfo.promoCode}</p>
                     </div>
                   )}
@@ -476,16 +468,16 @@ export const AdminOrders: React.FC = () => {
 
               {/* Payment Details */}
               <Card>
-                <h3 className="font-semibold mb-4">Платежные реквизиты</h3>
+                <h3 className="font-semibold mb-4">{t('admin.orders.details.paymentDetails')}</h3>
                 <div className="space-y-3 text-sm">
                   <div>
-                    <p className="text-dark-500 mb-1">Кошелек отправителя ({selectedOrder.fromCurrency.code})</p>
+                    <p className="text-dark-500 mb-1">{t('admin.orders.details.senderWallet')} ({selectedOrder.fromCurrency.code})</p>
                     <p className="font-mono text-xs bg-dark-100 dark:bg-dark-700 p-2 rounded break-all">
                       {selectedOrder.paymentDetails.fromWallet}
                     </p>
                   </div>
                   <div>
-                    <p className="text-dark-500 mb-1">Кошелек получателя ({selectedOrder.toCurrency.code})</p>
+                    <p className="text-dark-500 mb-1">{t('admin.orders.details.receiverWallet')} ({selectedOrder.toCurrency.code})</p>
                     <p className="font-mono text-xs bg-dark-100 dark:bg-dark-700 p-2 rounded break-all">
                       {selectedOrder.paymentDetails.toWallet}
                     </p>
@@ -496,7 +488,7 @@ export const AdminOrders: React.FC = () => {
               {/* Actions */}
               <div className="flex gap-3 justify-end">
                 <Button variant="outline" onClick={handleCloseDetails}>
-                  Закрыть
+                  {t('admin.orders.details.close')}
                 </Button>
                 {selectedOrder.status !== 'completed' && selectedOrder.status !== 'cancelled' && (
                   <>
@@ -506,14 +498,14 @@ export const AdminOrders: React.FC = () => {
                         handleStatusChange(selectedOrder.id, 'cancelled');
                       }}
                     >
-                      Отменить заявку
+                      {t('admin.orders.details.cancelOrder')}
                     </Button>
                     <Button 
                       onClick={() => {
                         handleStatusChange(selectedOrder.id, 'completed');
                       }}
                     >
-                      Завершить заявку
+                      {t('admin.orders.details.completeOrder')}
                     </Button>
                   </>
                 )}

@@ -2,6 +2,7 @@ export { AdminLogin } from './AdminLogin';
 export { AdminDashboard } from './AdminDashboard';
 export { AdminOrders } from './AdminOrders';
 export { AdminSettings } from './AdminSettings';
+export { AdminSecurity } from './AdminSecurity';
 export { AdminCurrencies } from './AdminCurrencies';
 export { AdminKYC } from './AdminKYC';
 export { AdminAnnouncements } from './AdminAnnouncements';
