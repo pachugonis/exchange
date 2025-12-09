@@ -609,7 +609,7 @@ export const Exchange: React.FC = () => {
           </span>
         </label>
         {validationErrors.terms && (
-          <p className="text-red-500 text-sm">{validationErrors.terms}</p>
+          <p className="text-red-500 text-sm">{t(validationErrors.terms)}</p>
         )}
 
         <label className="flex items-start gap-3 cursor-pointer">
@@ -627,7 +627,7 @@ export const Exchange: React.FC = () => {
           </span>
         </label>
         {validationErrors.aml && (
-          <p className="text-red-500 text-sm">{validationErrors.aml}</p>
+          <p className="text-red-500 text-sm">{t(validationErrors.aml)}</p>
         )}
       </div>
     </div>

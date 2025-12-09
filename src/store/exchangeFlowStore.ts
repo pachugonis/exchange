@@ -422,10 +422,10 @@ export const useExchangeFlowStore = create<ExchangeFlowState>()(
             
           case 4: // Confirmation
             if (!state.agreedToTerms) {
-              errors.terms = 'Необходимо согласиться с правилами';
+              errors.terms = 'exchange.wizard.validation.agreeToTerms';
             }
             if (!state.agreedToAML) {
-              errors.aml = 'Необходимо согласиться с политикой AML/KYC';
+              errors.aml = 'exchange.wizard.validation.agreeToAML';
             }
             break;
         }

@@ -341,6 +341,10 @@ export const translations = {
         orderIdLost: 'Ошибка: номер заявки не найден',
         startOver: 'Начать сначала',
         invalidStep: 'Ошибка: некорректный шаг',
+        validation: {
+          agreeToTerms: 'Необходимо согласиться с правилами',
+          agreeToAML: 'Необходимо согласиться с политикой AML/KYC',
+        },
       },
       steps: {
         title: 'Как работает обмен',
@@ -491,6 +495,10 @@ export const translations = {
         orderIdLost: 'Error: order ID not found',
         startOver: 'Start over',
         invalidStep: 'Error: invalid step',
+        validation: {
+          agreeToTerms: 'You must agree to the terms',
+          agreeToAML: 'You must agree to the AML/KYC policy',
+        },
       },
       steps: {
         title: 'How Exchange Works',
@@ -1289,9 +1297,14 @@ export const translations = {
           contactInfo: 'Контактная информация',
           email: 'Email',
           telegram: 'Telegram',
+          promoCode: 'Промокод',
           paymentDetails: 'Платежные реквизиты',
+          senderWallet: 'Кошелек отправителя',
+          receiverWallet: 'Кошелек получателя',
           changeStatus: 'Изменить статус',
           close: 'Закрыть',
+          cancelOrder: 'Отменить заявку',
+          completeOrder: 'Завершить заявку',
         },
         messages: {
           notFound: 'Заявки не найдены',
@@ -1382,6 +1395,8 @@ export const translations = {
           allTypes: 'Все типы',
           crypto: 'Криптовалюта',
           ewallet: 'Электронные кошельки',
+          card: 'Банковские карты',
+          cash: 'Наличные',
           custom: 'Пользовательские',
         },
         found: 'Найдено:',
@@ -1465,6 +1480,11 @@ export const translations = {
         messages: {
           noData: 'Нет данных',
           saveError: 'Ошибка сохранения',
+        },
+        pagination: {
+          showing: 'Показано',
+          of: 'из',
+          records: 'записей',
         },
       },
       settings: {
@@ -2004,9 +2024,14 @@ export const translations = {
           contactInfo: 'Contact Information',
           email: 'Email',
           telegram: 'Telegram',
+          promoCode: 'Promo Code',
           paymentDetails: 'Payment Details',
+          senderWallet: 'Sender Wallet',
+          receiverWallet: 'Receiver Wallet',
           changeStatus: 'Change Status',
           close: 'Close',
+          cancelOrder: 'Cancel Order',
+          completeOrder: 'Complete Order',
         },
         messages: {
           notFound: 'No orders found',
@@ -2097,6 +2122,8 @@ export const translations = {
           allTypes: 'All Types',
           crypto: 'Cryptocurrency',
           ewallet: 'E-wallets',
+          card: 'Bank Cards',
+          cash: 'Cash',
           custom: 'Custom',
         },
         found: 'Found:',
@@ -2180,6 +2207,11 @@ export const translations = {
         messages: {
           noData: 'No data',
           saveError: 'Error saving',
+        },
+        pagination: {
+          showing: 'Showing',
+          of: 'of',
+          records: 'records',
         },
       },
       settings: {

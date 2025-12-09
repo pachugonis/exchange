@@ -395,6 +395,8 @@ export const AdminCurrencies: React.FC = () => {
                 {type === 'all' ? t('admin.currencies.filters.allTypes') : 
                  type === 'crypto' ? t('admin.currencies.filters.crypto') :
                  type === 'ewallet' ? t('admin.currencies.filters.ewallet') :
+                 type === 'card' ? t('admin.currencies.filters.card') :
+                 type === 'cash' ? t('admin.currencies.filters.cash') :
                  type === 'custom' ? t('admin.currencies.filters.custom') : type}
               </button>
             ))}

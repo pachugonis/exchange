@@ -26,6 +26,9 @@ export const Home: React.FC = () => {
     BTC_USD: number;
     ETH_USD: number;
     USDT_USD: number;
+    SOL_USD: number;
+    BNB_USD: number;
+    XMR_USD: number;
   } | null>(null);
 
   useEffect(() => {
@@ -36,6 +39,9 @@ export const Home: React.FC = () => {
           BTC_USD: rates.BTC_USD,
           ETH_USD: rates.ETH_USD,
           USDT_USD: rates.USDT_USD,
+          SOL_USD: rates.SOL_USD,
+          BNB_USD: rates.BNB_USD,
+          XMR_USD: rates.XMR_USD,
         });
       } catch (error) {
         console.error('Failed to load crypto rates:', error);
@@ -228,7 +234,7 @@ export const Home: React.FC = () => {
               <h2 className="text-3xl font-bold text-center mb-8">{settings.cryptoRatesTitle}</h2>
               {designVariant === 'alternative' ? (
                 // Alternative layout: same as default but with alternative colors
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
                   <Card className="bg-gradient-to-br from-orange-500/10 to-orange-600/10 border-orange-500/20">
                     <div className="flex items-center justify-between">
                       <div>
@@ -258,10 +264,40 @@ export const Home: React.FC = () => {
                       <CurrencyIcon currency={currencies.find(c => c.code === 'USDT_TRC20')!} size="xl" />
                     </div>
                   </Card>
+
+                  <Card className="bg-gradient-to-br from-purple-500/10 to-purple-600/10 border-purple-500/20">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="text-sm text-dark-500 dark:text-dark-400 mb-1">Solana</div>
+                        <div className="text-2xl font-bold">${cryptoRates.SOL_USD.toLocaleString('en-US', { maximumFractionDigits: 2 })}</div>
+                      </div>
+                      <CurrencyIcon currency={currencies.find(c => c.code === 'SOL')!} size="xl" />
+                    </div>
+                  </Card>
+
+                  <Card className="bg-gradient-to-br from-amber-500/10 to-yellow-600/10 border-amber-500/20">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="text-sm text-dark-500 dark:text-dark-400 mb-1">BNB</div>
+                        <div className="text-2xl font-bold">${cryptoRates.BNB_USD.toLocaleString('en-US', { maximumFractionDigits: 2 })}</div>
+                      </div>
+                      <CurrencyIcon currency={currencies.find(c => c.code === 'BNB')!} size="xl" />
+                    </div>
+                  </Card>
+
+                  <Card className="bg-gradient-to-br from-slate-500/10 to-gray-600/10 border-slate-500/20">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="text-sm text-dark-500 dark:text-dark-400 mb-1">Monero</div>
+                        <div className="text-2xl font-bold">${cryptoRates.XMR_USD.toLocaleString('en-US', { maximumFractionDigits: 2 })}</div>
+                      </div>
+                      <CurrencyIcon currency={currencies.find(c => c.code === 'XMR')!} size="xl" />
+                    </div>
+                  </Card>
                 </div>
               ) : (
                 // Default layout
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
                   <Card className="bg-gradient-to-br from-orange-500/10 to-orange-600/10 border-orange-500/20">
                     <div className="flex items-center justify-between">
                       <div>
@@ -289,6 +325,36 @@ export const Home: React.FC = () => {
                         <div className="text-2xl font-bold">${cryptoRates.USDT_USD.toFixed(4)}</div>
                       </div>
                       <CurrencyIcon currency={currencies.find(c => c.code === 'USDT_TRC20')!} size="xl" />
+                    </div>
+                  </Card>
+
+                  <Card className="bg-gradient-to-br from-purple-500/10 to-purple-600/10 border-purple-500/20">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="text-sm text-dark-500 dark:text-dark-400 mb-1">Solana</div>
+                        <div className="text-2xl font-bold">${cryptoRates.SOL_USD.toLocaleString('en-US', { maximumFractionDigits: 2 })}</div>
+                      </div>
+                      <CurrencyIcon currency={currencies.find(c => c.code === 'SOL')!} size="xl" />
+                    </div>
+                  </Card>
+
+                  <Card className="bg-gradient-to-br from-yellow-500/10 to-yellow-600/10 border-yellow-500/20">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="text-sm text-dark-500 dark:text-dark-400 mb-1">BNB</div>
+                        <div className="text-2xl font-bold">${cryptoRates.BNB_USD.toLocaleString('en-US', { maximumFractionDigits: 2 })}</div>
+                      </div>
+                      <CurrencyIcon currency={currencies.find(c => c.code === 'BNB')!} size="xl" />
+                    </div>
+                  </Card>
+
+                  <Card className="bg-gradient-to-br from-gray-500/10 to-gray-600/10 border-gray-500/20">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="text-sm text-dark-500 dark:text-dark-400 mb-1">Monero</div>
+                        <div className="text-2xl font-bold">${cryptoRates.XMR_USD.toLocaleString('en-US', { maximumFractionDigits: 2 })}</div>
+                      </div>
+                      <CurrencyIcon currency={currencies.find(c => c.code === 'XMR')!} size="xl" />
                     </div>
                   </Card>
                 </div>

@@ -138,6 +138,10 @@ export const AdminPromos: React.FC = () => {
     });
   };
 
+  const isPromoExpired = (promo: PromoCode) => {
+    return promo.expiresAt && promo.expiresAt < Date.now();
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -393,13 +397,13 @@ export const AdminPromos: React.FC = () => {
                       >
                         <Copy className="w-4 h-4" />
                       </button>
-                      {promo.isActive ? (
-                        <span className="flex items-center gap-1 text-xs text-green-600 dark:text-green-400">
-                          <CheckCircle className="w-3 h-3" /> {t('admin.promos.active')}
-                        </span>
-                      ) : (
+                      {isPromoExpired(promo) || !promo.isActive ? (
                         <span className="flex items-center gap-1 text-xs text-red-600 dark:text-red-400">
                           <XCircle className="w-3 h-3" /> {t('admin.promos.inactive')}
+                        </span>
+                      ) : (
+                        <span className="flex items-center gap-1 text-xs text-green-600 dark:text-green-400">
+                          <CheckCircle className="w-3 h-3" /> {t('admin.promos.active')}
                         </span>
                       )}
                     </div>
