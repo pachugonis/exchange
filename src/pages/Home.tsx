@@ -78,12 +78,10 @@ export const Home: React.FC = () => {
           {designVariant === 'alternative' ? (
             // Alternative layout: same as default but with alternative styling
             <div className="text-center">
-              <h1 className="text-5xl md:text-6xl font-bold mb-6">
-                <span className="bg-gradient-alternative bg-clip-text text-transparent">
-                  {settings.heroTitle}
-                </span>
+              <h1 className="text-5xl md:text-6xl font-bold mb-6 text-emerald-600 dark:text-emerald-400">
+                {settings.heroTitle}
               </h1>
-              <p className="text-xl text-dark-600 dark:text-dark-300 mb-8 max-w-2xl mx-auto">
+              <p className="text-xl text-emerald-700 dark:text-emerald-300 mb-8 max-w-2xl mx-auto">
                 {settings.heroSubtitle}
               </p>
               <Link to="/exchange">

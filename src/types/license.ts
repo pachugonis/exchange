@@ -3,7 +3,7 @@
 /**
  * License type enum defining the different tiers
  */
-export type LicenseType = 'trial' | 'standard' | 'professional' | 'enterprise' | 'lifetime';
+export type LicenseType = 'standard' | 'professional';
 
 /**
  * License status enum defining the current state

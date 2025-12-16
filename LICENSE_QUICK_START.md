@@ -60,11 +60,8 @@ Done! ✅
 
 | Type | Duration | Domains | Price | Best For |
 |------|----------|---------|-------|----------|
-| **Trial** | 14 days | 1 | Free | Testing |
-| **Standard** | 1 year | 1 | $ | Single deployment |
-| **Professional** | 1 year | 3 | $$ | Multiple sites |
-| **Enterprise** | Custom | ∞ | Custom | Large organizations |
-| **Lifetime** | Forever | 5 | $$$ | Long-term use |
+| **Standard** | 1 year | 1 | 70,000 ₽ | Single deployment with annual renewal |
+| **Professional** | Lifetime | 1 | 800,000 ₽ | Long-term use with domain change capability |
 
 ## 🔧 Common Tasks
 
@@ -78,10 +75,14 @@ Admin Panel → License → Click "Revalidate"
 Contact: sales@4ex.com
 
 ### Change Domain
-1. Contact support@4ex.com
-2. Unbind old domain
-3. Wait 24 hours
-4. Activate on new domain
+**For Professional License only:**
+1. Go to Admin Panel → License
+2. Unbind current domain
+3. Activate on new domain
+
+**For Standard License:**
+- Domain change not available
+- Contact support@4ex.com for assistance
 
 ### Troubleshooting
 ```bash

@@ -29,27 +29,10 @@ export const LICENSE_CONFIG_KEY = 'license-configuration';
 // ============================================================================
 
 export const LICENSE_TIERS: Record<LicenseType, LicenseTierConfig> = {
-  trial: {
-    type: 'trial',
-    name: 'Trial License',
-    duration: 14, // 14 days
-    maxDomains: 1,
-    features: {
-      crypto: true,
-      telegram: false,
-      kyc: false,
-      customBranding: false,
-      prioritySupport: false,
-      api: false,
-      multiCurrency: true,
-      analytics: false,
-    },
-    description: 'Limited 14-day trial with basic features',
-  },
   standard: {
     type: 'standard',
-    name: 'Standard License',
-    duration: 365, // 1 year
+    name: 'Стандартная лицензия',
+    duration: 365, // 1 год
     maxDomains: 1,
     features: {
       crypto: true,
@@ -61,13 +44,13 @@ export const LICENSE_TIERS: Record<LicenseType, LicenseTierConfig> = {
       multiCurrency: true,
       analytics: true,
     },
-    description: 'Full features for single domain',
+    description: 'Полный функционал на 1 год с привязкой к одному домену. Стоимость: 70,000 ₽',
   },
   professional: {
     type: 'professional',
-    name: 'Professional License',
-    duration: 365, // 1 year
-    maxDomains: 3,
+    name: 'Профессиональная лицензия',
+    duration: null, // Бессрочная
+    maxDomains: 1,
     features: {
       crypto: true,
       telegram: true,
@@ -78,41 +61,7 @@ export const LICENSE_TIERS: Record<LicenseType, LicenseTierConfig> = {
       multiCurrency: true,
       analytics: true,
     },
-    description: 'Full features with priority support for up to 3 domains',
-  },
-  enterprise: {
-    type: 'enterprise',
-    name: 'Enterprise License',
-    duration: null, // Custom duration
-    maxDomains: -1, // Unlimited
-    features: {
-      crypto: true,
-      telegram: true,
-      kyc: true,
-      customBranding: true,
-      prioritySupport: true,
-      api: true,
-      multiCurrency: true,
-      analytics: true,
-    },
-    description: 'Custom enterprise solution with unlimited domains',
-  },
-  lifetime: {
-    type: 'lifetime',
-    name: 'Lifetime License',
-    duration: null, // Perpetual
-    maxDomains: 5,
-    features: {
-      crypto: true,
-      telegram: true,
-      kyc: true,
-      customBranding: true,
-      prioritySupport: false,
-      api: true,
-      multiCurrency: true,
-      analytics: true,
-    },
-    description: 'Lifetime access with updates for up to 5 domains',
+    description: 'Бессрочная лицензия с полным функционалом и возможностью изменения домена. Стоимость: 800,000 ₽',
   },
 };
 
@@ -309,14 +258,14 @@ export function getLicenseStatusInfo(license: License | null, lastValidationFail
   if (!license) {
     return {
       isValid: false,
-      licenseType: 'trial',
+      licenseType: 'standard',
       status: 'pending',
       expiresAt: null,
       daysRemaining: null,
       boundDomains: [],
       currentDomain: getCurrentDomain(),
       domainMatch: false,
-      features: LICENSE_TIERS.trial.features,
+      features: LICENSE_TIERS.standard.features,
       lastValidated: 0,
       inGracePeriod: false,
       gracePeriodDaysRemaining: 0,

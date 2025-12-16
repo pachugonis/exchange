@@ -95,13 +95,29 @@ src/
 
 ### 1. License Types Supported
 
-| Type | Duration | Max Domains | Features |
-|------|----------|-------------|----------|
-| Trial | 14 days | 1 | Limited features |
-| Standard | 1 year | 1 | Full features |
-| Professional | 1 year | 3 | Full + priority support |
-| Enterprise | Custom | Unlimited | Full + custom branding |
-| Lifetime | Perpetual | 5 | Full features forever |
+| Type | Duration | Max Domains | Price | Features |
+|------|----------|-------------|-------|----------|
+| Standard | 1 year | 1 | 70,000 ₽ | Full features with domain binding |
+| Professional | Lifetime | 1 | 800,000 ₽ | Full features + domain change capability |
+
+**Key Differences:**
+
+**Standard License:**
+- Valid for 1 year from activation
+- Bound to a single domain (cannot be changed)
+- Includes all core features: crypto exchange, Telegram bot, KYC, API, multi-currency, analytics
+- Requires annual renewal
+- Price: 70,000 ₽/year
+
+**Professional License:**
+- Lifetime validity (never expires)
+- Bound to a single domain (can be changed by user)
+- All Standard features plus:
+  - Custom branding capabilities
+  - Priority support
+  - Self-service domain unbinding/rebinding
+- One-time payment
+- Price: 800,000 ₽ (lifetime)
 
 ### 2. Validation Mechanisms
 
@@ -233,7 +249,9 @@ function ProtectedFeature() {
 #### 1. Purchase License
 
 1. Visit https://4ex.com/licenses
-2. Choose appropriate license tier
+2. Choose license tier:
+   - **Standard**: 70,000 ₽ - 1 year, single domain
+   - **Professional**: 800,000 ₽ - Lifetime, domain change capability
 3. Complete purchase
 4. Receive license key via email (format: LIC-XXXX-XXXX-XXXX-XXXX)
 
@@ -274,12 +292,20 @@ Access Admin Panel → License to view:
 
 #### 5. Renewal Process
 
+**For Standard License:**
+
 When your license is about to expire:
 
 1. You'll see warning banners (30 days before expiration)
 2. Contact sales@4ex.com for renewal
-3. Receive new license key or extension
-4. License automatically updates after renewal
+3. Pay renewal fee (70,000 ₽)
+4. Receive renewal confirmation or new license key
+5. License automatically extends for another year
+
+**For Professional License:**
+
+- No renewal required (lifetime license)
+- Unlimited updates and support included
 
 ### For Administrators
 
@@ -304,9 +330,9 @@ When your license is about to expire:
 
 **Domain Mismatch:**
 - License bound to different domain
-- Contact support to unbind old domain
-- Wait 24 hours for domain slot to free
-- Activate on new domain
+- **Standard License**: Contact support@4ex.com to resolve (domain change not allowed)
+- **Professional License**: Unbind domain in Admin Panel and reactivate on new domain
+- Access must be from the bound domain
 
 **Expired License:**
 - Contact sales@4ex.com for renewal
@@ -548,11 +574,18 @@ Check browser DevTools → Network:
 
 ### Upgrading License Tier
 
-1. **Purchase Upgrade**
-2. **Receive New License Key**
-3. **Update `.env` with New Key**
-4. **Restart Application**
-5. **License Updates Automatically**
+**From Standard to Professional:**
+
+1. **Contact Sales**: Email sales@4ex.com
+2. **Upgrade Fee**: Pay difference (800,000 ₽ - remaining Standard license value)
+3. **Receive New License Key**: Professional license key sent via email
+4. **Update Configuration**: Update `.env` with new key
+5. **Reactivate**: Visit application and activate Professional license
+6. **Benefits After Upgrade**:
+   - License becomes lifetime (no expiration)
+   - Domain change capability enabled
+   - Custom branding unlocked
+   - Priority support activated
 
 ## Troubleshooting
 
@@ -669,6 +702,22 @@ Violation of license terms may result in:
 
 ## Changelog
 
+### Version 2.0.0 (2025-12-16)
+
+**License Tier Updates:**
+- ✅ Removed: Trial, Enterprise, and Lifetime tiers
+- ✅ Updated Standard License:
+  - Duration: 1 year
+  - Price: 70,000 ₽
+  - Max domains: 1 (fixed, no changes allowed)
+  - Full features included
+- ✅ Updated Professional License:
+  - Duration: Lifetime (no expiration)
+  - Price: 800,000 ₽
+  - Max domains: 1 (with domain change capability)
+  - Full features + custom branding + priority support
+- ✅ Documentation updated to reflect new pricing and capabilities
+
 ### Version 1.0.0 (2024-11-23)
 
 **Initial Implementation:**
@@ -692,6 +741,6 @@ Violation of license terms may result in:
 
 ---
 
-**Last Updated**: November 23, 2024
-**Version**: 1.0.0
+**Last Updated**: December 16, 2025
+**Version**: 2.0.0
 **Author**: 4EX Development Team
