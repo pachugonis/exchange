@@ -1,0 +1,70 @@
+# Installation temporary files
+.install.conf
+installation.log
+*.log
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Credentials
+.credentials
+.admin-config.json
+
+# Backups
+*.backup
+*.bak
+backup_*
+
+# OS files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# Editor files
+.vscode/
+.idea/
+*.sublime-*
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+# Installation temporary files
+.install.conf
+installation.log
+*.log
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Credentials
+.credentials
+.admin-config.json
+
+# Backups
+*.backup
+*.bak
+backup_*
+
+# OS files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# Editor files
+.vscode/
+.idea/
+*.sublime-*
+
+# Temporary files
+tmp/
+temp/
+*.tmp
