@@ -1,0 +1,37 @@
+{
+  "name": "4ex-license-server",
+  "version": "2.0.0",
+  "description": "License validation server for 4EX Exchange Platform",
+  "type": "module",
+  "main": "server.mjs",
+  "scripts": {
+    "start": "node server.mjs",
+    "dev": "node --watch server.mjs",
+    "pm2:start": "pm2 start ecosystem.config.cjs",
+    "pm2:stop": "pm2 stop license-server",
+    "pm2:restart": "pm2 restart license-server",
+    "pm2:logs": "pm2 logs license-server",
+    "pm2:monit": "pm2 monit"
+  },
+  "keywords": [
+    "license",
+    "validation",
+    "jwt",
+    "4ex",
+    "exchange"
+  ],
+  "author": "4EX Development Team",
+  "license": "PROPRIETARY",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "jsonwebtoken": "^9.0.2"
+  },
+  "devDependencies": {
+    "pm2": "^5.4.3"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
