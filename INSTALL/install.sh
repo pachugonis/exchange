@@ -55,6 +55,11 @@ main() {
     
     # Phase 1: Prerequisites check
     print_phase "Phase 1: System Prerequisites Check"
+    
+    # Update package repositories
+    log "Updating package repositories..."
+    apt-get update -qq || log "Warning: apt update had some errors, continuing anyway..."
+    
     bash "${SCRIPT_DIR}/scripts/check-prerequisites.sh" || error_exit "Prerequisites check failed"
     
     # Phase 2: Interactive configuration
@@ -76,28 +81,69 @@ main() {
     print_phase "Phase 4: Application Deployment"
     deploy_application
     
-    # Phase 5: SSL certificate setup
-    print_phase "Phase 5: SSL Certificate Configuration"
-    bash "${SCRIPT_DIR}/scripts/setup-ssl.sh" "${DOMAIN}" "${ADMIN_EMAIL}" || error_exit "SSL setup failed"
+    # Phase 5: SSL certificate setup (SKIPPED - run enable-ssl.sh after installation)
+    # SSL will be configured separately to avoid installation failures
+    # To enable HTTPS: cd /root/INSTALL && bash enable-ssl.sh
     
     # Phase 6: Database initialization
-    print_phase "Phase 6: Database Initialization"
+    print_phase "Phase 5: Database Initialization"
     bash "${SCRIPT_DIR}/scripts/setup-database.sh" || error_exit "Database setup failed"
     
     # Phase 7: License activation
-    print_phase "Phase 7: License Activation"
+    print_phase "Phase 6: License Activation"
     activate_license
     
-    # Phase 8: Admin account creation
-    print_phase "Phase 8: Administrator Account Setup"
+    # Phase 7: Admin account creation
+    print_phase "Phase 7: Administrator Account Setup"
     bash "${SCRIPT_DIR}/scripts/setup-admin.sh" "${ADMIN_EMAIL}" "${ADMIN_PASSWORD}" || error_exit "Admin setup failed"
     
-    # Phase 9: Health check
-    print_phase "Phase 9: Post-Installation Validation"
+    # Phase 8: Health check
+    print_phase "Phase 8: Post-Installation Validation"
     bash "${SCRIPT_DIR}/scripts/health-check.sh" "${DOMAIN}" || error_exit "Health check failed"
     
     # Installation complete
     show_completion
+    
+    # Phase 9: SSL Setup (Optional)
+    echo ""
+    echo -e "${YELLOW}========================================${NC}"
+    echo -e "${YELLOW}  Optional: SSL Certificate Setup${NC}"
+    echo -e "${YELLOW}========================================${NC}"
+    echo ""
+    echo "Your site is currently running on HTTP (port 80)."
+    echo "Would you like to set up HTTPS with a free SSL certificate from Let's Encrypt?"
+    echo ""
+    echo "Requirements:"
+    echo "  - Domain ${DOMAIN} must point to this server's IP"
+    echo "  - Port 80 must be accessible from the internet"
+    echo ""
+    read -p "Setup SSL now? (y/n): " -n 1 -r
+    echo
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        echo ""
+        print_phase "Phase 9: SSL Certificate Configuration"
+        bash "${SCRIPT_DIR}/scripts/setup-ssl.sh" "${DOMAIN}" "${ADMIN_EMAIL}"
+        
+        if [[ $? -eq 0 ]]; then
+            echo ""
+            echo -e "${GREEN}========================================${NC}"
+            echo -e "${GREEN}  SSL Setup Complete!${NC}"
+            echo -e "${GREEN}========================================${NC}"
+            echo ""
+            echo -e "Your site is now available at: ${GREEN}https://${DOMAIN}${NC}"
+            echo ""
+        else
+            echo ""
+            echo -e "${YELLOW}SSL setup was skipped or failed.${NC}"
+            echo -e "You can run it later with: ${CYAN}cd /root/INSTALL && bash enable-ssl.sh${NC}"
+            echo ""
+        fi
+    else
+        echo ""
+        echo -e "${YELLOW}SSL setup skipped.${NC}"
+        echo -e "You can enable HTTPS later by running: ${CYAN}cd /root/INSTALL && bash enable-ssl.sh${NC}"
+        echo ""
+    fi
 }
 
 # Deploy application
@@ -124,10 +170,10 @@ deploy_application() {
     log "Generating nginx.conf from template..."
     rm -rf "${DEPLOYMENT_DIR}/nginx.conf" 2>/dev/null || true
     
-    # Use HTTP-only template initially (HTTPS will be configured by setup-ssl.sh)
+    # Use HTTP-only template for initial deployment
     sed "s/DOMAIN_PLACEHOLDER/${DOMAIN}/g" "${SCRIPT_DIR}/config/nginx.conf.http-only.template" > "${DEPLOYMENT_DIR}/nginx.conf"
     
-    # Also create the full template for SSL setup later
+    # Save the full template for later SSL setup
     sed "s/DOMAIN_PLACEHOLDER/${DOMAIN}/g" "${SCRIPT_DIR}/config/nginx.conf.template" > "${DEPLOYMENT_DIR}/nginx.conf.with-ssl"
     
     log "Creating .env file from configuration..."
@@ -223,7 +269,7 @@ EOF
     echo -e "${NC}"
     
     echo -e "${CYAN}================================================================${NC}"
-    echo -e "${GREEN}Application URL:${NC}      https://${DOMAIN}"
+    echo -e "${GREEN}Application URL:${NC}      http://${DOMAIN} (HTTPS after SSL setup)"
     echo -e "${GREEN}Admin Email:${NC}          ${ADMIN_EMAIL}"
     echo -e "${GREEN}Admin Password:${NC}       ${ADMIN_PASSWORD}"
     echo -e "${CYAN}================================================================${NC}"
@@ -233,14 +279,17 @@ EOF
     echo "  - Change your admin password after first login"
     echo "  - Enable 2FA in the admin panel"
     echo "  - Your credentials are saved in: ${DEPLOYMENT_DIR}/.credentials"
+    echo "  - Site is running on HTTP - enable HTTPS for security:"
+    echo "    cd /root/INSTALL && bash enable-ssl.sh"
     echo ""
     echo -e "${CYAN}================================================================${NC}"
     echo -e "${GREEN}Next Steps:${NC}"
-    echo "  1. Visit https://${DOMAIN} in your browser"
+    echo "  1. Visit http://${DOMAIN} in your browser (HTTP only for now)"
     echo "  2. Log in with the credentials above"
     echo "  3. Complete your profile setup"
     echo "  4. Configure exchange rates and currencies"
-    echo "  5. Review security settings"
+    echo "  5. Setup SSL certificate (recommended):"
+    echo "     cd /root/INSTALL && bash scripts/setup-ssl.sh ${DOMAIN} ${ADMIN_EMAIL}"
     echo ""
     echo -e "${CYAN}================================================================${NC}"
     echo -e "${GREEN}Useful Commands:${NC}"
@@ -262,9 +311,14 @@ EOF
 4EX Exchange Platform - Admin Credentials
 Installation Date: $(date)
 
-Application URL: https://${DOMAIN}
+Application URL: http://${DOMAIN}
 Admin Email: ${ADMIN_EMAIL}
 Admin Password: ${ADMIN_PASSWORD}
+
+IMPORTANT:
+- Site is currently running on HTTP only
+- To enable HTTPS, run: cd /root/INSTALL && bash scripts/setup-ssl.sh ${DOMAIN} ${ADMIN_EMAIL}
+- After SSL setup, URL will be: https://${DOMAIN}
 
 KEEP THIS FILE SECURE AND DELETE AFTER SAVING CREDENTIALS!
 EOF

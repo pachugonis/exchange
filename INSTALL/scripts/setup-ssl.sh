@@ -93,12 +93,26 @@ configure_nginx() {
     print_info "Enabling HTTPS port..."
     sed -i 's/# - "\${HTTPS_PORT:-443}:443"/- "\${HTTPS_PORT:-443}:443"/' "${DEPLOYMENT_DIR}/docker-compose.yml"
     
+    # Update SSL certificates mount to use bind mount instead of volume
+    print_info "Updating SSL certificates mount..."
+    sed -i 's|ssl_certificates:/etc/letsencrypt:ro|/etc/letsencrypt:/etc/letsencrypt:ro|' "${DEPLOYMENT_DIR}/docker-compose.yml"
+    
     # Recreate nginx container with new configuration
     print_info "Recreating nginx container..."
     cd "${DEPLOYMENT_DIR}"
+    docker compose down nginx
     docker compose up -d nginx
     
-    print_success "Nginx configured with SSL"
+    # Wait for nginx to start
+    sleep 3
+    
+    # Verify nginx is running
+    if docker ps | grep -q 4ex-nginx; then
+        print_success "Nginx configured with SSL and running"
+    else
+        print_error "Nginx failed to start. Check logs: docker logs 4ex-nginx"
+        return 1
+    fi
 }
 
 setup_renewal() {
