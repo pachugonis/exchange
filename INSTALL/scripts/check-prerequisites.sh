@@ -156,7 +156,7 @@ main() {
     check_dependencies || exit 1
     
     echo ""
-    print_success "✓ All prerequisites checks passed!"
+    print_success "вњ“ All prerequisites checks passed!"
     echo ""
 }
 
