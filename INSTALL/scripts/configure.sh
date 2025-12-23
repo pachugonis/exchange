@@ -53,7 +53,7 @@ EOF
 # Collect domain name
 collect_domain() {
     echo ""
-    print_section "Domain Configuration"
+    print_section "$(t 'domain_config_title')"
     echo ""
     
     while true; do
@@ -100,12 +100,12 @@ collect_domain() {
 # Collect admin email
 collect_email() {
     echo ""
-    print_section "Administrator Email"
+    print_section "$(t 'admin_email_title')"
     echo ""
-    print_info "This email will be used for:"
-    echo "  - SSL certificate notifications"
-    echo "  - Administrator account login"
-    echo "  - System notifications"
+    print_info "$(t 'email_usage_info')"
+    echo "  - $(t 'email_usage_ssl')"
+    echo "  - $(t 'email_usage_login')"
+    echo "  - $(t 'email_usage_notifications')"
     echo ""
     
     while true; do
@@ -123,14 +123,14 @@ collect_email() {
 # Collect admin password
 collect_password() {
     echo ""
-    print_section "Administrator Password"
+    print_section "$(t 'admin_password_title')"
     echo ""
-    print_info "Password requirements:"
-    echo "  - Minimum 12 characters"
-    echo "  - At least one uppercase letter"
-    echo "  - At least one lowercase letter"
-    echo "  - At least one number"
-    echo "  - At least one special character"
+    print_info "$(t 'password_requirements')"
+    echo "  - $(t 'password_req_length')"
+    echo "  - $(t 'password_req_uppercase')"
+    echo "  - $(t 'password_req_lowercase')"
+    echo "  - $(t 'password_req_number')"
+    echo "  - $(t 'password_req_special')"
     echo ""
     
     while true; do
@@ -156,10 +156,10 @@ collect_password() {
 # Collect license key
 collect_license() {
     echo ""
-    print_section "License Key"
+    print_section "$(t 'license_key_title')"
     echo ""
-    print_info "Enter your product license key."
-    print_info "Format: LIC-XXXX-XXXX-XXXX-XXXX"
+    print_info "$(t 'license_key_info')"
+    print_info "$(t 'license_key_format')"
     echo ""
     
     while true; do
@@ -177,76 +177,76 @@ collect_license() {
 # Collect database password
 collect_database() {
     echo ""
-    print_section "Database Configuration"
+    print_section "$(t 'database_config_title')"
     echo ""
-    print_info "A PostgreSQL database will be created for the application."
+    print_info "$(t 'database_info')"
     echo ""
     
-    read -p "Auto-generate secure database password? (Y/n): " -n 1 -r
+    read -p "$(t 'auto_generate_db_password') (Y/n): " -n 1 -r
     echo
     
     if [[ $REPLY =~ ^[Nn]$ ]]; then
         while true; do
-            read -s -p "Enter database password (min 16 characters): " DB_PASSWORD
+            read -s -p "$(t 'enter_db_password_prompt') " DB_PASSWORD
             echo
             
             if [[ ${#DB_PASSWORD} -ge 16 ]]; then
-                read -s -p "Confirm password: " db_confirm
+                read -s -p "$(t 'confirm_password') " db_confirm
                 echo
                 
                 if [[ "$DB_PASSWORD" == "$db_confirm" ]]; then
-                    print_success "Database password set"
+                    print_success "$(t 'db_password_set')"
                     break
                 else
-                    print_error "Passwords do not match. Please try again."
+                    print_error "$(t 'password_mismatch')"
                 fi
             else
-                print_error "Password must be at least 16 characters."
+                print_error "$(t 'db_password_min_length')"
             fi
         done
     else
         DB_PASSWORD=$(generate_password 32)
-        print_success "Database password auto-generated"
+        print_success "$(t 'db_password_generated')"
     fi
 }
 
 # Collect port configuration
 collect_ports() {
     echo ""
-    print_section "Port Configuration"
+    print_section "$(t 'port_config_title')"
     echo ""
-    print_info "Default ports: HTTP (80), HTTPS (443)"
+    print_info "$(t 'default_ports_info')"
     echo ""
     
-    read -p "Use default ports? (Y/n): " -n 1 -r
+    read -p "$(t 'use_default_ports') (Y/n): " -n 1 -r
     echo
     
     if [[ $REPLY =~ ^[Nn]$ ]]; then
-        read -p "HTTP port [80]: " custom_http
+        read -p "$(t 'http_port_prompt') [80]: " custom_http
         APP_PORT=${custom_http:-80}
         
-        read -p "HTTPS port [443]: " custom_https
+        read -p "$(t 'https_port_prompt') [443]: " custom_https
         SSL_PORT=${custom_https:-443}
         
-        print_info "Using ports: HTTP=${APP_PORT}, HTTPS=${SSL_PORT}"
+        print_info "$(t 'using_custom_ports') HTTP=${APP_PORT}, HTTPS=${SSL_PORT}"
     else
-        print_info "Using default ports: HTTP=80, HTTPS=443"
+        print_info "$(t 'using_default_ports')"
     fi
 }
 
 # Show configuration summary
 show_summary() {
     echo ""
-    print_section "Configuration Summary"
+    print_section "$(t 'configuration_summary')"
     echo ""
     echo -e "${CYAN}===============================================================${NC}"
-    echo -e "${GREEN}Domain:${NC}              $DOMAIN"
-    echo -e "${GREEN}Admin Email:${NC}         $ADMIN_EMAIL"
-    echo -e "${GREEN}Admin Password:${NC}      **********"
-    echo -e "${GREEN}License Key:${NC}         ${LICENSE_KEY:0:8}...${LICENSE_KEY: -4}"
-    echo -e "${GREEN}Database Password:${NC}   **********"
-    echo -e "${GREEN}HTTP Port:${NC}           $APP_PORT"
-    echo -e "${GREEN}HTTPS Port:${NC}          $SSL_PORT"
+    echo -e "${GREEN}$(t 'summary_domain'):${NC}              $DOMAIN"
+    echo -e "${GREEN}$(t 'summary_admin_email'):${NC}         $ADMIN_EMAIL"
+    echo -e "${GREEN}$(t 'summary_admin_password'):${NC}      **********"
+    echo -e "${GREEN}$(t 'summary_license_key'):${NC}         ${LICENSE_KEY:0:8}...${LICENSE_KEY: -4}"
+    echo -e "${GREEN}$(t 'summary_db_password'):${NC}   **********"
+    echo -e "${GREEN}$(t 'summary_http_port'):${NC}           $APP_PORT"
+    echo -e "${GREEN}$(t 'summary_https_port'):${NC}          $SSL_PORT"
     echo -e "${CYAN}===============================================================${NC}"
     echo ""
 }
@@ -269,7 +269,7 @@ HTTPS_PORT=${SSL_PORT}
 EOF
     
     chmod 600 "$CONFIG_FILE"
-    print_success "Configuration saved"
+    print_success "$(t 'config_saved')"
 }
 
 # Main execution
@@ -286,18 +286,18 @@ main() {
     show_summary
     
     echo ""
-    read -p "Proceed with installation? (y/N): " -n 1 -r
+    read -p "$(t 'confirm_installation') " -n 1 -r
     echo
     
     if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-        print_error "Installation cancelled by user"
+        print_error "$(t 'installation_cancelled')"
         exit 1
     fi
     
     save_configuration
     
     echo ""
-    print_success "Configuration complete!"
+    print_success "$(t 'config_complete')"
     echo ""
 }
 

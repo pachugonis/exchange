@@ -106,6 +106,127 @@ t() {
         en_invalid_license) echo "Invalid license key format" ;;
         ru_invalid_license) echo "Неверный формат лицензионного ключа" ;;
         
+        # Configuration sections
+        en_domain_config_title) echo "Domain Configuration" ;;
+        ru_domain_config_title) echo "Настройка домена" ;;
+        
+        en_admin_email_title) echo "Administrator Email" ;;
+        ru_admin_email_title) echo "Email администратора" ;;
+        
+        en_email_usage_info) echo "This email will be used for:" ;;
+        ru_email_usage_info) echo "Этот email будет использоваться для:" ;;
+        
+        en_email_usage_ssl) echo "SSL certificate notifications" ;;
+        ru_email_usage_ssl) echo "Уведомлений SSL-сертификата" ;;
+        
+        en_email_usage_login) echo "Administrator account login" ;;
+        ru_email_usage_login) echo "Входа в учетную запись администратора" ;;
+        
+        en_email_usage_notifications) echo "System notifications" ;;
+        ru_email_usage_notifications) echo "Системных уведомлений" ;;
+        
+        en_admin_password_title) echo "Administrator Password" ;;
+        ru_admin_password_title) echo "Пароль администратора" ;;
+        
+        en_password_requirements) echo "Password requirements:" ;;
+        ru_password_requirements) echo "Требования к паролю:" ;;
+        
+        en_password_req_length) echo "Minimum 12 characters" ;;
+        ru_password_req_length) echo "Минимум 12 символов" ;;
+        
+        en_password_req_uppercase) echo "At least one uppercase letter" ;;
+        ru_password_req_uppercase) echo "Минимум одна заглавная буква" ;;
+        
+        en_password_req_lowercase) echo "At least one lowercase letter" ;;
+        ru_password_req_lowercase) echo "Минимум одна строчная буква" ;;
+        
+        en_password_req_number) echo "At least one number" ;;
+        ru_password_req_number) echo "Минимум одна цифра" ;;
+        
+        en_password_req_special) echo "At least one special character" ;;
+        ru_password_req_special) echo "Минимум один специальный символ" ;;
+        
+        en_license_key_title) echo "License Key" ;;
+        ru_license_key_title) echo "Лицензионный ключ" ;;
+        
+        en_license_key_info) echo "Enter your product license key." ;;
+        ru_license_key_info) echo "Введите ваш лицензионный ключ продукта." ;;
+        
+        en_license_key_format) echo "Format: LIC-XXXX-XXXX-XXXX-XXXX" ;;
+        ru_license_key_format) echo "Формат: LIC-XXXX-XXXX-XXXX-XXXX" ;;
+        
+        en_database_config_title) echo "Database Configuration" ;;
+        ru_database_config_title) echo "Настройка базы данных" ;;
+        
+        en_database_info) echo "A PostgreSQL database will be created for the application." ;;
+        ru_database_info) echo "Для приложения будет создана база данных PostgreSQL." ;;
+        
+        en_auto_generate_db_password) echo "Auto-generate secure database password?" ;;
+        ru_auto_generate_db_password) echo "Автоматически сгенерировать безопасный пароль базы данных?" ;;
+        
+        en_enter_db_password_prompt) echo "Enter database password (min 16 characters):" ;;
+        ru_enter_db_password_prompt) echo "Введите пароль базы данных (минимум 16 символов):" ;;
+        
+        en_db_password_set) echo "Database password set" ;;
+        ru_db_password_set) echo "Пароль базы данных установлен" ;;
+        
+        en_db_password_min_length) echo "Password must be at least 16 characters." ;;
+        ru_db_password_min_length) echo "Пароль должен содержать минимум 16 символов." ;;
+        
+        en_db_password_generated) echo "Database password auto-generated" ;;
+        ru_db_password_generated) echo "Пароль базы данных сгенерирован автоматически" ;;
+        
+        en_port_config_title) echo "Port Configuration" ;;
+        ru_port_config_title) echo "Настройка портов" ;;
+        
+        en_default_ports_info) echo "Default ports: HTTP (80), HTTPS (443)" ;;
+        ru_default_ports_info) echo "Порты по умолчанию: HTTP (80), HTTPS (443)" ;;
+        
+        en_use_default_ports) echo "Use default ports?" ;;
+        ru_use_default_ports) echo "Использовать порты по умолчанию?" ;;
+        
+        en_http_port_prompt) echo "HTTP port" ;;
+        ru_http_port_prompt) echo "HTTP порт" ;;
+        
+        en_https_port_prompt) echo "HTTPS port" ;;
+        ru_https_port_prompt) echo "HTTPS порт" ;;
+        
+        en_using_custom_ports) echo "Using ports:" ;;
+        ru_using_custom_ports) echo "Используемые порты:" ;;
+        
+        en_using_default_ports) echo "Using default ports: HTTP=80, HTTPS=443" ;;
+        ru_using_default_ports) echo "Используются порты по умолчанию: HTTP=80, HTTPS=443" ;;
+        
+        en_summary_domain) echo "Domain" ;;
+        ru_summary_domain) echo "Домен" ;;
+        
+        en_summary_admin_email) echo "Admin Email" ;;
+        ru_summary_admin_email) echo "Email администратора" ;;
+        
+        en_summary_admin_password) echo "Admin Password" ;;
+        ru_summary_admin_password) echo "Пароль администратора" ;;
+        
+        en_summary_license_key) echo "License Key" ;;
+        ru_summary_license_key) echo "Лицензионный ключ" ;;
+        
+        en_summary_db_password) echo "Database Password" ;;
+        ru_summary_db_password) echo "Пароль базы данных" ;;
+        
+        en_summary_http_port) echo "HTTP Port" ;;
+        ru_summary_http_port) echo "HTTP порт" ;;
+        
+        en_summary_https_port) echo "HTTPS Port" ;;
+        ru_summary_https_port) echo "HTTPS порт" ;;
+        
+        en_config_saved) echo "Configuration saved" ;;
+        ru_config_saved) echo "Конфигурация сохранена" ;;
+        
+        en_installation_cancelled) echo "Installation cancelled by user" ;;
+        ru_installation_cancelled) echo "Установка отменена пользователем" ;;
+        
+        en_config_complete) echo "Configuration complete!" ;;
+        ru_config_complete) echo "Настройка завершена!" ;;
+        
         # Success messages
         en_installation_complete) echo "Installation completed successfully!" ;;
         ru_installation_complete) echo "Установка успешно завершена!" ;;
