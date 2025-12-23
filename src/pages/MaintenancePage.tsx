@@ -44,26 +44,26 @@ export const MaintenancePage: React.FC = () => {
           
           <div className="flex flex-wrap gap-4 justify-center">
             <a
-              href="mailto:support@4ex.com"
+              href="mailto:support@exchangekit.io"
               className="inline-flex items-center gap-2 px-6 py-3 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition"
             >
-              📧 support@4ex.com
+              📧 support@exchangekit.io
             </a>
             
             <a
-              href="https://t.me/4ex_support"
+              href="https://t.me/exchangekit_support"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition"
             >
-              📱 @4ex_support
+              📱 @exchangekit_support
             </a>
           </div>
         </div>
 
         <div className="mt-12 text-sm text-dark-500 dark:text-dark-400">
           <p>Спасибо за ваше терпение и понимание!</p>
-          <p className="mt-2">© 2025 4EX. Все права защищены.</p>
+          <p className="mt-2">© 2025 ExchangeKit. Все права защищены.</p>
         </div>
       </div>
     </div>

@@ -53,10 +53,10 @@ export const FAQ: React.FC = () => {
           </p>
           <div className="flex flex-wrap gap-4 justify-center">
             <a
-              href="mailto:support@4ex.com"
+              href="mailto:support@exchangekit.io"
               className="text-primary-500 hover:text-primary-600 font-medium"
             >
-              support@4ex.com
+              support@exchangekit.io
             </a>
             <span className="text-dark-400">•</span>
             <a
@@ -65,7 +65,7 @@ export const FAQ: React.FC = () => {
               rel="noopener noreferrer"
               className="text-primary-500 hover:text-primary-600 font-medium"
             >
-              Telegram: @4ex_support
+              Telegram: @exchangekit_support
             </a>
           </div>
         </div>

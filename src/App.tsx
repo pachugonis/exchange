@@ -95,7 +95,7 @@ function App() {
                       View License Details
                     </a>
                   )}
-                  <a href="mailto:support@4ex.com" className="block w-full px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors">
+                  <a href="mailto:support@exchangekit.io" className="block w-full px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors">
                     Contact Support
                   </a>
                 </div>

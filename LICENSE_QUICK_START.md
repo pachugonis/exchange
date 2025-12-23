@@ -31,14 +31,14 @@ Open http://localhost:5173 - No license required!
 ### For Production Deployment
 
 **1. Obtain License**
-- Purchase from https://4ex.com/licenses
+- Purchase from https://license.exchangekit.io
 - Receive key via email: `LIC-XXXX-XXXX-XXXX-XXXX`
 
 **2. Configure Environment**
 ```env
 VITE_LICENSE_ENABLE_VALIDATION=true
 VITE_LICENSE_KEY=LIC-XXXX-XXXX-XXXX-XXXX
-VITE_LICENSE_SERVER_URL=https://licenses.4ex.com
+VITE_LICENSE_SERVER_URL=https://license.exchangekit.io
 ```
 
 **3. Build and Deploy**
@@ -90,7 +90,7 @@ Contact: sales@4ex.com
 localStorage.removeItem('license-storage')
 
 # Test server connection
-curl https://licenses.4ex.com/api/health
+curl https://license.exchangekit.io/api/health
 
 # Check license data
 localStorage.getItem('license-storage')

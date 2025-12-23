@@ -1,7 +1,7 @@
 // Application constants
-export const APP_NAME = '4EX Currency Exchange';
-export const SUPPORT_EMAIL = 'support@4ex.cash';
-export const SUPPORT_TELEGRAM = '@4ex_support';
+export const APP_NAME = 'ExchangeKit';
+export const SUPPORT_EMAIL = 'support@exchangekit.io';
+export const SUPPORT_TELEGRAM = '@exchangekit_support';
 
 // Exchange constants
 export const DEFAULT_COMMISSION = 0.02; // 2%

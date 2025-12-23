@@ -14,7 +14,7 @@ export function generateSecret(): string {
 }
 
 // Generate QR code URL for Google Authenticator
-export function generateQRCodeURL(email: string, secret: string, issuer: string = '4EX'): string {
+export function generateQRCodeURL(email: string, secret: string, issuer: string = 'ExchangeKit'): string {
   const encodedIssuer = encodeURIComponent(issuer);
   const encodedEmail = encodeURIComponent(email);
   const otpauthURL = `otpauth://totp/${encodedIssuer}:${encodedEmail}?secret=${secret}&issuer=${encodedIssuer}`;

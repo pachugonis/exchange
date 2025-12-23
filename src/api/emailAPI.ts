@@ -125,7 +125,7 @@ export const sendEmail = async (request: SendEmailRequest): Promise<{ success: b
       to: request.to,
       from: smtpSettings?.smtpEnabled 
         ? `${smtpSettings.smtpFromName} <${smtpSettings.smtpFromEmail}>`
-        : 'noreply@4ex.com',
+        : 'noreply@exchangekit.io',
       subject: request.subject,
       type: request.type,
       status: 'sent',
@@ -210,11 +210,11 @@ export const sendEmailVerification = async (email: string, name: string): Promis
   const token = generateVerificationToken(email, 'email_verification');
   const verificationLink = `${window.location.origin}/user/verify-email?token=${token}`;
 
-  const subject = 'Подтверждение email - 4EX';
+  const subject = 'Подтверждение email - ExchangeKit';
   const body = `
 Здравствуйте, ${name}!
 
-Спасибо за регистрацию на 4EX!
+Спасибо за регистрацию на ExchangeKit!
 
 Пожалуйста, подтвердите ваш email адрес, перейдя по ссылке:
 ${verificationLink}
@@ -224,7 +224,7 @@ ${verificationLink}
 Если вы не регистрировались на нашем сайте, просто проигнорируйте это письмо.
 
 С уважением,
-Команда 4EX
+Команда ExchangeKit
   `.trim();
 
   const html = `
@@ -265,11 +265,11 @@ export const sendPasswordResetEmail = async (email: string, name: string): Promi
   const token = generateVerificationToken(email, 'password_reset');
   const resetLink = `${window.location.origin}/user/reset-password?token=${token}`;
 
-  const subject = 'Восстановление пароля - 4EX';
+  const subject = 'Восстановление пароля - ExchangeKit';
   const body = `
 Здравствуйте, ${name}!
 
-Вы запросили восстановление пароля для вашего аккаунта на 4EX.
+Вы запросили восстановление пароля для вашего аккаунта на ExchangeKit.
 
 Для сброса пароля перейдите по ссылке:
 ${resetLink}
@@ -279,7 +279,7 @@ ${resetLink}
 Если вы не запрашивали восстановление пароля, просто проигнорируйте это письмо.
 
 С уважением,
-Команда 4EX
+Команда ExchangeKit
   `.trim();
 
   const html = `

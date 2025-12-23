@@ -165,7 +165,7 @@ VITE_LICENSE_ENABLE_VALIDATION=false
 # For production (requires license)
 VITE_LICENSE_ENABLE_VALIDATION=true
 VITE_LICENSE_KEY=LIC-XXXX-XXXX-XXXX-XXXX
-VITE_LICENSE_SERVER_URL=https://licenses.4ex.com
+VITE_LICENSE_SERVER_URL=https://license.exchangekit.io
 ```
 
 #### 2. Development Mode
@@ -248,7 +248,7 @@ function ProtectedFeature() {
 
 #### 1. Purchase License
 
-1. Visit https://4ex.com/licenses
+1. Visit https://license.exchangekit.io
 2. Choose license tier:
    - **Standard**: 70,000 ₽ - 1 year, single domain
    - **Professional**: 800,000 ₽ - Lifetime, domain change capability
@@ -644,7 +644,7 @@ localStorage.removeItem('license-storage')
 window.location.reload()
 
 // Test server connection
-fetch('https://licenses.4ex.com/api/health')
+fetch('https://license.exchangekit.io/api/health')
   .then(r => r.json())
   .then(console.log)
 ```

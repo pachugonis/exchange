@@ -17,7 +17,7 @@ export const Rules: React.FC = () => {
           <Card>
             <h2 className="text-2xl font-bold mb-4">Общие положения</h2>
             <div className="prose dark:prose-invert max-w-none">
-              <p>Используя сервис 4EX, вы соглашаетесь с настоящими правилами обмена.</p>
+              <p>Используя сервис ExchangeKit, вы соглашаетесь с настоящими правилами обмена.</p>
               <p>Сервис предоставляет услуги обмена электронных валют в автоматическом и полуавтоматическом режиме.</p>
             </div>
           </Card>
@@ -306,11 +306,11 @@ export const Contact: React.FC = () => {
             <div className="space-y-3">
               <div>
                 <p className="text-sm text-dark-500 mb-1">Email</p>
-                <p className="font-medium">support@4ex.cash</p>
+                <p className="font-medium">support@exchangekit.io</p>
               </div>
               <div>
                 <p className="text-sm text-dark-500 mb-1">Telegram</p>
-                <p className="font-medium">@4ex_support</p>
+                <p className="font-medium">@exchangekit_support</p>
               </div>
               <div>
                 <p className="text-sm text-dark-500 mb-1">Рабочие часы</p>

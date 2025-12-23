@@ -3,9 +3,11 @@ import { formatDaysRemaining, formatExpirationDate } from '../../utils/license';
 import { Alert } from '../ui/Alert';
 import { Button } from '../ui/Button';
 import { AlertTriangle, XCircle, Clock, Shield } from 'lucide-react';
+import { useTranslation } from '../../hooks/useTranslation';
 
 export function LicenseWarningBanner() {
   const { license, statusInfo } = useLicenseStore();
+  const { t } = useTranslation();
 
   // Don't show banner if no license or license is fully valid
   if (!license) {
@@ -21,10 +23,9 @@ export function LicenseWarningBanner() {
             <div className="flex items-center gap-3">
               <XCircle className="w-6 h-6 flex-shrink-0" />
               <div>
-                <p className="font-semibold">Critical: License Validation Failed</p>
+                <p className="font-semibold">{t('licenseBanner.critical.title')}</p>
                 <p className="text-sm opacity-90">
-                  Grace period expires in {statusInfo.gracePeriodDaysRemaining} days. 
-                  Platform will become inaccessible. Please restore network connection immediately.
+                  {t('licenseBanner.critical.message', { days: statusInfo.gracePeriodDaysRemaining })}
                 </p>
               </div>
             </div>
@@ -34,7 +35,7 @@ export function LicenseWarningBanner() {
               className="bg-white text-red-600 hover:bg-red-50 border-white flex-shrink-0"
               href="/admin/license"
             >
-              View License
+              {t('licenseBanner.buttons.viewLicense')}
             </Button>
           </div>
         </div>
@@ -51,10 +52,9 @@ export function LicenseWarningBanner() {
             <div className="flex items-center gap-3">
               <AlertTriangle className="w-5 h-5 flex-shrink-0" />
               <div>
-                <p className="font-semibold">License Validation Issue</p>
+                <p className="font-semibold">{t('licenseBanner.urgent.title')}</p>
                 <p className="text-sm opacity-90">
-                  Operating in grace period mode. {statusInfo.gracePeriodDaysRemaining} days remaining.
-                  Check your network connection.
+                  {t('licenseBanner.urgent.message', { days: statusInfo.gracePeriodDaysRemaining })}
                 </p>
               </div>
             </div>
@@ -64,7 +64,7 @@ export function LicenseWarningBanner() {
               className="bg-white text-orange-600 hover:bg-orange-50 border-white flex-shrink-0"
               href="/admin/license"
             >
-              Troubleshoot
+              {t('licenseBanner.buttons.troubleshoot')}
             </Button>
           </div>
         </div>
@@ -82,7 +82,7 @@ export function LicenseWarningBanner() {
               <AlertTriangle className="w-5 h-5 flex-shrink-0" />
               <div>
                 <p className="text-sm font-medium">
-                  License validation pending. Grace period: {statusInfo.gracePeriodDaysRemaining} days remaining.
+                  {t('licenseBanner.warning.message', { days: statusInfo.gracePeriodDaysRemaining })}
                 </p>
               </div>
             </div>
@@ -92,7 +92,7 @@ export function LicenseWarningBanner() {
               className="bg-white hover:bg-gray-50 border-gray-300 flex-shrink-0"
               href="/admin/license"
             >
-              Details
+              {t('licenseBanner.buttons.details')}
             </Button>
           </div>
         </div>
@@ -109,10 +109,9 @@ export function LicenseWarningBanner() {
             <div className="flex items-center gap-3">
               <XCircle className="w-6 h-6 flex-shrink-0" />
               <div>
-                <p className="font-semibold">License Expired</p>
+                <p className="font-semibold">{t('licenseBanner.expired.title')}</p>
                 <p className="text-sm opacity-90">
-                  Your license expired on {formatExpirationDate(license.expiresAt)}. 
-                  Renew now to continue using the platform.
+                  {t('licenseBanner.expired.message', { date: formatExpirationDate(license.expiresAt) })}
                 </p>
               </div>
             </div>
@@ -120,9 +119,9 @@ export function LicenseWarningBanner() {
               variant="outline" 
               size="sm"
               className="bg-white text-red-600 hover:bg-red-50 border-white flex-shrink-0"
-              href="mailto:sales@4ex.com"
+              href="mailto:sales@exchangekit.io"
             >
-              Renew License
+              {t('licenseBanner.buttons.renew')}
             </Button>
           </div>
         </div>
@@ -139,9 +138,9 @@ export function LicenseWarningBanner() {
             <div className="flex items-center gap-3">
               <Shield className="w-6 h-6 flex-shrink-0" />
               <div>
-                <p className="font-semibold">License Suspended</p>
+                <p className="font-semibold">{t('licenseBanner.suspended.title')}</p>
                 <p className="text-sm opacity-90">
-                  Your license has been suspended. Please contact support for assistance.
+                  {t('licenseBanner.suspended.message')}
                 </p>
               </div>
             </div>
@@ -149,9 +148,9 @@ export function LicenseWarningBanner() {
               variant="outline" 
               size="sm"
               className="bg-white text-red-600 hover:bg-red-50 border-white flex-shrink-0"
-              href="mailto:support@4ex.com"
+              href="mailto:support@exchangekit.io"
             >
-              Contact Support
+              {t('licenseBanner.buttons.contactSupport')}
             </Button>
           </div>
         </div>
@@ -168,10 +167,9 @@ export function LicenseWarningBanner() {
             <div className="flex items-center gap-3">
               <Clock className="w-5 h-5 flex-shrink-0" />
               <div>
-                <p className="font-semibold">License Expiring Soon</p>
+                <p className="font-semibold">{t('licenseBanner.expiringSoon7.title')}</p>
                 <p className="text-sm opacity-90">
-                  Your license expires in {formatDaysRemaining(statusInfo.daysRemaining)}. 
-                  Renew now to avoid service interruption.
+                  {t('licenseBanner.expiringSoon7.message', { days: formatDaysRemaining(statusInfo.daysRemaining!) })}
                 </p>
               </div>
             </div>
@@ -179,9 +177,9 @@ export function LicenseWarningBanner() {
               variant="outline" 
               size="sm"
               className="bg-white text-orange-600 hover:bg-orange-50 border-white flex-shrink-0"
-              href="mailto:sales@4ex.com"
+              href="mailto:sales@exchangekit.io"
             >
-              Renew Now
+              {t('licenseBanner.buttons.renewNow')}
             </Button>
           </div>
         </div>
@@ -199,8 +197,7 @@ export function LicenseWarningBanner() {
               <Clock className="w-5 h-5 flex-shrink-0" />
               <div>
                 <p className="text-sm font-medium">
-                  Your license expires in {formatDaysRemaining(statusInfo.daysRemaining)}. 
-                  Consider renewing soon.
+                  {t('licenseBanner.expiringSoon30.message', { days: formatDaysRemaining(statusInfo.daysRemaining!) })}
                 </p>
               </div>
             </div>
@@ -208,9 +205,9 @@ export function LicenseWarningBanner() {
               variant="outline" 
               size="sm"
               className="bg-white hover:bg-gray-50 border-gray-300 flex-shrink-0"
-              href="mailto:sales@4ex.com"
+              href="mailto:sales@exchangekit.io"
             >
-              Renew
+              {t('licenseBanner.buttons.renew')}
             </Button>
           </div>
         </div>
@@ -227,9 +224,9 @@ export function LicenseWarningBanner() {
             <div className="flex items-center gap-3">
               <XCircle className="w-6 h-6 flex-shrink-0" />
               <div>
-                <p className="font-semibold">Domain Mismatch</p>
+                <p className="font-semibold">{t('licenseBanner.domainMismatch.title')}</p>
                 <p className="text-sm opacity-90">
-                  This license is not authorized for domain: {statusInfo.currentDomain}
+                  {t('licenseBanner.domainMismatch.message', { domain: statusInfo.currentDomain })}
                 </p>
               </div>
             </div>
@@ -239,7 +236,7 @@ export function LicenseWarningBanner() {
               className="bg-white text-red-600 hover:bg-red-50 border-white flex-shrink-0"
               href="/admin/license"
             >
-              Manage Domains
+              {t('licenseBanner.buttons.manageDomains')}
             </Button>
           </div>
         </div>

@@ -332,8 +332,8 @@ export async function handleReviews(message: TelegramMessage, session: BotSessio
 export async function handleSupport(message: TelegramMessage, session: BotSession) {
   const text = `📞 Customer Support\n\n` +
     `We're here to help! Contact us through:\n\n` +
-    `✉️ Email: support@4ex.com\n` +
-    `💬 Telegram: @4ex_support\n` +
+    `✉️ Email: support@exchangekit.io\n` +
+    `💬 Telegram: @exchangekit_support\n` +
     `📱 Phone: +1 234 567 8900\n\n` +
     `Support hours: 24/7\n` +
     `Average response time: < 5 minutes`;

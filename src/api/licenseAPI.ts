@@ -13,7 +13,7 @@ import type {
 } from '../types/license';
 
 // Get license server URL from environment or use default
-const LICENSE_SERVER_URL = import.meta.env.VITE_LICENSE_SERVER_URL || 'https://licenses.4ex.com';
+const LICENSE_SERVER_URL = import.meta.env.VITE_LICENSE_SERVER_URL || 'https://license.exchangekit.io';
 const REQUEST_TIMEOUT = 10000; // 10 seconds
 
 /**

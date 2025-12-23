@@ -13,7 +13,7 @@ source "${SCRIPT_DIR}/utils/helpers.sh"
 
 ADMIN_EMAIL="$1"
 ADMIN_PASSWORD="$2"
-DEPLOYMENT_DIR="/opt/4ex-exchange"
+DEPLOYMENT_DIR="/opt/exchangekit"
 
 if [[ -z "$ADMIN_EMAIL" ]] || [[ -z "$ADMIN_PASSWORD" ]]; then
     echo "Usage: $0 <email> <password>"
@@ -24,7 +24,7 @@ create_admin_user() {
     print_step "Creating administrator account..."
     
     # First, check if users table exists
-    if ! docker exec 4ex-postgres psql -U exchange_user -d exchange_db -t -c "SELECT to_regclass('public.users');" 2>/dev/null | grep -q users; then
+    if ! docker exec exchangekit-postgres psql -U exchange_user -d exchange_db -t -c "SELECT to_regclass('public.users');" 2>/dev/null | grep -q users; then
         print_error "Users table does not exist. Running database setup first..."
         bash "${SCRIPT_DIR}/scripts/setup-database.sh" || {
             print_error "Failed to setup database"
@@ -49,7 +49,7 @@ DO UPDATE SET
 SQLEOF
 
     # Execute SQL file
-    if docker exec -i 4ex-postgres psql -U exchange_user -d exchange_db < /tmp/create_admin.sql; then
+    if docker exec -i exchangekit-postgres psql -U exchange_user -d exchange_db < /tmp/create_admin.sql; then
         print_success "Administrator account created"
     else
         print_error "Failed to create administrator account"
@@ -70,6 +70,7 @@ create_admin_config() {
 {
   "admin": {
     "email": "${ADMIN_EMAIL}",
+    "password": "${ADMIN_PASSWORD}",
     "role": "admin",
     "createdAt": "$(date -Iseconds)",
     "permissions": [
@@ -85,14 +86,30 @@ create_admin_config() {
 EOF
     
     chmod 600 "${DEPLOYMENT_DIR}/.admin-config.json"
+    
+    # Also create initial admin-storage state for the application
+    # This ensures the password is set correctly in localStorage
+    cat > "${DEPLOYMENT_DIR}/.admin-storage-init.json" <<EOF
+{
+  "state": {
+    "password": "${ADMIN_PASSWORD}",
+    "twoFactorEnabled": false,
+    "twoFactorSecret": null
+  },
+  "version": 0
+}
+EOF
+    
+    chmod 600 "${DEPLOYMENT_DIR}/.admin-storage-init.json"
     print_success "Admin configuration saved"
+    print_info "Admin will be able to login with email: ${ADMIN_EMAIL}"
 }
 
 verify_admin() {
     print_step "Verifying administrator account..."
     
     # Check if admin user exists in database
-    local admin_exists=$(docker exec 4ex-postgres psql -U exchange_user -d exchange_db -t -c \
+    local admin_exists=$(docker exec exchangekit-postgres psql -U exchange_user -d exchange_db -t -c \
         "SELECT COUNT(*) FROM users WHERE email = '${ADMIN_EMAIL}' AND role = 'admin';" 2>&1)
     
     # Trim whitespace
@@ -105,7 +122,7 @@ verify_admin() {
     else
         print_error "Failed to verify administrator account"
         print_info "Listing all users in database:"
-        docker exec 4ex-postgres psql -U exchange_user -d exchange_db -c "SELECT id, email, role FROM users;"
+        docker exec exchangekit-postgres psql -U exchange_user -d exchange_db -c "SELECT id, email, role FROM users;"
         return 1
     fi
 }

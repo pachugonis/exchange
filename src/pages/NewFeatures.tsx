@@ -18,7 +18,7 @@ export const NewFeatures: React.FC = () => {
     <div className="min-h-screen py-12 px-4">
       <div className="container mx-auto max-w-6xl">
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold mb-4">Новые возможности 4EX</h1>
+          <h1 className="text-4xl font-bold mb-4">Новые возможности ExchangeKit</h1>
           <p className="text-dark-600 dark:text-dark-400">
             Улучшенный функционал для удобного обмена валют
           </p>

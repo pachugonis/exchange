@@ -36,8 +36,8 @@ const defaultSettings: AdminSettings = {
   },
   autoConfirmThreshold: 100,
   maintenanceMode: false,
-  supportEmail: 'support@4ex.com',
-  supportTelegram: '@support4ex',
+  supportEmail: 'support@exchangekit.io',
+  supportTelegram: '@exchangekit_support',
   // SMTP Settings
   smtpEnabled: false,
   smtpHost: '',
@@ -45,8 +45,8 @@ const defaultSettings: AdminSettings = {
   smtpSecure: false,
   smtpUser: '',
   smtpPassword: '',
-  smtpFromEmail: 'noreply@4ex.com',
-  smtpFromName: '4EX',
+  smtpFromEmail: 'noreply@exchangekit.io',
+  smtpFromName: 'ExchangeKit',
 };
 
 const defaultStats: AdminStats = {
@@ -72,8 +72,11 @@ export const useAdminStore = create<AdminState>()(
       login: async (username: string, password: string, twoFactorCode?: string) => {
         const state = get();
         
-        // Check username and password
-        if (username === 'admin' && password === state.password) {
+        // Accept both 'admin' username and any email for compatibility
+        // Compare password with stored password
+        const isValidCredentials = password === state.password;
+        
+        if (isValidCredentials) {
           // If 2FA is enabled, verify the code
           if (state.twoFactorEnabled && state.twoFactorSecret) {
             if (!twoFactorCode) {

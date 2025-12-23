@@ -13,7 +13,7 @@ source "${SCRIPT_DIR}/utils/helpers.sh"
 
 DOMAIN="$1"
 EMAIL="$2"
-DEPLOYMENT_DIR="/opt/4ex-exchange"
+DEPLOYMENT_DIR="/opt/exchangekit"
 
 if [[ -z "$DOMAIN" ]] || [[ -z "$EMAIL" ]]; then
     echo "Usage: $0 <domain> <email>"
@@ -38,8 +38,8 @@ stop_services() {
     print_step "Temporarily stopping web services..."
     
     # Stop Docker containers if running
-    if docker ps | grep -q 4ex-nginx; then
-        docker stop 4ex-nginx || true
+    if docker ps | grep -q exchangekit-nginx; then
+        docker stop exchangekit-nginx || true
     fi
     
     # Make sure port 80 is free
@@ -107,10 +107,10 @@ configure_nginx() {
     sleep 3
     
     # Verify nginx is running
-    if docker ps | grep -q 4ex-nginx; then
+    if docker ps | grep -q exchangekit-nginx; then
         print_success "Nginx configured with SSL and running"
     else
-        print_error "Nginx failed to start. Check logs: docker logs 4ex-nginx"
+        print_error "Nginx failed to start. Check logs: docker logs exchangekit-nginx"
         return 1
     fi
 }
@@ -127,8 +127,8 @@ set -e
 certbot renew --quiet
 
 # Reload nginx
-if docker ps | grep -q 4ex-nginx; then
-    docker exec 4ex-nginx nginx -s reload
+if docker ps | grep -q exchangekit-nginx; then
+    docker exec exchangekit-nginx nginx -s reload
 fi
 EOF
 

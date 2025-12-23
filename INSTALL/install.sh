@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #############################################################################
-# 4EX Exchange Platform - Automated Installation Script
+# ExchangeKit - Automated Installation Script
 # Version: 1.0.0
 # Target: Ubuntu 24.04 LTS
 # Description: One-click installation with Docker containerization
@@ -20,9 +20,10 @@ NC='\033[0m' # No Color
 # Script directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 INSTALL_LOG="${SCRIPT_DIR}/installation.log"
-DEPLOYMENT_DIR="/opt/4ex-exchange"
+DEPLOYMENT_DIR="/opt/exchangekit"
 
 # Source utility scripts
+source "${SCRIPT_DIR}/utils/translations.sh"
 source "${SCRIPT_DIR}/utils/messages.sh"
 source "${SCRIPT_DIR}/utils/helpers.sh"
 source "${SCRIPT_DIR}/utils/validators.sh"
@@ -42,29 +43,32 @@ error_exit() {
 # Check if running as root
 check_root() {
     if [[ $EUID -ne 0 ]]; then
-        error_exit "This script must be run as root. Please use: sudo bash install.sh"
+        error_exit "$(t 'must_run_as_root')"
     fi
 }
 
 # Main installation function
 main() {
+    # Select language first
+    select_language
+    
     clear
     show_banner
     
-    log "=== Starting 4EX Exchange Platform Installation ==="
+    log "=== $(t 'starting_installation') ==="
     
     # Phase 1: Prerequisites check
-    print_phase "Phase 1: System Prerequisites Check"
+    print_phase "$(t 'phase1')"
     
     # Update package repositories
-    log "Updating package repositories..."
+    log "$(t 'updating_packages')"
     apt-get update -qq || log "Warning: apt update had some errors, continuing anyway..."
     
-    bash "${SCRIPT_DIR}/scripts/check-prerequisites.sh" || error_exit "Prerequisites check failed"
+    bash "${SCRIPT_DIR}/scripts/check-prerequisites.sh" || error_exit "$(t 'prerequisites_failed')"
     
     # Phase 2: Interactive configuration
-    print_phase "Phase 2: Configuration Wizard"
-    bash "${SCRIPT_DIR}/scripts/configure.sh" || error_exit "Configuration failed"
+    print_phase "$(t 'phase2')"
+    bash "${SCRIPT_DIR}/scripts/configure.sh" || error_exit "$(t 'configuration_failed')"
     
     # Load configuration
     if [[ -f "${SCRIPT_DIR}/.install.conf" ]]; then
@@ -74,11 +78,11 @@ main() {
     fi
     
     # Phase 3: System preparation
-    print_phase "Phase 3: System Preparation"
-    bash "${SCRIPT_DIR}/scripts/setup-docker.sh" || error_exit "Docker setup failed"
+    print_phase "$(t 'phase3')"
+    bash "${SCRIPT_DIR}/scripts/setup-docker.sh" || error_exit "$(t 'docker_setup_failed')"
     
     # Phase 4: Application deployment
-    print_phase "Phase 4: Application Deployment"
+    print_phase "$(t 'phase4')"
     deploy_application
     
     # Phase 5: SSL certificate setup (SKIPPED - run enable-ssl.sh after installation)
@@ -86,19 +90,19 @@ main() {
     # To enable HTTPS: cd /root/INSTALL && bash enable-ssl.sh
     
     # Phase 6: Database initialization
-    print_phase "Phase 5: Database Initialization"
-    bash "${SCRIPT_DIR}/scripts/setup-database.sh" || error_exit "Database setup failed"
+    print_phase "$(t 'phase5')"
+    bash "${SCRIPT_DIR}/scripts/setup-database.sh" || error_exit "$(t 'database_setup_failed')"
     
     # Phase 7: License activation
-    print_phase "Phase 6: License Activation"
+    print_phase "$(t 'phase6')"
     activate_license
     
     # Phase 7: Admin account creation
-    print_phase "Phase 7: Administrator Account Setup"
-    bash "${SCRIPT_DIR}/scripts/setup-admin.sh" "${ADMIN_EMAIL}" "${ADMIN_PASSWORD}" || error_exit "Admin setup failed"
+    print_phase "$(t 'phase7')"
+    bash "${SCRIPT_DIR}/scripts/setup-admin.sh" "${ADMIN_EMAIL}" "${ADMIN_PASSWORD}" || error_exit "$(t 'admin_setup_failed')"
     
     # Phase 8: Health check
-    print_phase "Phase 8: Post-Installation Validation"
+    print_phase "$(t 'phase8')"
     bash "${SCRIPT_DIR}/scripts/health-check.sh" "${DOMAIN}" || error_exit "Health check failed"
     
     # Installation complete
@@ -187,19 +191,43 @@ deploy_application() {
     docker compose up -d || error_exit "Failed to start containers"
     
     log "Waiting for services to be ready..."
-    sleep 10
+    sleep 15
+    
+    # Copy admin initialization file into the running container
+    if [[ -f "${DEPLOYMENT_DIR}/.admin-storage-init.json" ]]; then
+        log "Copying admin initialization file to container..."
+        local max_attempts=5
+        local attempt=1
+        
+        while [ $attempt -le $max_attempts ]; do
+            if docker cp "${DEPLOYMENT_DIR}/.admin-storage-init.json" exchangekit-app:/usr/share/nginx/html/.admin-storage-init.json 2>/dev/null; then
+                log "Admin initialization file copied successfully"
+                break
+            else
+                log "Attempt $attempt/$max_attempts failed, retrying..."
+                sleep 2
+                attempt=$((attempt + 1))
+            fi
+        done
+        
+        if [ $attempt -gt $max_attempts ]; then
+            log "Warning: Failed to copy admin init file after $max_attempts attempts"
+        fi
+    else
+        log "Warning: Admin initialization file not found at ${DEPLOYMENT_DIR}/.admin-storage-init.json"
+    fi
 }
 
 # Create environment file
 create_env_file() {
     log "Generating .env file..."
     cat > "${DEPLOYMENT_DIR}/.env" <<EOF
-# 4EX Exchange Platform - Production Configuration
+# ExchangeKit - Production Configuration
 # Generated: $(date)
 
 # License Configuration
 VITE_LICENSE_KEY=${LICENSE_KEY}
-VITE_LICENSE_SERVER_URL=https://licenses.4ex.com
+VITE_LICENSE_SERVER_URL=https://license.exchangekit.io
 VITE_LICENSE_ENABLE_VALIDATION=true
 VITE_LICENSE_CHECK_INTERVAL=24
 VITE_LICENSE_GRACE_PERIOD=7
@@ -269,7 +297,8 @@ EOF
     echo -e "${NC}"
     
     echo -e "${CYAN}================================================================${NC}"
-    echo -e "${GREEN}Application URL:${NC}      http://${DOMAIN} (HTTPS after SSL setup)"
+    echo -e "${GREEN}Application URL:${NC}      http://${DOMAIN}"
+    echo -e "${GREEN}Admin Panel:${NC}          http://${DOMAIN}/admin/login"
     echo -e "${GREEN}Admin Email:${NC}          ${ADMIN_EMAIL}"
     echo -e "${GREEN}Admin Password:${NC}       ${ADMIN_PASSWORD}"
     echo -e "${CYAN}================================================================${NC}"
@@ -284,11 +313,13 @@ EOF
     echo ""
     echo -e "${CYAN}================================================================${NC}"
     echo -e "${GREEN}Next Steps:${NC}"
-    echo "  1. Visit http://${DOMAIN} in your browser (HTTP only for now)"
-    echo "  2. Log in with the credentials above"
-    echo "  3. Complete your profile setup"
-    echo "  4. Configure exchange rates and currencies"
-    echo "  5. Setup SSL certificate (recommended):"
+    echo "  1. Visit http://${DOMAIN}/admin/login to access admin panel"
+    echo "  2. Use email: ${ADMIN_EMAIL}"
+    echo "  3. Use password: ${ADMIN_PASSWORD}"
+    echo "  4. If login fails, clear browser cache and try again"
+    echo "  5. Complete your profile setup"
+    echo "  6. Configure exchange rates and currencies"
+    echo "  7. Setup SSL certificate (recommended):"
     echo "     cd /root/INSTALL && bash scripts/setup-ssl.sh ${DOMAIN} ${ADMIN_EMAIL}"
     echo ""
     echo -e "${CYAN}================================================================${NC}"
@@ -302,13 +333,13 @@ EOF
     echo -e "${CYAN}================================================================${NC}"
     echo -e "${GREEN}Support:${NC}"
     echo "  - Documentation: https://docs.4ex.com"
-    echo "  - Support Email: support@4ex.com"
-    echo "  - License Issues: licenses@4ex.com"
+    echo "  - Support Email: support@exchangekit.io"
+    echo "  - License Issues: licenses@exchangekit.io"
     echo ""
     
     # Save credentials to file
     cat > "${DEPLOYMENT_DIR}/.credentials" <<EOF
-4EX Exchange Platform - Admin Credentials
+ExchangeKit - Admin Credentials
 Installation Date: $(date)
 
 Application URL: http://${DOMAIN}

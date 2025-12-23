@@ -89,7 +89,7 @@ export const AdminSecurity: React.FC = () => {
     }
   };
 
-  const qrCodeURL = tempSecret ? generateQRCodeURL(username || 'admin', tempSecret, '4EX Admin') : '';
+  const qrCodeURL = tempSecret ? generateQRCodeURL(username || 'admin', tempSecret, 'ExchangeKit Admin') : '';
 
   return (
     <div className="space-y-6">

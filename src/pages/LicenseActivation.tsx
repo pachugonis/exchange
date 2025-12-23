@@ -106,7 +106,7 @@ export default function LicenseActivation() {
             Activate Your License
           </h1>
           <p className="text-gray-600 dark:text-gray-400">
-            Enter your license key to activate 4EX Exchange platform
+            Enter your license key to activate ExchangeKit
           </p>
         </div>
 
@@ -283,7 +283,7 @@ export default function LicenseActivation() {
         <div className="text-center text-sm text-gray-600 dark:text-gray-400">
           <p>
             Need help?{' '}
-            <a href="mailto:licenses@4ex.com" className="text-blue-600 hover:underline">
+            <a href="mailto:licenses@exchangekit.io" className="text-blue-600 hover:underline">
               Contact License Support
             </a>
           </p>

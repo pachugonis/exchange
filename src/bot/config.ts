@@ -256,7 +256,7 @@ export const CALLBACK_PREFIX = {
 
 // Message templates
 export const MESSAGES = {
-  WELCOME_NEW: `Welcome to 4EX Exchange Bot! 🚀
+  WELCOME_NEW: `Welcome to ExchangeKit Exchange Bot! 🚀
 
 I'm your personal assistant for cryptocurrency exchanges. With me, you can:
 

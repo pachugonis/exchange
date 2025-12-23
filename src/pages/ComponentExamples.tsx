@@ -43,7 +43,7 @@ export const ComponentExamples: React.FC = () => {
     <div className="min-h-screen py-12 px-4">
       <div className="container mx-auto max-w-6xl">
         <h1 className="text-4xl font-bold mb-8 text-center">
-          Примеры компонентов 4EX
+          Примеры компонентов ExchangeKit
         </h1>
 
         {/* Tabs Navigation */}

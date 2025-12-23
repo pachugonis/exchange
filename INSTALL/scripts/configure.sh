@@ -8,6 +8,7 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && cd .. && pwd)"
+source "${SCRIPT_DIR}/utils/translations.sh"
 source "${SCRIPT_DIR}/utils/messages.sh"
 source "${SCRIPT_DIR}/utils/validators.sh"
 source "${SCRIPT_DIR}/utils/helpers.sh"
@@ -30,21 +31,22 @@ show_welcome() {
     cat << "EOF"
 ===============================================================
                                                                
-          4EX EXCHANGE PLATFORM - INSTALLATION WIZARD         
-                                                               
+EOF
+    echo "          $(t 'wizard_title')         "
+    cat << "EOF"                                                               
 ===============================================================
 EOF
     echo -e "${NC}"
     echo ""
-    echo "This wizard will guide you through the installation process."
-    echo "Please have the following information ready:"
+    echo "$(t 'wizard_intro')"
+    echo "$(t 'wizard_requirements')"
     echo ""
-    echo "  - Your domain name (DNS must point to this server)"
-    echo "  - Administrator email address"
-    echo "  - Strong administrator password"
-    echo "  - Valid license key (format: LIC-XXXX-XXXX-XXXX-XXXX)"
+    echo "  - $(t 'wizard_domain')"
+    echo "  - $(t 'wizard_admin_email')"
+    echo "  - $(t 'wizard_admin_password')"
+    echo "  - $(t 'wizard_license')"
     echo ""
-    echo "Press Enter to continue..."
+    echo "$(t 'press_enter')"
     read
 }
 
@@ -55,7 +57,7 @@ collect_domain() {
     echo ""
     
     while true; do
-        read -p "Enter your domain name (e.g., exchange.example.com): " DOMAIN
+        read -p "$(t 'enter_domain') " DOMAIN
         
         if validate_domain "$DOMAIN"; then
             print_success "Domain format valid: $DOMAIN"
@@ -90,7 +92,7 @@ collect_domain() {
             
             break
         else
-            print_error "Invalid domain format. Please try again."
+            print_error "$(t 'invalid_domain')"
         fi
     done
 }
@@ -107,13 +109,13 @@ collect_email() {
     echo ""
     
     while true; do
-        read -p "Enter administrator email: " ADMIN_EMAIL
+        read -p "$(t 'enter_admin_email') " ADMIN_EMAIL
         
         if validate_email "$ADMIN_EMAIL"; then
             print_success "Email format valid: $ADMIN_EMAIL"
             break
         else
-            print_error "Invalid email format. Please try again."
+            print_error "$(t 'invalid_email')"
         fi
     done
 }
@@ -132,21 +134,21 @@ collect_password() {
     echo ""
     
     while true; do
-        read -s -p "Enter administrator password: " ADMIN_PASSWORD
+        read -s -p "$(t 'enter_admin_password') " ADMIN_PASSWORD
         echo
         
         if validate_password "$ADMIN_PASSWORD"; then
-            read -s -p "Confirm password: " password_confirm
+            read -s -p "$(t 'confirm_password') " password_confirm
             echo
             
             if [[ "$ADMIN_PASSWORD" == "$password_confirm" ]]; then
                 print_success "Password set successfully"
                 break
             else
-                print_error "Passwords do not match. Please try again."
+                print_error "$(t 'password_mismatch')"
             fi
         else
-            print_error "Password does not meet requirements. Please try again."
+            print_error "$(t 'password_too_short')"
         fi
     done
 }
@@ -161,13 +163,13 @@ collect_license() {
     echo ""
     
     while true; do
-        read -p "Enter license key: " LICENSE_KEY
+        read -p "$(t 'enter_license') " LICENSE_KEY
         
         if validate_license_key "$LICENSE_KEY"; then
             print_success "License key format valid"
             break
         else
-            print_error "Invalid license key format. Please try again."
+            print_error "$(t 'invalid_license')"
         fi
     done
 }
@@ -252,7 +254,7 @@ show_summary() {
 # Save configuration
 save_configuration() {
     cat > "$CONFIG_FILE" <<EOF
-# 4EX Exchange Installation Configuration
+# ExchangeKit Installation Configuration
 # Generated: $(date)
 
 DOMAIN="${DOMAIN}"

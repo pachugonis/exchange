@@ -73,7 +73,7 @@ interface SiteSettingsState {
 }
 
 const defaultSettings: SiteSettings = {
-  siteName: '4EX',
+  siteName: 'ExchangeKit',
   siteLogo: null,
   
   designVariant: 'default',
@@ -112,9 +112,9 @@ const defaultSettings: SiteSettings = {
   showTestimonials: true,
   
   footerDescription: 'Надежный сервис обмена криптовалют и электронных денег',
-  footerEmail: 'support@4ex.cash',
-  footerTelegram: '@4ex_support',
-  footerCopyright: '© 2024 4EX Currency Exchange. Все права защищены.',
+  footerEmail: 'support@exchangekit.io',
+  footerTelegram: '@exchangekit_support',
+  footerCopyright: '© 2024 ExchangeKit. Все права защищены.',
   
   footerBanners: [],
 };

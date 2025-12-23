@@ -182,7 +182,7 @@ export const AdminSiteSettings: React.FC = () => {
             <Input
               value={localSettings.siteName}
               onChange={(e) => setLocalSettings({ ...localSettings, siteName: e.target.value })}
-              placeholder="4EX"
+              placeholder="ExchangeKit"
             />
           </div>
 

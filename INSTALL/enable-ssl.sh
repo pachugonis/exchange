@@ -5,7 +5,7 @@
 # Run this after main installation to enable HTTPS
 #############################################################################
 
-DEPLOYMENT_DIR="/opt/4ex-exchange"
+DEPLOYMENT_DIR="/opt/exchangekit"
 
 # Colors
 GREEN='\033[0;32m'
@@ -57,7 +57,7 @@ if [[ $? -eq 0 ]]; then
     echo -e "Your site is now available at: ${GREEN}https://${DOMAIN}${NC}"
     echo ""
     echo "Verifying nginx status..."
-    docker ps | grep 4ex-nginx
+    docker ps | grep exchangekit-nginx
 else
     echo ""
     echo -e "${RED}SSL setup failed. Please check the errors above.${NC}"
@@ -66,6 +66,6 @@ else
     echo "  - Domain not pointing to this server"
     echo "  - Port 80 not accessible from internet"
     echo "  - Firewall blocking HTTP traffic"
-    echo "  - Check nginx logs: docker logs 4ex-nginx"
+    echo "  - Check nginx logs: docker logs exchangekit-nginx"
     echo ""
 fi

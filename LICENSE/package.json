@@ -1,7 +1,7 @@
 {
-  "name": "4ex-license-server",
+  "name": "exchangekit-license-server",
   "version": "2.0.0",
-  "description": "License validation server for 4EX Exchange Platform",
+  "description": "License validation server for ExchangeKit",
   "type": "module",
   "main": "server.mjs",
   "scripts": {
@@ -17,10 +17,10 @@
     "license",
     "validation",
     "jwt",
-    "4ex",
+    "exchangekit",
     "exchange"
   ],
-  "author": "4EX Development Team",
+  "author": "ExchangeKit Development Team",
   "license": "PROPRIETARY",
   "dependencies": {
     "cors": "^2.8.5",

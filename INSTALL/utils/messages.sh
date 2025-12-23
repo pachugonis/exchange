@@ -5,6 +5,12 @@
 # Colored output and formatted messages
 #############################################################################
 
+# Load translations if available
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && cd .. && pwd)"
+if [[ -f "${SCRIPT_DIR}/utils/translations.sh" ]]; then
+    source "${SCRIPT_DIR}/utils/translations.sh"
+fi
+
 # Colors
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -59,8 +65,10 @@ show_banner() {
     cat << "EOF"
 ===============================================================
                                                                
-    4EX - Exchange Platform - Automated Installer
-                       Version 1.0.0                          
+EOF
+    echo "    $(t 'banner_title')"
+    echo "                       $(t 'banner_version') 1.0.0"
+    cat << "EOF"                          
                                                                
 ===============================================================
 EOF

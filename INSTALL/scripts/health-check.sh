@@ -12,7 +12,7 @@ source "${SCRIPT_DIR}/utils/messages.sh"
 source "${SCRIPT_DIR}/utils/helpers.sh"
 
 DOMAIN="$1"
-DEPLOYMENT_DIR="/opt/4ex-exchange"
+DEPLOYMENT_DIR="/opt/exchangekit"
 
 if [[ -z "$DOMAIN" ]]; then
     echo "Usage: $0 <domain>"
@@ -22,8 +22,8 @@ fi
 check_containers() {
     print_step "Checking Docker containers..."
     
-    local containers=("4ex-postgres" "4ex-app")
-    local optional_containers=("4ex-nginx")
+    local containers=("exchangekit-postgres" "exchangekit-app")
+    local optional_containers=("exchangekit-nginx")
     local all_running=true
     
     # Check required containers
@@ -53,7 +53,7 @@ check_containers() {
 check_database() {
     print_step "Checking database connectivity..."
     
-    if docker exec 4ex-postgres pg_isready -U exchange_user &>/dev/null; then
+    if docker exec exchangekit-postgres pg_isready -U exchange_user &>/dev/null; then
         print_success "Database: Connected"
     else
         print_error "Database: Connection failed"
@@ -61,7 +61,7 @@ check_database() {
     fi
     
     # Check if tables exist
-    local table_count=$(docker exec 4ex-postgres psql -U exchange_user -d exchange_db -t -c \
+    local table_count=$(docker exec exchangekit-postgres psql -U exchange_user -d exchange_db -t -c \
         "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public';" 2>/dev/null || echo "0")
     
     if [[ $table_count -gt 0 ]]; then
@@ -75,7 +75,7 @@ check_http() {
     print_step "Checking HTTP endpoint..."
     
     # Skip if nginx is not running
-    if ! docker ps --format '{{.Names}}' | grep -q "4ex-nginx"; then
+    if ! docker ps --format '{{.Names}}' | grep -q "exchangekit-nginx"; then
         print_info "HTTP: Skipped (nginx not running)"
         return 0
     fi
@@ -101,7 +101,7 @@ check_https() {
     print_step "Checking HTTPS endpoint..."
     
     # Skip if nginx is not running
-    if ! docker ps --format '{{.Names}}' | grep -q "4ex-nginx"; then
+    if ! docker ps --format '{{.Names}}' | grep -q "exchangekit-nginx"; then
         print_info "HTTPS: Skipped (nginx not running)"
         return 0
     fi
@@ -150,14 +150,14 @@ check_application() {
     sleep 5
     
     # Try to access health endpoint
-    if docker exec 4ex-app wget --quiet --tries=1 --spider http://localhost:3000/health 2>/dev/null; then
+    if docker exec exchangekit-app wget --quiet --tries=1 --spider http://localhost:3000/health 2>/dev/null; then
         print_success "Application: Health check passed"
     else
         print_warning "Application: Health endpoint not responding"
     fi
     
     # Check if index.html exists
-    if docker exec 4ex-app test -f /usr/share/nginx/html/index.html; then
+    if docker exec exchangekit-app test -f /usr/share/nginx/html/index.html; then
         print_success "Application: Static files deployed"
     else
         print_error "Application: Static files missing"
@@ -225,21 +225,21 @@ generate_report() {
     local report_file="${DEPLOYMENT_DIR}/health-check-report.txt"
     
     cat > "$report_file" <<EOF
-4EX Exchange Platform - Health Check Report
+ExchangeKit - Health Check Report
 Generated: $(date)
 Domain: ${DOMAIN}
 
 Container Status:
-$(docker ps --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}' | grep 4ex- || echo "No containers found")
+$(docker ps --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}' | grep exchangekit- || echo "No containers found")
 
 Database Status:
-$(docker exec 4ex-postgres psql -U exchange_user -d exchange_db -c "SELECT version();" 2>/dev/null || echo "Database not accessible")
+$(docker exec exchangekit-postgres psql -U exchange_user -d exchange_db -c "SELECT version();" 2>/dev/null || echo "Database not accessible")
 
 Application Logs (last 20 lines):
-$(docker logs --tail 20 4ex-app 2>&1 || echo "No logs available")
+$(docker logs --tail 20 exchangekit-app 2>&1 || echo "No logs available")
 
 Nginx Logs (last 20 lines):
-$(docker logs --tail 20 4ex-nginx 2>&1 || echo "No logs available")
+$(docker logs --tail 20 exchangekit-nginx 2>&1 || echo "No logs available")
 
 Disk Usage:
 $(df -h /)

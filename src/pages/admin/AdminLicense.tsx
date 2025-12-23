@@ -152,7 +152,7 @@ export default function AdminLicense() {
               Your license expires in {formatDaysRemaining(statusInfo.daysRemaining)}. 
               Renew now to avoid service interruption.
             </p>
-            <Button href="mailto:sales@4ex.com" className="mt-3" size="sm">
+            <Button href="mailto:sales@exchangekit.io" className="mt-3" size="sm">
               Contact Sales
             </Button>
           </div>

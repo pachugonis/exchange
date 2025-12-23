@@ -11,7 +11,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && cd .. && pwd)"
 source "${SCRIPT_DIR}/utils/messages.sh"
 source "${SCRIPT_DIR}/utils/helpers.sh"
 
-DEPLOYMENT_DIR="/opt/4ex-exchange"
+DEPLOYMENT_DIR="/opt/exchangekit"
 
 wait_for_postgres() {
     print_step "Waiting for PostgreSQL to be ready..."
@@ -20,7 +20,7 @@ wait_for_postgres() {
     local attempt=1
     
     while [ $attempt -le $max_attempts ]; do
-        if docker exec 4ex-postgres pg_isready -U exchange_user &>/dev/null; then
+        if docker exec exchangekit-postgres pg_isready -U exchange_user &>/dev/null; then
             print_success "PostgreSQL is ready"
             return 0
         fi
@@ -38,11 +38,11 @@ initialize_database() {
     print_step "Initializing database..."
     
     # Check if database exists
-    if docker exec 4ex-postgres psql -U exchange_user -lqt | cut -d \| -f 1 | grep -qw exchange_db; then
+    if docker exec exchangekit-postgres psql -U exchange_user -lqt | cut -d \| -f 1 | grep -qw exchange_db; then
         print_info "Database already exists"
     else
         print_info "Creating database..."
-        docker exec 4ex-postgres createdb -U exchange_user exchange_db || true
+        docker exec exchangekit-postgres createdb -U exchange_user exchange_db || true
     fi
     
     print_success "Database initialized"
@@ -93,7 +93,7 @@ SQLEOF
 
     # Execute SQL file
     print_info "Executing SQL schema..."
-    if docker exec -i 4ex-postgres psql -U exchange_user -d exchange_db < /tmp/schema.sql; then
+    if docker exec -i exchangekit-postgres psql -U exchange_user -d exchange_db < /tmp/schema.sql; then
         print_success "Database schema created"
     else
         print_error "Failed to create database schema"
@@ -110,7 +110,7 @@ verify_database() {
     print_step "Verifying database setup..."
     
     # Test database connection
-    if docker exec 4ex-postgres psql -U exchange_user -d exchange_db -c "SELECT 1;" &>/dev/null; then
+    if docker exec exchangekit-postgres psql -U exchange_user -d exchange_db -c "SELECT 1;" &>/dev/null; then
         print_success "Database connection verified"
     else
         print_error "Database connection failed"
@@ -118,7 +118,7 @@ verify_database() {
     fi
     
     # Check tables
-    local table_count=$(docker exec 4ex-postgres psql -U exchange_user -d exchange_db -t -c "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public';")
+    local table_count=$(docker exec exchangekit-postgres psql -U exchange_user -d exchange_db -t -c "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public';")
     print_info "Created $table_count tables"
 }
 

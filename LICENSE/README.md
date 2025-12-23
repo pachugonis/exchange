@@ -1,6 +1,6 @@
-# 4EX License Server
+# ExchangeKit License Server
 
-Сервер валидации лицензий для платформы обмена криптовалют 4EX.
+Сервер валидации лицензий для платформы обмена криптовалют ExchangeKit.
 
 ## 📋 Содержание
 
@@ -451,13 +451,13 @@ max_memory_restart: '1G'  # вместо 500M
 
 ## 📞 Поддержка
 
-- **Email**: support@4ex.com
-- **Telegram**: @4ex_support
+- **Email**: support@exchangekit.io
+- **Telegram**: @exchangekit_support
 
 ## 📄 Лицензия
 
 Проприетарное ПО. Все права защищены.  
-© 2025 4EX Development Team
+© 2025 ExchangeKit Development Team
 
 ---
 
