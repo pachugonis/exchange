@@ -64,11 +64,11 @@ main() {
     log "$(t 'updating_packages')"
     apt-get update -qq || log "Warning: apt update had some errors, continuing anyway..."
     
-    bash "${SCRIPT_DIR}/scripts/check-prerequisites.sh" || error_exit "$(t 'prerequisites_failed')"
+    LANG_CODE="${LANG_CODE}" bash "${SCRIPT_DIR}/scripts/check-prerequisites.sh" || error_exit "$(t 'prerequisites_failed')"
     
     # Phase 2: Interactive configuration
     print_phase "$(t 'phase2')"
-    bash "${SCRIPT_DIR}/scripts/configure.sh" || error_exit "$(t 'configuration_failed')"
+    LANG_CODE="${LANG_CODE}" bash "${SCRIPT_DIR}/scripts/configure.sh" || error_exit "$(t 'configuration_failed')"
     
     # Load configuration
     if [[ -f "${SCRIPT_DIR}/.install.conf" ]]; then
@@ -79,7 +79,7 @@ main() {
     
     # Phase 3: System preparation
     print_phase "$(t 'phase3')"
-    bash "${SCRIPT_DIR}/scripts/setup-docker.sh" || error_exit "$(t 'docker_setup_failed')"
+    LANG_CODE="${LANG_CODE}" bash "${SCRIPT_DIR}/scripts/setup-docker.sh" || error_exit "$(t 'docker_setup_failed')"
     
     # Phase 4: Application deployment
     print_phase "$(t 'phase4')"
@@ -91,7 +91,7 @@ main() {
     
     # Phase 6: Database initialization
     print_phase "$(t 'phase5')"
-    bash "${SCRIPT_DIR}/scripts/setup-database.sh" || error_exit "$(t 'database_setup_failed')"
+    LANG_CODE="${LANG_CODE}" bash "${SCRIPT_DIR}/scripts/setup-database.sh" || error_exit "$(t 'database_setup_failed')"
     
     # Phase 7: License activation
     print_phase "$(t 'phase6')"
@@ -99,11 +99,11 @@ main() {
     
     # Phase 7: Admin account creation
     print_phase "$(t 'phase7')"
-    bash "${SCRIPT_DIR}/scripts/setup-admin.sh" "${ADMIN_EMAIL}" "${ADMIN_PASSWORD}" || error_exit "$(t 'admin_setup_failed')"
+    LANG_CODE="${LANG_CODE}" bash "${SCRIPT_DIR}/scripts/setup-admin.sh" "${ADMIN_EMAIL}" "${ADMIN_PASSWORD}" || error_exit "$(t 'admin_setup_failed')"
     
     # Phase 8: Health check
     print_phase "$(t 'phase8')"
-    bash "${SCRIPT_DIR}/scripts/health-check.sh" "${DOMAIN}" || error_exit "Health check failed"
+    LANG_CODE="${LANG_CODE}" bash "${SCRIPT_DIR}/scripts/health-check.sh" "${DOMAIN}" || error_exit "Health check failed"
     
     # Installation complete
     show_completion
@@ -111,41 +111,41 @@ main() {
     # Phase 9: SSL Setup (Optional)
     echo ""
     echo -e "${YELLOW}========================================${NC}"
-    echo -e "${YELLOW}  Optional: SSL Certificate Setup${NC}"
+    echo -e "${YELLOW}  $(t 'ssl_optional_title')${NC}"
     echo -e "${YELLOW}========================================${NC}"
     echo ""
-    echo "Your site is currently running on HTTP (port 80)."
-    echo "Would you like to set up HTTPS with a free SSL certificate from Let's Encrypt?"
+    echo "$(t 'ssl_site_running_http')"
+    echo "$(t 'ssl_would_like_setup')"
     echo ""
-    echo "Requirements:"
-    echo "  - Domain ${DOMAIN} must point to this server's IP"
-    echo "  - Port 80 must be accessible from the internet"
+    echo "$(t 'ssl_requirements'):"
+    printf "  - $(t 'ssl_domain_must_point')\n" "${DOMAIN}"
+    echo "  - $(t 'ssl_port_accessible')"
     echo ""
-    read -p "Setup SSL now? (y/n): " -n 1 -r
+    read -p "$(t 'ssl_setup_now'): " -n 1 -r
     echo
     if [[ $REPLY =~ ^[Yy]$ ]]; then
         echo ""
-        print_phase "Phase 9: SSL Certificate Configuration"
-        bash "${SCRIPT_DIR}/scripts/setup-ssl.sh" "${DOMAIN}" "${ADMIN_EMAIL}"
+        print_phase "$(t 'ssl_phase_9')"
+        LANG_CODE="${LANG_CODE}" bash "${SCRIPT_DIR}/scripts/setup-ssl.sh" "${DOMAIN}" "${ADMIN_EMAIL}"
         
         if [[ $? -eq 0 ]]; then
             echo ""
             echo -e "${GREEN}========================================${NC}"
-            echo -e "${GREEN}  SSL Setup Complete!${NC}"
+            echo -e "${GREEN}  $(t 'ssl_setup_complete')${NC}"
             echo -e "${GREEN}========================================${NC}"
             echo ""
-            echo -e "Your site is now available at: ${GREEN}https://${DOMAIN}${NC}"
+            echo -e "$(t 'ssl_site_available_at'): ${GREEN}https://${DOMAIN}${NC}"
             echo ""
         else
             echo ""
-            echo -e "${YELLOW}SSL setup was skipped or failed.${NC}"
-            echo -e "You can run it later with: ${CYAN}cd /root/INSTALL && bash enable-ssl.sh${NC}"
+            echo -e "${YELLOW}$(t 'ssl_setup_failed')${NC}"
+            echo -e "$(t 'ssl_run_later'): ${CYAN}cd /root/INSTALL && bash enable-ssl.sh${NC}"
             echo ""
         fi
     else
         echo ""
-        echo -e "${YELLOW}SSL setup skipped.${NC}"
-        echo -e "You can enable HTTPS later by running: ${CYAN}cd /root/INSTALL && bash enable-ssl.sh${NC}"
+        echo -e "${YELLOW}$(t 'ssl_setup_skipped')${NC}"
+        echo -e "$(t 'ssl_enable_later'): ${CYAN}cd /root/INSTALL && bash enable-ssl.sh${NC}"
         echo ""
     fi
 }
@@ -290,51 +290,53 @@ show_completion() {
     cat << "EOF"
 ===============================================================
 |                                                             |
-|         INSTALLATION COMPLETED SUCCESSFULLY!                |
+EOF
+    printf "|%*s|\n" 61 "$(t 'installation_success_title')"
+    cat << "EOF"
 |                                                             |
 ===============================================================
 EOF
     echo -e "${NC}"
     
     echo -e "${CYAN}================================================================${NC}"
-    echo -e "${GREEN}Application URL:${NC}      http://${DOMAIN}"
-    echo -e "${GREEN}Admin Panel:${NC}          http://${DOMAIN}/admin/login"
-    echo -e "${GREEN}Admin Email:${NC}          ${ADMIN_EMAIL}"
-    echo -e "${GREEN}Admin Password:${NC}       ${ADMIN_PASSWORD}"
+    echo -e "${GREEN}$(t 'application_url'):${NC}      http://${DOMAIN}"
+    echo -e "${GREEN}$(t 'admin_panel'):${NC}          http://${DOMAIN}/admin/login"
+    echo -e "${GREEN}$(t 'admin_email'):${NC}          ${ADMIN_EMAIL}"
+    echo -e "${GREEN}$(t 'admin_password'):${NC}       ${ADMIN_PASSWORD}"
     echo -e "${CYAN}================================================================${NC}"
     echo ""
-    echo -e "${YELLOW}IMPORTANT SECURITY NOTES:${NC}"
-    echo "  - Save your credentials in a secure location"
-    echo "  - Change your admin password after first login"
-    echo "  - Enable 2FA in the admin panel"
-    echo "  - Your credentials are saved in: ${DEPLOYMENT_DIR}/.credentials"
-    echo "  - Site is running on HTTP - enable HTTPS for security:"
+    echo -e "${YELLOW}$(t 'security_notes'):${NC}"
+    echo "  - $(t 'security_save_credentials')"
+    echo "  - $(t 'security_change_password')"
+    echo "  - $(t 'security_enable_2fa')"
+    echo "  - $(t 'credentials_saved_to'): ${DEPLOYMENT_DIR}/.credentials"
+    echo "  - $(t 'site_running_http'):"
     echo "    cd /root/INSTALL && bash enable-ssl.sh"
     echo ""
     echo -e "${CYAN}================================================================${NC}"
-    echo -e "${GREEN}Next Steps:${NC}"
-    echo "  1. Visit http://${DOMAIN}/admin/login to access admin panel"
-    echo "  2. Use email: ${ADMIN_EMAIL}"
-    echo "  3. Use password: ${ADMIN_PASSWORD}"
-    echo "  4. If login fails, clear browser cache and try again"
-    echo "  5. Complete your profile setup"
-    echo "  6. Configure exchange rates and currencies"
-    echo "  7. Setup SSL certificate (recommended):"
+    echo -e "${GREEN}$(t 'next_steps'):${NC}"
+    echo "  1. $(t 'step_visit_admin')"
+    echo "  2. $(t 'step_use_email'): ${ADMIN_EMAIL}"
+    echo "  3. $(t 'step_use_password'): ${ADMIN_PASSWORD}"
+    echo "  4. $(t 'step_clear_cache')"
+    echo "  5. $(t 'step_complete_profile')"
+    echo "  6. $(t 'step_configure_rates')"
+    echo "  7. $(t 'step_setup_ssl'):"
     echo "     cd /root/INSTALL && bash scripts/setup-ssl.sh ${DOMAIN} ${ADMIN_EMAIL}"
     echo ""
     echo -e "${CYAN}================================================================${NC}"
-    echo -e "${GREEN}Useful Commands:${NC}"
-    echo "  - View logs:        cd ${DEPLOYMENT_DIR} && docker compose logs -f"
-    echo "  - Restart services: cd ${DEPLOYMENT_DIR} && docker compose restart"
-    echo "  - Stop services:    cd ${DEPLOYMENT_DIR} && docker compose stop"
-    echo "  - Start services:   cd ${DEPLOYMENT_DIR} && docker compose start"
-    echo "  - Check status:     cd ${DEPLOYMENT_DIR} && docker compose ps"
+    echo -e "${GREEN}$(t 'useful_commands'):${NC}"
+    echo "  - $(t 'cmd_view_logs'):        cd ${DEPLOYMENT_DIR} && docker compose logs -f"
+    echo "  - $(t 'cmd_restart_services'): cd ${DEPLOYMENT_DIR} && docker compose restart"
+    echo "  - $(t 'cmd_stop_services'):    cd ${DEPLOYMENT_DIR} && docker compose stop"
+    echo "  - $(t 'cmd_start_services'):   cd ${DEPLOYMENT_DIR} && docker compose start"
+    echo "  - $(t 'cmd_check_status'):     cd ${DEPLOYMENT_DIR} && docker compose ps"
     echo ""
     echo -e "${CYAN}================================================================${NC}"
-    echo -e "${GREEN}Support:${NC}"
-    echo "  - Documentation: https://docs.4ex.com"
-    echo "  - Support Email: support@exchangekit.io"
-    echo "  - License Issues: licenses@exchangekit.io"
+    echo -e "${GREEN}$(t 'support'):${NC}"
+    echo "  - $(t 'documentation'): https://docs.4ex.com"
+    echo "  - $(t 'support_email'): support@exchangekit.io"
+    echo "  - $(t 'license_issues'): licenses@exchangekit.io"
     echo ""
     
     # Save credentials to file

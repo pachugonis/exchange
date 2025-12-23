@@ -6,7 +6,7 @@
 #############################################################################
 
 # Default language
-LANG_CODE="${INSTALL_LANG:-en}"
+LANG_CODE="${LANG_CODE:-${INSTALL_LANG:-en}}"
 
 # Translation function
 t() {
@@ -226,6 +226,137 @@ t() {
         
         en_config_complete) echo "Configuration complete!" ;;
         ru_config_complete) echo "Настройка завершена!" ;;
+        
+        # Installation completion messages
+        en_installation_success_title) echo "INSTALLATION COMPLETED SUCCESSFULLY!" ;;
+        ru_installation_success_title) echo "УСТАНОВКА УСПЕШНО ЗАВЕРШЕНА!" ;;
+        
+        en_application_url) echo "Application URL" ;;
+        ru_application_url) echo "URL приложения" ;;
+        
+        en_admin_panel) echo "Admin Panel" ;;
+        ru_admin_panel) echo "Панель администратора" ;;
+        
+        en_admin_email) echo "Admin Email" ;;
+        ru_admin_email) echo "Email администратора" ;;
+        
+        en_admin_password) echo "Admin Password" ;;
+        ru_admin_password) echo "Пароль администратора" ;;
+        
+        en_security_notes) echo "IMPORTANT SECURITY NOTES" ;;
+        ru_security_notes) echo "ВАЖНЫЕ ЗАМЕЧАНИЯ ПО БЕЗОПАСНОСТИ" ;;
+        
+        en_security_save_credentials) echo "Save your credentials in a secure location" ;;
+        ru_security_save_credentials) echo "Сохраните учетные данные в безопасном месте" ;;
+        
+        en_security_change_password) echo "Change your admin password after first login" ;;
+        ru_security_change_password) echo "Измените пароль администратора после первого входа" ;;
+        
+        en_security_enable_2fa) echo "Enable 2FA in the admin panel" ;;
+        ru_security_enable_2fa) echo "Включите двухфакторную аутентификацию в панели администратора" ;;
+        
+        en_credentials_saved_to) echo "Your credentials are saved in" ;;
+        ru_credentials_saved_to) echo "Ваши учетные данные сохранены в" ;;
+        
+        en_site_running_http) echo "Site is running on HTTP - enable HTTPS for security" ;;
+        ru_site_running_http) echo "Сайт работает по HTTP - включите HTTPS для безопасности" ;;
+        
+        en_next_steps) echo "Next Steps" ;;
+        ru_next_steps) echo "Следующие шаги" ;;
+        
+        en_step_visit_admin) echo "Visit http://${DOMAIN}/admin/login to access admin panel" ;;
+        ru_step_visit_admin) echo "Перейдите на http://${DOMAIN}/admin/login для доступа к панели администратора" ;;
+        
+        en_step_use_email) echo "Use email" ;;
+        ru_step_use_email) echo "Используйте email" ;;
+        
+        en_step_use_password) echo "Use password" ;;
+        ru_step_use_password) echo "Используйте пароль" ;;
+        
+        en_step_clear_cache) echo "If login fails, clear browser cache and try again" ;;
+        ru_step_clear_cache) echo "Если вход не удался, очистите кэш браузера и попробуйте снова" ;;
+        
+        en_step_complete_profile) echo "Complete your profile setup" ;;
+        ru_step_complete_profile) echo "Завершите настройку профиля" ;;
+        
+        en_step_configure_rates) echo "Configure exchange rates and currencies" ;;
+        ru_step_configure_rates) echo "Настройте курсы обмена и валюты" ;;
+        
+        en_step_setup_ssl) echo "Setup SSL certificate (recommended)" ;;
+        ru_step_setup_ssl) echo "Установите SSL сертификат (рекомендуется)" ;;
+        
+        en_useful_commands) echo "Useful Commands" ;;
+        ru_useful_commands) echo "Полезные команды" ;;
+        
+        en_cmd_view_logs) echo "View logs" ;;
+        ru_cmd_view_logs) echo "Просмотр логов" ;;
+        
+        en_cmd_restart_services) echo "Restart services" ;;
+        ru_cmd_restart_services) echo "Перезапуск сервисов" ;;
+        
+        en_cmd_stop_services) echo "Stop services" ;;
+        ru_cmd_stop_services) echo "Остановка сервисов" ;;
+        
+        en_cmd_start_services) echo "Start services" ;;
+        ru_cmd_start_services) echo "Запуск сервисов" ;;
+        
+        en_cmd_check_status) echo "Check status" ;;
+        ru_cmd_check_status) echo "Проверка статуса" ;;
+        
+        en_support) echo "Support" ;;
+        ru_support) echo "Поддержка" ;;
+        
+        en_documentation) echo "Documentation" ;;
+        ru_documentation) echo "Документация" ;;
+        
+        en_support_email) echo "Support Email" ;;
+        ru_support_email) echo "Email поддержки" ;;
+        
+        en_license_issues) echo "License Issues" ;;
+        ru_license_issues) echo "Вопросы лицензирования" ;;
+        
+        # SSL Setup messages
+        en_ssl_optional_title) echo "Optional: SSL Certificate Setup" ;;
+        ru_ssl_optional_title) echo "Опционально: Установка SSL сертификата" ;;
+        
+        en_ssl_site_running_http) echo "Your site is currently running on HTTP (port 80)." ;;
+        ru_ssl_site_running_http) echo "Ваш сайт сейчас работает по HTTP (порт 80)." ;;
+        
+        en_ssl_would_like_setup) echo "Would you like to set up HTTPS with a free SSL certificate from Let's Encrypt?" ;;
+        ru_ssl_would_like_setup) echo "Хотите настроить HTTPS с бесплатным SSL сертификатом от Let's Encrypt?" ;;
+        
+        en_ssl_requirements) echo "Requirements" ;;
+        ru_ssl_requirements) echo "Требования" ;;
+        
+        en_ssl_domain_must_point) echo "Domain %s must point to this server's IP" ;;
+        ru_ssl_domain_must_point) echo "Домен %s должен указывать на IP этого сервера" ;;
+        
+        en_ssl_port_accessible) echo "Port 80 must be accessible from the internet" ;;
+        ru_ssl_port_accessible) echo "Порт 80 должен быть доступен из интернета" ;;
+        
+        en_ssl_setup_now) echo "Setup SSL now? (y/n)" ;;
+        ru_ssl_setup_now) echo "Установить SSL сейчас? (y/n)" ;;
+        
+        en_ssl_phase_9) echo "Phase 9: SSL Certificate Configuration" ;;
+        ru_ssl_phase_9) echo "Фаза 9: Настройка SSL сертификата" ;;
+        
+        en_ssl_setup_complete) echo "SSL Setup Complete!" ;;
+        ru_ssl_setup_complete) echo "Настройка SSL завершена!" ;;
+        
+        en_ssl_site_available_at) echo "Your site is now available at" ;;
+        ru_ssl_site_available_at) echo "Ваш сайт теперь доступен по адресу" ;;
+        
+        en_ssl_setup_failed) echo "SSL setup was skipped or failed." ;;
+        ru_ssl_setup_failed) echo "Настройка SSL пропущена или не удалась." ;;
+        
+        en_ssl_run_later) echo "You can run it later with" ;;
+        ru_ssl_run_later) echo "Вы можете запустить позже командой" ;;
+        
+        en_ssl_setup_skipped) echo "SSL setup skipped." ;;
+        ru_ssl_setup_skipped) echo "Настройка SSL пропущена." ;;
+        
+        en_ssl_enable_later) echo "You can enable HTTPS later by running" ;;
+        ru_ssl_enable_later) echo "Вы можете включить HTTPS позже, выполнив" ;;
         
         # Success messages
         en_installation_complete) echo "Installation completed successfully!" ;;
