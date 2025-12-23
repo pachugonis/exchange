@@ -426,6 +426,133 @@ t() {
         en_license_issues) echo "License Issues" ;;
         ru_license_issues) echo "Вопросы лицензирования" ;;
         
+        # Update Script Messages
+        en_update_title) echo "ExchangeKit Update Manager" ;;
+        ru_update_title) echo "Менеджер обновлений ExchangeKit" ;;
+        
+        en_checking_installation) echo "Checking current installation..." ;;
+        ru_checking_installation) echo "Проверка текущей установки..." ;;
+        
+        en_installation_not_found) echo "ExchangeKit is not installed" ;;
+        ru_installation_not_found) echo "ExchangeKit не установлен" ;;
+        
+        en_config_not_found) echo "Configuration file not found. Installation may be corrupted." ;;
+        ru_config_not_found) echo "Файл конфигурации не найден. Установка может быть повреждена." ;;
+        
+        en_installation_found) echo "Current installation found" ;;
+        ru_installation_found) echo "Текущая установка обнаружена" ;;
+        
+        en_creating_backup) echo "Creating backup of current installation..." ;;
+        ru_creating_backup) echo "Создание резервной копии текущей установки..." ;;
+        
+        en_backup_created) echo "Backup created at" ;;
+        ru_backup_created) echo "Резервная копия создана в" ;;
+        
+        en_stopping_services) echo "Stopping services..." ;;
+        ru_stopping_services) echo "Остановка сервисов..." ;;
+        
+        en_services_stopped) echo "Services stopped" ;;
+        ru_services_stopped) echo "Сервисы остановлены" ;;
+        
+        en_services_not_running) echo "Services were not running" ;;
+        ru_services_not_running) echo "Сервисы не были запущены" ;;
+        
+        en_updating_files) echo "Updating application files..." ;;
+        ru_updating_files) echo "Обновление файлов приложения..." ;;
+        
+        en_extracting_package) echo "Extracting update package" ;;
+        ru_extracting_package) echo "Распаковка пакета обновления" ;;
+        
+        en_pulling_from_git) echo "Pulling latest changes from Git..." ;;
+        ru_pulling_from_git) echo "Получение последних изменений из Git..." ;;
+        
+        en_no_update_source) echo "No update package provided and Git repository not configured" ;;
+        ru_no_update_source) echo "Пакет обновления не предоставлен и Git репозиторий не настроен" ;;
+        
+        en_update_usage) echo "Usage: sudo bash update.sh <path-to-update-package.tar.gz>" ;;
+        ru_update_usage) echo "Использование: sudo bash update.sh <путь-к-пакету-обновления.tar.gz>" ;;
+        
+        en_files_updated) echo "Application files updated" ;;
+        ru_files_updated) echo "Файлы приложения обновлены" ;;
+        
+        en_rebuilding_containers) echo "Rebuilding Docker containers..." ;;
+        ru_rebuilding_containers) echo "Пересборка Docker контейнеров..." ;;
+        
+        en_containers_rebuilt) echo "Containers rebuilt" ;;
+        ru_containers_rebuilt) echo "Контейнеры пересобраны" ;;
+        
+        en_checking_migrations) echo "Checking for database migrations..." ;;
+        ru_checking_migrations) echo "Проверка миграций базы данных..." ;;
+        
+        en_running_migrations) echo "Running database migrations..." ;;
+        ru_running_migrations) echo "Выполнение миграций базы данных..." ;;
+        
+        en_no_migrations) echo "No migrations required" ;;
+        ru_no_migrations) echo "Миграции не требуются" ;;
+        
+        en_starting_services) echo "Starting services..." ;;
+        ru_starting_services) echo "Запуск сервисов..." ;;
+        
+        en_services_started) echo "Services started" ;;
+        ru_services_started) echo "Сервисы запущены" ;;
+        
+        en_verifying_update) echo "Verifying update..." ;;
+        ru_verifying_update) echo "Проверка обновления..." ;;
+        
+        en_all_services_running) echo "All services are running" ;;
+        ru_all_services_running) echo "Все сервисы запущены" ;;
+        
+        en_services_failed) echo "Some services failed to start" ;;
+        ru_services_failed) echo "Некоторые сервисы не запустились" ;;
+        
+        en_check_logs) echo "Check logs with: docker compose logs" ;;
+        ru_check_logs) echo "Проверьте логи командой: docker compose logs" ;;
+        
+        en_app_responding) echo "Application is responding" ;;
+        ru_app_responding) echo "Приложение отвечает" ;;
+        
+        en_app_not_ready) echo "Application may not be fully ready yet" ;;
+        ru_app_not_ready) echo "Приложение может быть еще не полностью готово" ;;
+        
+        en_check_status) echo "Check status with: docker compose ps" ;;
+        ru_check_status) echo "Проверьте статус командой: docker compose ps" ;;
+        
+        en_cleaning_backups) echo "Cleaning up old backups..." ;;
+        ru_cleaning_backups) echo "Очистка старых резервных копий..." ;;
+        
+        en_backups_cleaned) echo "Old backups cleaned (kept last 5)" ;;
+        ru_backups_cleaned) echo "Старые резервные копии очищены (оставлено последние 5)" ;;
+        
+        en_no_cleanup_needed) echo "No cleanup needed (less than 5 backups)" ;;
+        ru_no_cleanup_needed) echo "Очистка не требуется (меньше 5 резервных копий)" ;;
+        
+        en_update_failed_rollback) echo "Update failed! Rolling back to previous version..." ;;
+        ru_update_failed_rollback) echo "Обновление не удалось! Откат к предыдущей версии..." ;;
+        
+        en_restoring_backup) echo "Restoring from backup" ;;
+        ru_restoring_backup) echo "Восстановление из резервной копии" ;;
+        
+        en_rollback_complete) echo "Rollback completed" ;;
+        ru_rollback_complete) echo "Откат завершен" ;;
+        
+        en_backup_not_found) echo "Backup not found at" ;;
+        ru_backup_not_found) echo "Резервная копия не найдена в" ;;
+        
+        en_no_backup_info) echo "No backup information found" ;;
+        ru_no_backup_info) echo "Информация о резервной копии не найдена" ;;
+        
+        en_update_complete) echo "Update completed successfully!" ;;
+        ru_update_complete) echo "Обновление успешно завершено!" ;;
+        
+        en_backup_location) echo "Backup location" ;;
+        ru_backup_location) echo "Расположение резервной копии" ;;
+        
+        en_restarting_app) echo "Restarting app container to apply admin configuration..." ;;
+        ru_restarting_app) echo "Перезапуск контейнера приложения для применения конфигурации администратора..." ;;
+        
+        en_app_restarted) echo "App container restarted" ;;
+        ru_app_restarted) echo "Контейнер приложения перезапущен" ;;
+        
         # Default
         *) echo "$key" ;;
     esac

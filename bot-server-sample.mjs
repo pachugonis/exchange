@@ -96,7 +96,7 @@ bot.command('start', async (ctx) => {
       );
     } else {
       await ctx.reply(
-        `Welcome to 4EX Exchange Bot! 🚀\n\n` +
+        `Welcome to ExchangeKit Bot! 🚀\n\n` +
         `I'm your personal assistant for cryptocurrency exchanges. With me, you can:\n\n` +
         `✓ Exchange crypto and fiat currencies\n` +
         `✓ Track your orders in real-time\n` +

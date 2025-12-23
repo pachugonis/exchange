@@ -1,4 +1,4 @@
-# 4EX Exchange Platform - Installation Package
+# ExchangeKit Platform - Installation Package
 
 ## 📦 Complete One-Click Installation System
 
@@ -426,8 +426,8 @@ sudo bash install.sh
 
 ---
 
-© 2024 4EX Exchange Platform. All rights reserved.
-# 4EX Exchange Platform - Installation Package
+© 2024 ExchangeKit Platform. All rights reserved.
+# ExchangeKit Platform - Installation Package
 
 ## 📦 Complete One-Click Installation System
 
@@ -855,4 +855,4 @@ sudo bash install.sh
 
 ---
 
-© 2024 4EX Exchange Platform. All rights reserved.
+© 2024 ExchangeKit Platform. All rights reserved.

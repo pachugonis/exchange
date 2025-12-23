@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, TrendingUp } from 'lucide-react';
 import { Card } from '../ui/Card';
+import { useTranslation } from '../../hooks/useTranslation';
 import { Badge } from '../ui/Badge';
 
 interface Direction {
@@ -80,13 +81,15 @@ const popularDirections: Direction[] = [
 ];
 
 export const PopularDirections: React.FC = () => {
+  const { t } = useTranslation();
+  
   return (
     <section className="py-20 px-4">
       <div className="container mx-auto">
         <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold mb-4">Популярные направления обмена</h2>
+          <h2 className="text-3xl font-bold mb-4">{t('home.popularDirections.title')}</h2>
           <p className="text-dark-600 dark:text-dark-400">
-            Самые востребованные пары для обмена с актуальными курсами
+            {t('home.popularDirections.subtitle')}
           </p>
         </div>
 
@@ -130,7 +133,7 @@ export const PopularDirections: React.FC = () => {
 
                   <div className="mt-auto">
                     <div className="text-xs text-dark-500 dark:text-dark-400 mb-1">
-                      Курс обмена
+                      {t('home.popularDirections.exchangeRate')}
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="font-semibold text-sm">{direction.rate}</span>
@@ -154,7 +157,7 @@ export const PopularDirections: React.FC = () => {
         <div className="mt-12 text-center">
           <Link to="/exchange">
             <button className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-primary text-white rounded-lg font-medium hover:shadow-lg transition-shadow">
-              Посмотреть все направления
+              {t('home.popularDirections.viewAll')}
               <ArrowRight className="w-5 h-5" />
             </button>
           </Link>

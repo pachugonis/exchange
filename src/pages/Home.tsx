@@ -229,7 +229,7 @@ export const Home: React.FC = () => {
           {/* Live Rates Widget */}
           {settings.showCryptoRates && cryptoRates && (
             <div className="mb-16">
-              <h2 className="text-3xl font-bold text-center mb-8">{settings.cryptoRatesTitle}</h2>
+              <h2 className="text-3xl font-bold text-center mb-8">{t('home.cryptoRates.title')}</h2>
               {designVariant === 'alternative' ? (
                 // Alternative layout: same as default but with alternative colors
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
@@ -365,12 +365,12 @@ export const Home: React.FC = () => {
           
           {settings.showCTA && (
             <div className="text-center">
-              <h2 className="text-3xl font-bold mb-6">{settings.ctaTitle}</h2>
+              <h2 className="text-3xl font-bold mb-6">{t('home.cta.title')}</h2>
               <p className="text-dark-600 dark:text-dark-300 mb-8 max-w-2xl mx-auto">
-                {settings.ctaDescription}
+                {t('home.cta.description')}
               </p>
               <Link to="/exchange">
-                <Button size="lg">{settings.ctaButtonText}</Button>
+                <Button size="lg">{t('home.cta.button')}</Button>
               </Link>
             </div>
           )}

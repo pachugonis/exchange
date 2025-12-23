@@ -1,6 +1,6 @@
 # Sample Telegram Bot Server
 
-This is a starter template for the Telegram bot server that works with your 4EX Exchange platform.
+This is a starter template for the Telegram bot server that works with your ExchangeKit platform.
 
 ## Quick Start
 
@@ -116,7 +116,7 @@ bot.onText(/\/start/, async (msg) => {
     } else {
       await bot.sendMessage(
         chatId,
-        `Welcome to 4EX Exchange Bot! 🚀\n\n` +
+        `Welcome to ExchangeKit Bot! 🚀\n\n` +
         `I'm your personal assistant for cryptocurrency exchanges. With me, you can:\n\n` +
         `✓ Exchange crypto and fiat currencies\n` +
         `✓ Track your orders in real-time\n` +
@@ -458,7 +458,7 @@ PORT=3000
 {
   "name": "telegram-bot-server",
   "version": "1.0.0",
-  "description": "Telegram bot server for 4EX Exchange",
+  "description": "Telegram bot server for ExchangeKit",
   "main": "bot-server-sample.js",
   "scripts": {
     "start": "node bot-server-sample.js",

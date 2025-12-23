@@ -511,4 +511,4 @@ For questions or issues:
 
 ## License
 
-Part of 4EX Exchange Platform - MIT License
+Part of ExchangeKit Platform - MIT License

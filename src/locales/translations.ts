@@ -164,7 +164,19 @@ export const translations = {
         error: 'Ошибка подписки',
       },
       cryptoRates: {
+        title: 'Курсы криптовалют',
         updateInfo: '🔄 Курсы обновляются автоматически с CoinGecko API',
+      },
+      cta: {
+        title: 'Готовы начать?',
+        description: 'Создайте заявку прямо сейчас и обменяйте валюту по выгодному курсу',
+        button: 'Обменять валюту',
+      },
+      popularDirections: {
+        title: 'Популярные направления обмена',
+        subtitle: 'Самые востребованные пары для обмена с актуальными курсами',
+        exchangeRate: 'Курс обмена',
+        viewAll: 'Посмотреть все направления',
       },
       sslSecure: 'SSL Secure',
       announcement: {
@@ -184,7 +196,19 @@ export const translations = {
         error: 'Subscription error',
       },
       cryptoRates: {
+        title: 'Cryptocurrency Rates',
         updateInfo: '🔄 Rates are automatically updated from CoinGecko API',
+      },
+      cta: {
+        title: 'Ready to Start?',
+        description: 'Create an order right now and exchange currency at a favorable rate',
+        button: 'Exchange Currency',
+      },
+      popularDirections: {
+        title: 'Popular Exchange Directions',
+        subtitle: 'Most popular exchange pairs with current rates',
+        exchangeRate: 'Exchange Rate',
+        viewAll: 'View All Directions',
       },
       sslSecure: 'SSL Secure',
       announcement: {
@@ -999,6 +1023,7 @@ export const translations = {
         newsletter: 'Рассылка',
         reviews: 'Отзывы',
         siteSettings: 'Настройки сайта',
+        license: 'Лицензия',
         settings: 'Настройки',
         security: 'Безопасность',
         logout: 'Выход',
@@ -1726,6 +1751,7 @@ export const translations = {
         newsletter: 'Newsletter',
         reviews: 'Reviews',
         siteSettings: 'Site Settings',
+        license: 'License',
         settings: 'Settings',
         security: 'Security',
         logout: 'Logout',

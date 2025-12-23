@@ -61,7 +61,7 @@ export function delay(ms: number): Promise<void> {
  * Get theme from localStorage or system preference
  */
 export function getInitialTheme(): 'dark' | 'light' {
-  if (typeof window === 'undefined') return 'dark';
+  if (typeof window === 'undefined') return 'light';
   
   const stored = localStorage.getItem('theme');
   if (stored === 'dark' || stored === 'light') return stored;
@@ -70,7 +70,7 @@ export function getInitialTheme(): 'dark' | 'light' {
     return 'dark';
   }
   
-  return 'dark'; // Default to dark
+  return 'light'; // Default to light
 }
 
 /**

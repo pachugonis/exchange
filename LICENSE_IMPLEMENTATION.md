@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document describes the client-side implementation of the license server validation and domain binding system for the 4EX Exchange platform. The implementation enables license-based distribution with server-side validation, ensuring each instance is properly authorized and bound to specific domains.
+This document describes the client-side implementation of the license server validation and domain binding system for the ExchangeKit platform. The implementation enables license-based distribution with server-side validation, ensuring each instance is properly authorized and bound to specific domains.
 
 ## Implementation Status
 
@@ -26,7 +26,7 @@ The following components have been implemented:
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                     4EX Exchange Client                      │
+│                     ExchangeKit Client                      │
 ├─────────────────────────────────────────────────────────────┤
 │                                                               │
 │  ┌──────────────┐      ┌──────────────┐     ┌─────────────┐ │

@@ -4,7 +4,7 @@ import { useAdminStore } from '../../store/adminStore';
 import { useThemeStore } from '../../store/themeStore';
 import { useTranslation } from '../../hooks/useTranslation';
 import { LanguageSelector } from '../ui/LanguageSelector';
-import { LayoutDashboard, Settings, ShoppingCart, DollarSign, LogOut, Moon, Sun, Ticket, FileText, Shield, Mail, Star, Megaphone, Users, Globe, Lock } from 'lucide-react';
+import { LayoutDashboard, Settings, ShoppingCart, DollarSign, LogOut, Moon, Sun, Ticket, FileText, Shield, Mail, Star, Megaphone, Users, Globe, Lock, Award } from 'lucide-react';
 
 export const AdminLayout: React.FC = () => {
   const navigate = useNavigate();
@@ -30,6 +30,7 @@ export const AdminLayout: React.FC = () => {
     { path: '/admin/newsletter', icon: Mail, label: t('admin.navigation.newsletter') },
     { path: '/admin/reviews', icon: Star, label: t('admin.navigation.reviews') },
     { path: '/admin/site-settings', icon: Globe, label: t('admin.navigation.siteSettings') },
+    { path: '/admin/license', icon: Award, label: t('admin.navigation.license') },
     { path: '/admin/settings', icon: Settings, label: t('admin.navigation.settings') },
     { path: '/admin/security', icon: Lock, label: t('admin.navigation.security') },
   ];

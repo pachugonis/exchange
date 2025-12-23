@@ -1,4 +1,4 @@
-# 4EX Exchange Platform - Quick Start Guide
+# ExchangeKit Platform - Quick Start Guide
 
 ## ⚡ 5-Minute Installation
 
@@ -96,7 +96,7 @@ docker compose start
 **That's it! Your exchange platform is ready to use.**
 
 Visit https://your-domain.com to get started! 🚀
-# 4EX Exchange Platform - Quick Start Guide
+# ExchangeKit Platform - Quick Start Guide
 
 ## ⚡ 5-Minute Installation
 

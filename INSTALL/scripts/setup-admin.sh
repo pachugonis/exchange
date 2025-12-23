@@ -65,6 +65,17 @@ SQLEOF
 create_admin_config() {
     print_step "Creating admin configuration file..."
     
+    # Remove any existing directories that might conflict with config files
+    if [ -d "${DEPLOYMENT_DIR}/.admin-config.json" ]; then
+        print_info "Removing existing .admin-config.json directory..."
+        rm -rf "${DEPLOYMENT_DIR}/.admin-config.json"
+    fi
+    
+    if [ -d "${DEPLOYMENT_DIR}/.admin-storage-init.json" ]; then
+        print_info "Removing existing .admin-storage-init.json directory..."
+        rm -rf "${DEPLOYMENT_DIR}/.admin-storage-init.json"
+    fi
+    
     # Create admin config in deployment directory
     cat > "${DEPLOYMENT_DIR}/.admin-config.json" <<EOF
 {
@@ -87,8 +98,7 @@ EOF
     
     chmod 600 "${DEPLOYMENT_DIR}/.admin-config.json"
     
-    # Also create initial admin-storage state for the application
-    # This ensures the password is set correctly in localStorage
+    # Create initial admin-storage state for the application
     cat > "${DEPLOYMENT_DIR}/.admin-storage-init.json" <<EOF
 {
   "state": {
@@ -100,7 +110,8 @@ EOF
 }
 EOF
     
-    chmod 600 "${DEPLOYMENT_DIR}/.admin-storage-init.json"
+    chmod 644 "${DEPLOYMENT_DIR}/.admin-storage-init.json"
+    
     print_success "Admin configuration saved"
     print_info "Admin will be able to login with email: ${ADMIN_EMAIL}"
 }
@@ -136,6 +147,18 @@ main() {
     create_admin_user
     create_admin_config
     verify_admin
+    
+    # Copy admin init file to running container if it exists
+    if docker ps --format '{{.Names}}' | grep -q "exchangekit-app"; then
+        if [ -f "${DEPLOYMENT_DIR}/.admin-storage-init.json" ]; then
+            print_step "Copying admin configuration to application..."
+            if docker cp "${DEPLOYMENT_DIR}/.admin-storage-init.json" exchangekit-app:/usr/share/nginx/html/.admin-storage-init.json 2>/dev/null; then
+                print_success "Admin configuration deployed"
+            else
+                print_warning "Failed to copy admin config to container (will be copied on next restart)"
+            fi
+        fi
+    fi
     
     echo ""
     print_success "Administrator account setup complete!"

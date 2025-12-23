@@ -1,8 +1,8 @@
-# 4EX Exchange Platform - Installation Guide
+# ExchangeKit Platform - Installation Guide
 
 ## 🚀 One-Click Installation for Ubuntu 24.04
 
-This installation package provides a fully automated deployment system for the 4EX Exchange Platform using Docker containerization.
+This installation package provides a fully automated deployment system for the ExchangeKit Platform using Docker containerization.
 
 ## 📋 Prerequisites
 
@@ -637,11 +637,11 @@ After successful installation:
 **Docker Version:** 24.0+  
 
 For the latest version and updates, visit: https://4ex.com/downloads
-# 4EX Exchange Platform - Installation Guide
+# ExchangeKit Platform - Installation Guide
 
 ## 🚀 One-Click Installation for Ubuntu 24.04
 
-This installation package provides a fully automated deployment system for the 4EX Exchange Platform using Docker containerization.
+This installation package provides a fully automated deployment system for the ExchangeKit Platform using Docker containerization.
 
 ## 📋 Prerequisites
 
