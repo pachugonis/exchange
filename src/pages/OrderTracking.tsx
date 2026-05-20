@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { Search, Clock } from 'lucide-react';
 import { Input } from '../components/ui/Input';
 import { Button } from '../components/ui/Button';
@@ -9,6 +10,7 @@ import { ReviewForm } from '../components/exchange/ReviewForm';
 import { FavoriteButton } from '../components/exchange/FavoriteButton';
 import { useOrderStore } from '../store/orderStore';
 import { useReviewStore } from '../store/reviewStore';
+import { useUserStore } from '../store/userStore';
 import { useTranslation } from '../hooks/useTranslation';
 import { formatDate } from '../utils/formatters';
 
@@ -20,6 +22,7 @@ export const OrderTracking: React.FC = () => {
   const [lastUpdateTime, setLastUpdateTime] = useState(Date.now());
   const { getOrderById, orders } = useOrderStore();
   const { getOrderReview } = useReviewStore();
+  const { user, isAuthenticated } = useUserStore();
   const { t, locale } = useTranslation();
 
   // Auto-refresh orders every 5 seconds
@@ -194,33 +197,67 @@ export const OrderTracking: React.FC = () => {
         )}
 
         {/* Review Section - Only show for completed orders */}
-        {searchedOrder && searchedOrder.status === 'completed' && !searchedOrder.hasReview && (
-          <div className="mb-8">
-            {!showReviewForm ? (
-              <Card>
-                <div className="text-center">
-                  <h3 className="text-xl font-semibold mb-2">{t('orders.tracking.exchangeCompleted')}</h3>
-                  <p className="text-dark-600 dark:text-dark-400 mb-4">
-                    {t('orders.tracking.leaveReviewPrompt')}
-                  </p>
-                  <Button onClick={() => setShowReviewForm(true)}>
-                    {t('orders.tracking.leaveReview')}
-                  </Button>
-                </div>
-              </Card>
-            ) : (
-              <ReviewForm 
-                order={searchedOrder} 
-                onSubmitSuccess={() => {
-                  setShowReviewForm(false);
-                  // Update the searched order to reflect the review
-                  const updatedOrder = getOrderById(searchedOrder.id);
-                  setSearchedOrder(updatedOrder);
-                }}
-              />
-            )}
-          </div>
-        )}
+        {searchedOrder && searchedOrder.status === 'completed' && !searchedOrder.hasReview && (() => {
+          const isOwner = isAuthenticated && user && (
+            (searchedOrder.userId && searchedOrder.userId === user.id) ||
+            (searchedOrder.contactInfo?.email && searchedOrder.contactInfo.email === user.email)
+          );
+
+          if (!isAuthenticated) {
+            return (
+              <div className="mb-8">
+                <Card>
+                  <div className="text-center">
+                    <h3 className="text-xl font-semibold mb-2">{t('orders.tracking.exchangeCompleted')}</h3>
+                    <Alert variant="info" className="mb-4 text-left">
+                      {t('orders.tracking.reviewLoginRequired')}
+                    </Alert>
+                    <Link to="/login">
+                      <Button>{t('orders.tracking.loginButton')}</Button>
+                    </Link>
+                  </div>
+                </Card>
+              </div>
+            );
+          }
+
+          if (!isOwner) {
+            return (
+              <div className="mb-8">
+                <Alert variant="warning">
+                  {t('orders.tracking.reviewNotOwner')}
+                </Alert>
+              </div>
+            );
+          }
+
+          return (
+            <div className="mb-8">
+              {!showReviewForm ? (
+                <Card>
+                  <div className="text-center">
+                    <h3 className="text-xl font-semibold mb-2">{t('orders.tracking.exchangeCompleted')}</h3>
+                    <p className="text-dark-600 dark:text-dark-400 mb-4">
+                      {t('orders.tracking.leaveReviewPrompt')}
+                    </p>
+                    <Button onClick={() => setShowReviewForm(true)}>
+                      {t('orders.tracking.leaveReview')}
+                    </Button>
+                  </div>
+                </Card>
+              ) : (
+                <ReviewForm
+                  order={searchedOrder}
+                  onSubmitSuccess={() => {
+                    setShowReviewForm(false);
+                    const updatedOrder = getOrderById(searchedOrder.id);
+                    setSearchedOrder(updatedOrder);
+                  }}
+                />
+              )}
+            </div>
+          );
+        })()}
 
         {/* Show existing review if already submitted */}
         {searchedOrder && searchedOrder.hasReview && (() => {

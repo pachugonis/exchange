@@ -27,24 +27,43 @@ export const useReviewStore = create<ReviewState>()(
         if (data.rating < 1 || data.rating > 5) {
           return { success: false, error: 'Рейтинг должен быть от 1 до 5' };
         }
-        
+
         // Validate comment
         if (!data.comment || data.comment.trim().length < 10) {
           return { success: false, error: 'Комментарий должен содержать минимум 10 символов' };
         }
-        
+
         if (data.comment.trim().length > 200) {
           return { success: false, error: 'Комментарий не должен превышать 200 символов' };
         }
-        
+
         // Check if review already exists for this order
         const existingReview = get().reviews.find(r => r.orderId === data.orderId);
         if (existingReview) {
           return { success: false, error: 'Вы уже оставили отзыв для этого обмена' };
         }
-        
+
         // Get order details to include exchange direction
         const order = useOrderStore.getState().getOrderById(data.orderId);
+
+        // Authorization: only the user who made this order can leave a review.
+        // Why: prevents an authenticated user from posting a review for someone else's order
+        // by bypassing the UI and calling createReview directly with an arbitrary orderId.
+        if (!order) {
+          return { success: false, error: 'Заказ не найден' };
+        }
+
+        if (order.status !== 'completed') {
+          return { success: false, error: 'Отзыв можно оставить только для завершённого обмена' };
+        }
+
+        const isOwner =
+          (!!userId && !!order.userId && order.userId === userId) ||
+          (!!userEmail && !!order.contactInfo?.email && order.contactInfo.email === userEmail);
+
+        if (!isOwner) {
+          return { success: false, error: 'Оставить отзыв может только пользователь, совершивший этот обмен' };
+        }
         
         const newReview: Review = {
           id: generateId('REVIEW'),

@@ -42,7 +42,16 @@ export const ReviewForm: React.FC<ReviewFormProps> = ({ order, onSubmitSuccess }
       toast.error('Комментарий не должен превышать 200 символов');
       return;
     }
-    
+
+    const isOwner =
+      (!!user?.id && !!order.userId && order.userId === user.id) ||
+      (!!user?.email && !!order.contactInfo?.email && order.contactInfo.email === user.email);
+
+    if (!isOwner) {
+      toast.error('Оставить отзыв может только пользователь, совершивший этот обмен');
+      return;
+    }
+
     setLoading(true);
     
     const result = await createReview(
