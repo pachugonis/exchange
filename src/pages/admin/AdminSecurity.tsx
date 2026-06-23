@@ -6,11 +6,11 @@ import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { useAdminStore } from '../../store/adminStore';
 import { useTranslation } from '../../hooks/useTranslation';
-import { generateSecret, generateQRCodeURL, formatSecret, verifyTOTP } from '../../utils/twoFactor';
+import { generateQRCodeURL, formatSecret } from '../../utils/twoFactor';
 import toast from 'react-hot-toast';
 
 export const AdminSecurity: React.FC = () => {
-  const { isAuthenticated, username, twoFactorEnabled, changePassword, enableTwoFactor, disableTwoFactor } = useAdminStore();
+  const { isAuthenticated, username, twoFactorEnabled, changePassword, setupTwoFactor, enableTwoFactor, disableTwoFactor } = useAdminStore();
   const { t } = useTranslation();
 
   // Password change state
@@ -25,6 +25,8 @@ export const AdminSecurity: React.FC = () => {
   const [show2FASetup, setShow2FASetup] = useState(false);
   const [tempSecret, setTempSecret] = useState('');
   const [verificationCode, setVerificationCode] = useState('');
+  const [showDisable2FA, setShowDisable2FA] = useState(false);
+  const [disableCode, setDisableCode] = useState('');
 
   if (!isAuthenticated) {
     return <Navigate to="/admin/login" replace />;
@@ -57,8 +59,12 @@ export const AdminSecurity: React.FC = () => {
     }
   };
 
-  const handleSetup2FA = () => {
-    const secret = generateSecret();
+  const handleSetup2FA = async () => {
+    const { secret, error } = await setupTwoFactor();
+    if (!secret) {
+      toast.error(error || t('admin.security.messages.invalidCode'));
+      return;
+    }
     setTempSecret(secret);
     setShow2FASetup(true);
     setVerificationCode('');
@@ -70,9 +76,9 @@ export const AdminSecurity: React.FC = () => {
       return;
     }
 
-    const isValid = await verifyTOTP(tempSecret, verificationCode);
-    if (isValid) {
-      enableTwoFactor(tempSecret);
+    // The server verifies the code against the stored secret and enables 2FA.
+    const ok = await enableTwoFactor(verificationCode);
+    if (ok) {
       toast.success(t('admin.security.messages.twoFactorEnabled'));
       setShow2FASetup(false);
       setTempSecret('');
@@ -82,10 +88,18 @@ export const AdminSecurity: React.FC = () => {
     }
   };
 
-  const handleDisable2FA = () => {
-    if (confirm(t('admin.security.messages.confirmDisable2FA'))) {
-      disableTwoFactor();
+  const handleDisable2FA = async () => {
+    if (!disableCode) {
+      toast.error(t('admin.security.messages.enterCode'));
+      return;
+    }
+    const ok = await disableTwoFactor(disableCode);
+    if (ok) {
       toast.success(t('admin.security.messages.twoFactorDisabled'));
+      setShowDisable2FA(false);
+      setDisableCode('');
+    } else {
+      toast.error(t('admin.security.messages.invalidCode'));
     }
   };
 
@@ -216,12 +230,41 @@ export const AdminSecurity: React.FC = () => {
                 {t('admin.security.twoFactor.enable')}
               </Button>
             ) : (
-              <Button variant="outline" onClick={handleDisable2FA} className="gap-2 text-red-600 border-red-600 hover:bg-red-50 dark:hover:bg-red-900/20">
+              <Button variant="outline" onClick={() => { setShowDisable2FA(true); setDisableCode(''); }} className="gap-2 text-red-600 border-red-600 hover:bg-red-50 dark:hover:bg-red-900/20">
                 <X className="w-4 h-4" />
                 {t('admin.security.twoFactor.disable')}
               </Button>
             )}
           </div>
+
+          {/* 2FA Disable — requires a current code */}
+          {twoFactorEnabled && showDisable2FA && (
+            <div className="p-6 border-2 border-red-500 rounded-lg bg-red-50 dark:bg-red-900/10">
+              <label className="block text-sm font-medium mb-2">
+                {t('admin.security.twoFactor.setup.step3')}
+              </label>
+              <Input
+                type="text"
+                value={disableCode}
+                onChange={(e) => setDisableCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                placeholder={t('admin.security.twoFactor.setup.codePlaceholder')}
+                className="text-center text-2xl tracking-wider font-mono"
+                maxLength={6}
+              />
+              <div className="flex gap-3 mt-4">
+                <Button onClick={handleDisable2FA} className="gap-2 text-red-600 border-red-600">
+                  <X className="w-4 h-4" />
+                  {t('admin.security.twoFactor.disable')}
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => { setShowDisable2FA(false); setDisableCode(''); }}
+                >
+                  {t('admin.security.twoFactor.setup.cancel')}
+                </Button>
+              </div>
+            </div>
+          )}
 
           {/* 2FA Setup */}
           {show2FASetup && (

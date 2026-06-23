@@ -45,8 +45,12 @@ export const UserSettings: React.FC = () => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleEnable2FA = () => {
-    const { secret } = enable2FA();
+  const handleEnable2FA = async () => {
+    const { secret, error } = await enable2FA();
+    if (!secret) {
+      toast.error(error || t('user.settings.twoFA.verificationError'));
+      return;
+    }
     setTwoFactorSecret(secret);
     setShow2FASetup(true);
   };

@@ -1,11 +1,12 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { AdminSettings, AdminStats } from '../types/admin';
+import { authAPI } from '../api/authAPI';
 
 interface AdminState {
   isAuthenticated: boolean;
   username: string | null;
-  password: string;
+  token: string | null;
   twoFactorEnabled: boolean;
   twoFactorSecret: string | null;
   settings: AdminSettings;
@@ -15,8 +16,9 @@ interface AdminState {
   login: (username: string, password: string, twoFactorCode?: string) => Promise<boolean>;
   logout: () => void;
   changePassword: (currentPassword: string, newPassword: string) => Promise<boolean>;
-  enableTwoFactor: (secret: string) => void;
-  disableTwoFactor: () => void;
+  setupTwoFactor: () => Promise<{ secret: string; otpauthUrl?: string; error?: string }>;
+  enableTwoFactor: (code: string) => Promise<boolean>;
+  disableTwoFactor: (code: string) => Promise<boolean>;
   updateSettings: (settings: Partial<AdminSettings>) => void;
   updatePaymentAddress: (currencyCode: string, address: string) => void;
   updateCommission: (commission: number) => void;
@@ -63,60 +65,69 @@ export const useAdminStore = create<AdminState>()(
     (set, get) => ({
       isAuthenticated: false,
       username: null,
-      password: 'admin123', // Default password
+      token: null,
       twoFactorEnabled: false,
       twoFactorSecret: null,
       settings: defaultSettings,
       stats: defaultStats,
-      
+
       login: async (username: string, password: string, twoFactorCode?: string) => {
-        const state = get();
-        
-        // Accept both 'admin' username and any email for compatibility
-        // Compare password with stored password
-        const isValidCredentials = password === state.password;
-        
-        if (isValidCredentials) {
-          // If 2FA is enabled, verify the code
-          if (state.twoFactorEnabled && state.twoFactorSecret) {
-            if (!twoFactorCode) {
-              return false; // 2FA code required
-            }
-            
-            // Verify 2FA code
-            const { verifyTOTP } = await import('../utils/twoFactor');
-            const isValid = await verifyTOTP(state.twoFactorSecret, twoFactorCode);
-            if (!isValid) {
-              return false;
-            }
-          }
-          
-          set({ isAuthenticated: true, username });
+        // `username` carries the admin email; credentials are verified server-side.
+        const res = await authAPI.adminLogin({ email: username, password, twoFactorCode });
+
+        if (res.ok && res.data.token) {
+          set({
+            isAuthenticated: true,
+            username,
+            token: res.data.token,
+            twoFactorEnabled: !!res.data.user?.twoFactorEnabled,
+          });
           await get().loadStats();
           return true;
         }
-        return false;
-      },
-      
-      logout: () => {
-        set({ isAuthenticated: false, username: null });
-      },
-      
-      changePassword: async (currentPassword: string, newPassword: string) => {
-        const state = get();
-        if (currentPassword === state.password) {
-          set({ password: newPassword });
-          return true;
+
+        // Signal the login screen to prompt for a 2FA code.
+        if (res.data.requires2FA) {
+          set({ twoFactorEnabled: true });
         }
         return false;
       },
-      
-      enableTwoFactor: (secret: string) => {
-        set({ twoFactorEnabled: true, twoFactorSecret: secret });
+
+      logout: () => {
+        set({ isAuthenticated: false, username: null, token: null });
+      },
+
+      changePassword: async (currentPassword: string, newPassword: string) => {
+        const token = get().token;
+        if (!token) return false;
+        const res = await authAPI.changePassword({ currentPassword, newPassword }, token);
+        return res.ok;
       },
       
-      disableTwoFactor: () => {
-        set({ twoFactorEnabled: false, twoFactorSecret: null });
+      // Ask the server to generate and store a (not-yet-enabled) TOTP secret.
+      setupTwoFactor: async () => {
+        const token = get().token;
+        if (!token) return { secret: '', error: 'Не авторизован' };
+        const res = await authAPI.setup2FA(token);
+        if (!res.ok) return { secret: '', error: res.data.error || 'Ошибка' };
+        return { secret: res.data.secret, otpauthUrl: res.data.otpauthUrl };
+      },
+
+      // Confirm a code; the server verifies it against the stored secret and enables 2FA.
+      enableTwoFactor: async (code: string) => {
+        const token = get().token;
+        if (!token) return false;
+        const res = await authAPI.enable2FA(code, token);
+        if (res.ok) set({ twoFactorEnabled: true });
+        return res.ok;
+      },
+
+      disableTwoFactor: async (code: string) => {
+        const token = get().token;
+        if (!token) return false;
+        const res = await authAPI.disable2FA(code, token);
+        if (res.ok) set({ twoFactorEnabled: false, twoFactorSecret: null });
+        return res.ok;
       },
       
       updateSettings: (newSettings) => {
@@ -180,7 +191,7 @@ export const useAdminStore = create<AdminState>()(
       partialize: (state) => ({
         isAuthenticated: state.isAuthenticated,
         username: state.username,
-        password: state.password,
+        token: state.token,
         twoFactorEnabled: state.twoFactorEnabled,
         twoFactorSecret: state.twoFactorSecret,
         settings: state.settings,
