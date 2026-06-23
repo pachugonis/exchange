@@ -36,6 +36,10 @@ export const config = {
   bcryptRounds: Number(process.env.BCRYPT_ROUNDS ?? 12),
   totpIssuer: process.env.TOTP_ISSUER ?? 'ExchangeKit',
 
+  // Ключ Etherscan для отслеживания оплаты в сети Ethereum (ETH/ERC20).
+  // Без ключа ETH-заявки не отслеживаются автоматически.
+  etherscanApiKey: process.env.ETHERSCAN_API_KEY ?? '',
+
   // Public frontend URL used to build links inside emails.
   appUrl: process.env.APP_URL ?? 'http://localhost:5173',
 

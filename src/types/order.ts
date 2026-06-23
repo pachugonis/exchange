@@ -38,8 +38,11 @@ export interface Order {
   createdAt: number;
   updatedAt: number;
   expiresAt: number; // Курс резервируется на 15 минут
+  paymentDeadline: number; // Крайний срок поступления оплаты (создание + 30 минут)
   statusHistory: StatusChange[];
   paymentAddress?: string; // Адрес для оплаты
+  txHash?: string; // Хэш входящей транзакции, обнаруженной в блокчейне
+  paidAt?: number; // Момент обнаружения оплаты в блокчейне
   hasReview?: boolean; // Flag to track if user has left a review
   reviewId?: string; // Reference to the review if one exists
 }

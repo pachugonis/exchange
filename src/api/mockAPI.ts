@@ -7,9 +7,10 @@ import {
   API_DELAY_MIN, 
   API_DELAY_MAX, 
   API_ERROR_PROBABILITY, 
-  RATE_RESERVE_TIME, 
+  RATE_RESERVE_TIME,
+  PAYMENT_WINDOW,
   DEFAULT_COMMISSION,
-  STATUS_PROGRESSION_DELAYS 
+  STATUS_PROGRESSION_DELAYS
 } from '../utils/constants';
 
 // Store for simulating ongoing order progressions
@@ -85,6 +86,7 @@ export async function createOrder(orderData: Partial<Order>): Promise<Order> {
     createdAt: now,
     updatedAt: now,
     expiresAt: now + RATE_RESERVE_TIME,
+    paymentDeadline: now + PAYMENT_WINDOW,
     statusHistory: [
       {
         status: 'waiting_payment',
@@ -92,7 +94,9 @@ export async function createOrder(orderData: Partial<Order>): Promise<Order> {
         message: 'Заявка создана, ожидается оплата',
       },
     ],
-    paymentAddress: generateCryptoAddress(orderData.fromCurrency!.code),
+    paymentAddress:
+      orderData.fromCurrency!.paymentAddress ||
+      generateCryptoAddress(orderData.fromCurrency!.code),
   };
   
   return order;

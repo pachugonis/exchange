@@ -1,5 +1,6 @@
 export { ExchangeSteps } from './ExchangeSteps';
 export { ExchangeStatus, ExchangeProgress } from './ExchangeStatus';
+export { PaymentCountdown } from './PaymentCountdown';
 export { ExchangeCalculator } from './ExchangeCalculator';
 export { ExchangeInfo } from './ExchangeInfo';
 export { RateChart } from './RateChart';

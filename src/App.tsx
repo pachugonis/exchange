@@ -28,10 +28,14 @@ import { AdminAnnouncements } from './pages/admin/AdminAnnouncements';
 import { AdminUsers } from './pages/admin/AdminUsers';
 import { useThemeStore } from './store/themeStore';
 import { useAdminStore } from './store/adminStore';
+import { usePaymentTracking } from './hooks/usePaymentTracking';
 
 function App() {
   const { theme } = useThemeStore();
   const { settings, isAuthenticated: isAdminAuthenticated } = useAdminStore();
+
+  // Отслеживание оплаты по блокчейну и авто-отмена просроченных заявок
+  usePaymentTracking();
 
   useEffect(() => {
     // Apply theme on mount

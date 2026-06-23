@@ -5,6 +5,7 @@ import { pool, initSchema } from './db.ts';
 import { hashPassword, newUuid } from './lib/security.ts';
 import { authRouter } from './routes/auth.ts';
 import { kycRouter } from './routes/kyc.ts';
+import { paymentsRouter } from './routes/payments.ts';
 
 /** Seed an admin account from env if one does not already exist. */
 async function ensureAdmin(): Promise<void> {
@@ -38,6 +39,7 @@ async function main(): Promise<void> {
   app.get('/health', (_req, res) => res.json({ ok: true }));
   app.use('/api/auth', authRouter);
   app.use('/api/kyc', kycRouter);
+  app.use('/api/payments', paymentsRouter);
 
   // Centralised error handler so route handlers can stay lean.
   app.use((err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {

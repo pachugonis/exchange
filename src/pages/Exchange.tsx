@@ -11,6 +11,7 @@ import { Button } from '../components/ui/Button';
 import { Modal } from '../components/ui/Modal';
 import { CurrencySelect } from '../components/ui/CurrencySelect';
 import { PromoCodeInput } from '../components/exchange/PromoCodeInput';
+import { PaymentCountdown } from '../components/exchange/PaymentCountdown';
 import { ArrowLeftRight, RefreshCw, ArrowRight, ArrowLeft, Check, Loader2, Copy, XCircle } from 'lucide-react';
 import { formatCurrency } from '../utils/formatters';
 import toast from 'react-hot-toast';
@@ -735,6 +736,19 @@ export const Exchange: React.FC = () => {
               ⚠️ <strong>{t('exchange.wizard.importantNote')}</strong> {t('exchange.wizard.sendExactAmount')} {fromAmount} {fromCurrency?.code}
             </p>
           </div>
+
+          {/* Таймер оплаты и статус отслеживания по блокчейну */}
+          {(() => {
+            const currentOrder = getOrderById(orderId || '');
+            return currentOrder ? (
+              <>
+                <PaymentCountdown order={currentOrder} className="mb-3" />
+                <p className="text-xs text-dark-500 dark:text-dark-400">
+                  {t('exchange.wizard.paymentTrackingNote')}
+                </p>
+              </>
+            ) : null;
+          })()}
         </div>
 
         <div className="text-left bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">

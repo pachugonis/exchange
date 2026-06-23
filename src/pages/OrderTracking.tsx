@@ -5,7 +5,7 @@ import { Input } from '../components/ui/Input';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { Alert } from '../components/ui/Alert';
-import { ExchangeStatus, ExchangeProgress } from '../components/exchange';
+import { ExchangeStatus, ExchangeProgress, PaymentCountdown } from '../components/exchange';
 import { ReviewForm } from '../components/exchange/ReviewForm';
 import { FavoriteButton } from '../components/exchange/FavoriteButton';
 import { useOrderStore } from '../store/orderStore';
@@ -122,6 +122,11 @@ export const OrderTracking: React.FC = () => {
                 status={searchedOrder.status}
                 currentStep={searchedOrder.statusHistory.length}
               />
+
+              {/* Таймер оплаты для заявок, ожидающих перевод */}
+              {searchedOrder.status === 'waiting_payment' && searchedOrder.paymentDeadline && (
+                <PaymentCountdown order={searchedOrder} className="mt-4" />
+              )}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">

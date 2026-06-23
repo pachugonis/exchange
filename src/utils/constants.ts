@@ -9,6 +9,11 @@ export const RATE_RESERVE_TIME = 15 * 60 * 1000; // 15 minutes in milliseconds
 export const RATE_UPDATE_INTERVAL = 30 * 1000; // 30 seconds
 export const STATUS_POLL_INTERVAL = 10 * 1000; // 10 seconds
 
+// Окно на оплату заявки: если перевод не поступит за это время — заявка отменяется
+export const PAYMENT_WINDOW = 30 * 60 * 1000; // 30 minutes in milliseconds
+// Как часто опрашивать блокчейн на предмет поступления оплаты
+export const PAYMENT_CHECK_INTERVAL = 30 * 1000; // 30 seconds
+
 // Validation constants
 export const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 export const TELEGRAM_REGEX = /^@[a-zA-Z0-9_]{5,32}$/;
