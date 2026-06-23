@@ -26,6 +26,23 @@ npm start                 # сервер на http://localhost:3001
 curl http://localhost:3001/api/health
 ```
 
+## Веб-админка
+
+Веб-интерфейс управления лицензиями доступен по адресу **`/admin`**
+(например, `http://localhost:3001/admin`). Вход по логину и паролю из `.env`
+(`ADMIN_USERNAME`, `ADMIN_PASSWORD`).
+
+Возможности:
+
+- генерация новых ключей (Professional, бессрочно, 1 домен) одной кнопкой;
+- список всех лицензий с поиском по ключу, e-mail и домену;
+- статусы (активна / приостановлена / отозвана) и их смена прямо из таблицы;
+- просмотр привязанных доменов и числа проверок.
+
+Интерфейс — статичная страница (`public/admin/index.html`), без сборки и
+дополнительных зависимостей. После входа выдаётся admin-токен (JWT, 12 ч),
+который хранится в браузере. В продакшене закрывайте `/admin` через HTTPS.
+
 ## Развёртывание на VPS (systemd)
 
 Требования: Node.js >= 18, Ubuntu 22.04+/24.04, 512 МБ RAM. Деплой через systemd
@@ -106,7 +123,10 @@ RELEASE_SSH_TARGET=license@HOST:/opt/license-server/releases \
 | Метод | Путь | Назначение |
 |-------|------|------------|
 | GET  | `/api/health` | статус, число лицензий |
-| POST | `/api/admin/licenses` | создать лицензию (заголовок `X-Admin-Password`) |
+| POST | `/api/admin/login` | вход в веб-админку (`username`, `password`) → admin-токен |
+| GET  | `/api/admin/licenses` | список лицензий (admin-токен или `X-Admin-Password`) |
+| POST | `/api/admin/licenses` | создать лицензию (admin-токен или `X-Admin-Password`) |
+| PATCH | `/api/admin/licenses/:id/status` | сменить статус: `active`/`suspended`/`revoked` |
 | POST | `/api/license/activate` | активация + привязка домена, выдаёт JWT |
 | POST | `/api/license/validate` | проверка лицензии и домена |
 | POST | `/api/license/heartbeat` | продление «живости» (Bearer-токен) |

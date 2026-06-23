@@ -5,13 +5,19 @@ import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import fs from 'fs/promises';
 import path from 'path';
+import { fileURLToPath } from 'url';
 
 // Load environment variables
 dotenv.config();
 
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
 const app = express();
 const PORT = process.env.LICENSE_SERVER_PORT || 3001;
 const JWT_SECRET = process.env.LICENSE_JWT_SECRET || 'your-secret-key-change-in-production';
+// Учётные данные для входа в веб-админку
+const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'admin';
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || '';
 const DB_FILE = 'license-database.json';
 
 // Каталог с артефактами релизов и манифестом releases.json.
@@ -22,6 +28,9 @@ const MANIFEST_FILE = path.join(RELEASES_DIR, 'releases.json');
 // Middleware
 app.use(cors());
 app.use(express.json());
+
+// Веб-админка (одностраничное приложение без сборки) на /admin
+app.use('/admin', express.static(path.join(__dirname, 'public', 'admin')));
 
 // ============================================================================
 // Database Functions (JSON-based)
@@ -190,6 +199,40 @@ function authenticate(req, res, next) {
   next();
 }
 
+// Сравнение строк, устойчивое к timing-атакам
+function safeEqual(a, b) {
+  const bufA = Buffer.from(String(a));
+  const bufB = Buffer.from(String(b));
+  if (bufA.length !== bufB.length) return false;
+  return crypto.timingSafeEqual(bufA, bufB);
+}
+
+// Admin-токен веб-админки (отдельная роль 'admin' в payload)
+function generateAdminToken(username) {
+  return jwt.sign({ role: 'admin', username }, JWT_SECRET, { expiresIn: '12h' });
+}
+
+// Доступ к admin-эндпоинтам: либо Bearer admin-токен, либо заголовок
+// x-admin-password (для обратной совместимости со скриптами/curl).
+function authenticateAdmin(req, res, next) {
+  const adminPassword = req.headers['x-admin-password'];
+  if (adminPassword && ADMIN_PASSWORD && safeEqual(adminPassword, ADMIN_PASSWORD)) {
+    req.admin = { username: ADMIN_USERNAME, via: 'password' };
+    return next();
+  }
+
+  const authHeader = req.headers.authorization;
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    const decoded = verifyToken(authHeader.substring(7));
+    if (decoded && decoded.role === 'admin') {
+      req.admin = { username: decoded.username, via: 'token' };
+      return next();
+    }
+  }
+
+  return res.status(401).json({ error: 'UNAUTHORIZED', message: 'Admin authentication required' });
+}
+
 // ============================================================================
 // API Endpoints
 // ============================================================================
@@ -204,13 +247,49 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-app.post('/api/admin/licenses', async (req, res) => {
-  const adminPassword = req.headers['x-admin-password'];
+// Вход в веб-админку по логину и паролю → выдаёт admin-токен на 12 часов
+app.post('/api/admin/login', (req, res) => {
+  const { username, password } = req.body || {};
 
-  if (adminPassword !== process.env.ADMIN_PASSWORD) {
-    return res.status(403).json({ error: 'FORBIDDEN', message: 'Invalid admin password' });
+  if (!ADMIN_PASSWORD) {
+    return res.status(500).json({
+      success: false,
+      error: 'NOT_CONFIGURED',
+      message: 'ADMIN_PASSWORD is not set on the server',
+    });
   }
 
+  if (!safeEqual(username || '', ADMIN_USERNAME) || !safeEqual(password || '', ADMIN_PASSWORD)) {
+    return res.status(401).json({
+      success: false,
+      error: 'INVALID_CREDENTIALS',
+      message: 'Invalid username or password',
+    });
+  }
+
+  res.json({
+    success: true,
+    token: generateAdminToken(ADMIN_USERNAME),
+    username: ADMIN_USERNAME,
+    expiresIn: 43200,
+  });
+});
+
+// Список всех лицензий с привязанными доменами (для веб-админки)
+app.get('/api/admin/licenses', authenticateAdmin, (req, res) => {
+  const licenses = database.licenses.map(license => ({
+    ...license,
+    boundDomains: getDomainBindings(license.id),
+  }));
+
+  res.json({
+    success: true,
+    total: licenses.length,
+    licenses: licenses.sort((a, b) => b.issuedAt - a.issuedAt),
+  });
+});
+
+app.post('/api/admin/licenses', authenticateAdmin, async (req, res) => {
   // Все лицензии одного типа: Professional, бессрочно, на один домен.
   // При генерации указывается ТОЛЬКО ключ — почта и домен не задаются.
   // Привязка к почте и домену происходит при активации клиентом на его сервере.
@@ -256,6 +335,34 @@ app.post('/api/admin/licenses', async (req, res) => {
     success: true,
     license,
     message: 'License created successfully',
+  });
+});
+
+// Смена статуса лицензии из веб-админки: active | suspended | revoked
+app.patch('/api/admin/licenses/:id/status', authenticateAdmin, async (req, res) => {
+  const { status } = req.body || {};
+  const allowed = ['active', 'suspended', 'revoked'];
+
+  if (!allowed.includes(status)) {
+    return res.status(400).json({
+      success: false,
+      error: 'INVALID_STATUS',
+      message: `Status must be one of: ${allowed.join(', ')}`,
+    });
+  }
+
+  const license = database.licenses.find(l => l.id === parseInt(req.params.id, 10));
+  if (!license) {
+    return res.status(404).json({ success: false, error: 'NOT_FOUND', message: 'License not found' });
+  }
+
+  license.status = status;
+  await saveDatabase();
+
+  res.json({
+    success: true,
+    license: { ...license, boundDomains: getDomainBindings(license.id) },
+    message: `License status changed to ${status}`,
   });
 });
 
