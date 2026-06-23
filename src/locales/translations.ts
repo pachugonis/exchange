@@ -368,6 +368,11 @@ export const translations = {
         validation: {
           agreeToTerms: 'Необходимо согласиться с правилами',
           agreeToAML: 'Необходимо согласиться с политикой AML/KYC',
+          enterFromWallet: 'Введите адрес кошелька отправителя',
+          enterToWallet: 'Введите адрес кошелька получателя',
+          addressNoSpaces: 'Адрес не должен содержать пробелов',
+          invalidAddress: 'Некорректный адрес {code}',
+          invalidAddressNetwork: 'Некорректный адрес {code} ({network})',
         },
       },
       steps: {
@@ -522,6 +527,11 @@ export const translations = {
         validation: {
           agreeToTerms: 'You must agree to the terms',
           agreeToAML: 'You must agree to the AML/KYC policy',
+          enterFromWallet: 'Enter the sender wallet address',
+          enterToWallet: 'Enter the recipient wallet address',
+          addressNoSpaces: 'The address must not contain spaces',
+          invalidAddress: 'Invalid {code} address',
+          invalidAddressNetwork: 'Invalid {code} address ({network})',
         },
       },
       steps: {
@@ -2620,7 +2630,8 @@ type TranslationKey = string;
 // Helper function to get translation
 export const getTranslation = (
   key: TranslationKey,
-  locale: Locale
+  locale: Locale,
+  params?: Record<string, string | number>
 ): string => {
   const keys = key.split('.');
   let value: any = translations;
@@ -2654,8 +2665,13 @@ export const getTranslation = (
     }
   }
 
-  // Return the final string value
+  // Return the final string value (with optional {param} interpolation)
   if (typeof value === 'string') {
+    if (params) {
+      return value.replace(/\{(\w+)\}/g, (match, name) =>
+        name in params ? String(params[name]) : match
+      );
+    }
     return value;
   }
 

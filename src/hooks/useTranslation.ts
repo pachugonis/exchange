@@ -4,8 +4,8 @@ import { getTranslation } from '../locales/translations';
 export const useTranslation = () => {
   const { locale, setLocale } = useLanguageStore();
 
-  const t = (key: string): string => {
-    return getTranslation(key, locale);
+  const t = (key: string, params?: Record<string, string | number>): string => {
+    return getTranslation(key, locale, params);
   };
 
   return {

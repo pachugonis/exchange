@@ -1,6 +1,9 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { Currency } from '../types';
+import { getCryptoAddressError, type CryptoAddressErrorCode } from '../utils/validators';
+import { getTranslation } from '../locales/translations';
+import { useLanguageStore } from './languageStore';
 
 export type ExchangeStep = 1 | 2 | 3 | 4 | 5;
 
@@ -411,14 +414,60 @@ export const useExchangeFlowStore = create<ExchangeFlowState>()(
             }
             break;
             
-          case 3: // Payment Details
-            if (!state.fromWallet) {
-              errors.fromWallet = 'Введите адрес кошелька отправителя';
+          case 3: { // Payment Details
+            const locale = useLanguageStore.getState().locale;
+            const tr = (key: string, params?: Record<string, string | number>) =>
+              getTranslation(`exchange.wizard.validation.${key}`, locale, params);
+
+            // Преобразование кода ошибки адреса в локализованное сообщение
+            const addressErrorMessage = (
+              code: CryptoAddressErrorCode,
+              currency: Currency,
+              emptyKey: string
+            ): string => {
+              const network = currency.networks?.[0];
+              switch (code) {
+                case 'empty':
+                  return tr(emptyKey);
+                case 'spaces':
+                  return tr('addressNoSpaces');
+                case 'invalid':
+                default:
+                  return network
+                    ? tr('invalidAddressNetwork', { code: currency.code, network })
+                    : tr('invalidAddress', { code: currency.code });
+              }
+            };
+
+            // Адрес отправителя
+            if (!state.fromWallet || !state.fromWallet.trim()) {
+              errors.fromWallet = tr('enterFromWallet');
+            } else if (state.fromCurrency?.type === 'crypto') {
+              const code = getCryptoAddressError(
+                state.fromWallet,
+                state.fromCurrency.code,
+                state.fromCurrency.networks?.[0]
+              );
+              if (code) {
+                errors.fromWallet = addressErrorMessage(code, state.fromCurrency, 'enterFromWallet');
+              }
             }
-            if (!state.toWallet) {
-              errors.toWallet = 'Введите адрес кошелька получателя';
+
+            // Адрес получателя — критичен, средства уходят на него
+            if (!state.toWallet || !state.toWallet.trim()) {
+              errors.toWallet = tr('enterToWallet');
+            } else if (state.toCurrency?.type === 'crypto') {
+              const code = getCryptoAddressError(
+                state.toWallet,
+                state.toCurrency.code,
+                state.toCurrency.networks?.[0]
+              );
+              if (code) {
+                errors.toWallet = addressErrorMessage(code, state.toCurrency, 'enterToWallet');
+              }
             }
             break;
+          }
             
           case 4: // Confirmation
             if (!state.agreedToTerms) {

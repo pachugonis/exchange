@@ -143,11 +143,20 @@ export const Exchange: React.FC = () => {
 
   // Handle order creation
   const handleCreateOrder = async () => {
-    console.log('Creating order, validating step 4...');
+    console.log('Creating order, validating addresses and agreements...');
+    // Повторно проверяем адреса кошельков (шаг 3) перед созданием заявки,
+    // чтобы исключить ошибки из-за некорректного адреса
+    const addressesValid = validateStep(3);
+    if (!addressesValid) {
+      toast.error(t('exchange.wizard.fillAllFields'));
+      setCurrentStep(3);
+      return;
+    }
+
     const isValid = validateStep(4);
     console.log('Validation result:', isValid);
     console.log('Validation errors:', validationErrors);
-    
+
     if (!isValid) {
       toast.error(t('exchange.wizard.fillAllFields'));
       return;
@@ -482,10 +491,9 @@ export const Exchange: React.FC = () => {
           placeholder={`${t('exchange.wizard.yourAddress')} ${fromCurrency?.code}`}
           value={fromWallet}
           onChange={(e) => setFromWallet(e.target.value)}
+          onBlur={() => fromWallet && validateStep(3)}
+          error={validationErrors.fromWallet}
         />
-        {validationErrors.fromWallet && (
-          <p className="text-red-500 text-sm mt-1">{validationErrors.fromWallet}</p>
-        )}
       </div>
 
       <div>
@@ -497,10 +505,9 @@ export const Exchange: React.FC = () => {
           placeholder={`${t('exchange.wizard.receiveAddress')} ${toCurrency?.code}`}
           value={toWallet}
           onChange={(e) => setToWallet(e.target.value)}
+          onBlur={() => toWallet && validateStep(3)}
+          error={validationErrors.toWallet}
         />
-        {validationErrors.toWallet && (
-          <p className="text-red-500 text-sm mt-1">{validationErrors.toWallet}</p>
-        )}
       </div>
     </div>
   );

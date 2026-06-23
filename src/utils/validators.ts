@@ -64,21 +64,105 @@ export function validateETHAddress(address: string): boolean {
 }
 
 /**
- * Validate crypto wallet address based on currency
+ * Address format patterns per cryptocurrency / network.
+ * Each value is a list of accepted regexps (a coin may exist in several networks).
  */
-export function validateCryptoAddress(address: string, currencyCode: string): boolean {
-  if (!address) return false;
-  
-  switch (currencyCode) {
-    case 'BTC':
-      return validateBTCAddress(address);
-    case 'ETH':
-    case 'USDT':
-    case 'USDC':
-      return validateETHAddress(address);
-    default:
-      return address.length > 10; // Generic validation
+const CRYPTO_ADDRESS_PATTERNS: Record<string, RegExp[]> = {
+  // Bitcoin: legacy (1/3) + bech32 (bc1)
+  BTC: [/^[13][a-km-zA-HJ-NP-Z1-9]{25,34}$/, /^bc1[a-z0-9]{25,59}$/],
+  // EVM-совместимые сети
+  ETH: [/^0x[a-fA-F0-9]{40}$/],
+  BNB: [/^0x[a-fA-F0-9]{40}$/],
+  // Tron
+  TRX: [/^T[1-9A-HJ-NP-Za-km-z]{33}$/],
+  // Стейблкоины могут быть в нескольких сетях (ERC20/BEP20/TRC20)
+  USDT: [/^0x[a-fA-F0-9]{40}$/, /^T[1-9A-HJ-NP-Za-km-z]{33}$/],
+  USDC: [/^0x[a-fA-F0-9]{40}$/, /^T[1-9A-HJ-NP-Za-km-z]{33}$/],
+  // Litecoin: legacy (L/M/3) + bech32 (ltc1)
+  LTC: [/^[LM3][a-km-zA-HJ-NP-Z1-9]{26,33}$/, /^ltc1[a-z0-9]{25,59}$/],
+  // Dogecoin
+  DOGE: [/^D[5-9A-HJ-NP-U][1-9A-HJ-NP-Za-km-z]{32}$/],
+  // XRP / Ripple
+  XRP: [/^r[1-9A-HJ-NP-Za-km-z]{24,34}$/],
+  // Solana (base58, 32-44 символа)
+  SOL: [/^[1-9A-HJ-NP-Za-km-z]{32,44}$/],
+  // Monero
+  XMR: [/^[48][0-9AB][1-9A-HJ-NP-Za-km-z]{93}$/],
+  // Sui (0x + 64 hex)
+  SUI: [/^0x[a-fA-F0-9]{64}$/],
+};
+
+/**
+ * Map a network name to the address pattern it uses.
+ */
+const NETWORK_ADDRESS_PATTERNS: Record<string, RegExp[]> = {
+  ERC20: [/^0x[a-fA-F0-9]{40}$/],
+  BEP20: [/^0x[a-fA-F0-9]{40}$/],
+  TRC20: [/^T[1-9A-HJ-NP-Za-km-z]{33}$/],
+  ETH: [/^0x[a-fA-F0-9]{40}$/],
+  BTC: [/^[13][a-km-zA-HJ-NP-Z1-9]{25,34}$/, /^bc1[a-z0-9]{25,59}$/],
+  LTC: [/^[LM3][a-km-zA-HJ-NP-Z1-9]{26,33}$/, /^ltc1[a-z0-9]{25,59}$/],
+  DOGE: [/^D[5-9A-HJ-NP-U][1-9A-HJ-NP-Za-km-z]{32}$/],
+  XRP: [/^r[1-9A-HJ-NP-Za-km-z]{24,34}$/],
+  Solana: [/^[1-9A-HJ-NP-Za-km-z]{32,44}$/],
+  XMR: [/^[48][0-9AB][1-9A-HJ-NP-Za-km-z]{93}$/],
+  Sui: [/^0x[a-fA-F0-9]{64}$/],
+};
+
+/**
+ * Validate crypto wallet address based on currency and (optionally) network.
+ * If the address format for a currency is unknown, falls back to a generic
+ * sanity check so that legitimate orders are never blocked.
+ */
+export function validateCryptoAddress(
+  address: string,
+  currencyCode: string,
+  network?: string
+): boolean {
+  const value = address?.trim();
+  if (!value) return false;
+
+  // Адрес не должен содержать пробелов
+  if (/\s/.test(value)) return false;
+
+  // Если задана конкретная сеть — проверяем по её формату
+  const networkPatterns = network ? NETWORK_ADDRESS_PATTERNS[network] : undefined;
+  if (networkPatterns) {
+    return networkPatterns.some((re) => re.test(value));
   }
+
+  const patterns = CRYPTO_ADDRESS_PATTERNS[currencyCode?.toUpperCase()];
+  if (patterns) {
+    return patterns.some((re) => re.test(value));
+  }
+
+  // Неизвестная валюта — базовая проверка, чтобы не блокировать заявку
+  return value.length >= 10 && /^[a-zA-Z0-9:]+$/.test(value);
+}
+
+export type CryptoAddressErrorCode = 'empty' | 'spaces' | 'invalid';
+
+/**
+ * Validate a crypto address and return an error code (locale-agnostic).
+ * The caller is responsible for mapping the code to a localized message.
+ * Returns undefined when the address is valid.
+ */
+export function getCryptoAddressError(
+  address: string,
+  currencyCode: string,
+  network?: string
+): CryptoAddressErrorCode | undefined {
+  const value = address?.trim();
+  if (!value) {
+    return 'empty';
+  }
+  if (/\s/.test(value)) {
+    return 'spaces';
+  }
+  if (!validateCryptoAddress(value, currencyCode, network)) {
+    return 'invalid';
+  }
+  return undefined;
 }
 
 /**
