@@ -59,7 +59,7 @@ export const UserKYC: React.FC = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { user, isAuthenticated, updateProfile } = useUserStore();
-  const { submitKYC, getKYCData, uploadDocument } = useKYCStore();
+  const { submitKYC, getKYCData, uploadDocument, fetchMyKYC } = useKYCStore();
   
   const [selectedLevel, setSelectedLevel] = useState<KYCLevel>(1);
   const [currentStep, setCurrentStep] = useState(1);
@@ -83,6 +83,11 @@ export const UserKYC: React.FC = () => {
     selfie?: File;
     addressProof?: File;
   }>({});
+
+  // Load the current user's KYC submission from the server on mount.
+  React.useEffect(() => {
+    if (user) fetchMyKYC(user.id);
+  }, [user?.id, fetchMyKYC]);
 
   if (!isAuthenticated || !user) {
     navigate('/user/login');
@@ -165,10 +170,9 @@ export const UserKYC: React.FC = () => {
       const result = await submitKYC(user.id, selectedLevel, formData);
 
       if (result.success) {
-        // Update user profile
+        // Reflect pending status locally; the level is granted only on approval.
         updateProfile({
           kycStatus: 'pending',
-          kycLevel: selectedLevel,
         });
 
         toast.success('Заявка на верификацию отправлена!');

@@ -6,15 +6,17 @@ import { Badge } from '../../components/ui/Badge';
 import { Modal } from '../../components/ui/Modal';
 import { Input } from '../../components/ui/Input';
 import { useKYCStore } from '../../store/kycStore';
-import { useUserStore } from '../../store/userStore';
 import { useTranslation } from '../../hooks/useTranslation';
 import { formatDate } from '../../utils/formatters';
 import toast from 'react-hot-toast';
 
 export const AdminKYC: React.FC = () => {
-  const { getAllKYCSubmissions, updateKYCStatus } = useKYCStore();
-  const { updateProfile } = useUserStore();
+  const { getAllKYCSubmissions, updateKYCStatus, fetchAllKYC } = useKYCStore();
   const { t } = useTranslation();
+
+  React.useEffect(() => {
+    fetchAllKYC();
+  }, [fetchAllKYC]);
   const [selectedKYC, setSelectedKYC] = useState<any>(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [showDocumentModal, setShowDocumentModal] = useState(false);
@@ -27,23 +29,29 @@ export const AdminKYC: React.FC = () => {
     ? allSubmissions 
     : allSubmissions.filter(kyc => kyc.status === filterStatus);
 
-  const handleApprove = (userId: string, level: number) => {
-    updateKYCStatus(userId, 'verified');
-    updateProfile({ kycStatus: 'verified', kycLevel: level });
-    toast.success(t('admin.kyc.approved'));
-    setShowDetailsModal(false);
+  const handleApprove = async (userId: string) => {
+    const ok = await updateKYCStatus(userId, 'verified');
+    if (ok) {
+      toast.success(t('admin.kyc.approved'));
+      setShowDetailsModal(false);
+    } else {
+      toast.error(t('common.messages.error'));
+    }
   };
 
-  const handleReject = (userId: string) => {
+  const handleReject = async (userId: string) => {
     if (!rejectionReason.trim()) {
       toast.error(t('admin.kyc.enterReason'));
       return;
     }
-    updateKYCStatus(userId, 'rejected', rejectionReason);
-    updateProfile({ kycStatus: 'rejected' });
-    toast.success(t('admin.kyc.rejected'));
-    setRejectionReason('');
-    setShowDetailsModal(false);
+    const ok = await updateKYCStatus(userId, 'rejected', rejectionReason);
+    if (ok) {
+      toast.success(t('admin.kyc.rejected'));
+      setRejectionReason('');
+      setShowDetailsModal(false);
+    } else {
+      toast.error(t('common.messages.error'));
+    }
   };
 
   const getStatusBadge = (status: string) => {
@@ -310,7 +318,7 @@ export const AdminKYC: React.FC = () => {
                 </div>
                 <div className="flex gap-3">
                   <Button
-                    onClick={() => handleApprove(selectedKYC.userId, selectedKYC.level)}
+                    onClick={() => handleApprove(selectedKYC.userId)}
                     className="flex-1 gap-2 bg-green-600 hover:bg-green-700"
                   >
                     <CheckCircle className="w-4 h-4" />

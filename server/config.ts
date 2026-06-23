@@ -36,6 +36,20 @@ export const config = {
   bcryptRounds: Number(process.env.BCRYPT_ROUNDS ?? 12),
   totpIssuer: process.env.TOTP_ISSUER ?? 'ExchangeKit',
 
+  // Public frontend URL used to build links inside emails.
+  appUrl: process.env.APP_URL ?? 'http://localhost:5173',
+
+  // SMTP — when not configured, emails are logged to the console instead.
+  smtp: {
+    host: process.env.SMTP_HOST ?? '',
+    port: Number(process.env.SMTP_PORT ?? 587),
+    secure: process.env.SMTP_SECURE === 'true',
+    user: process.env.SMTP_USER ?? '',
+    password: process.env.SMTP_PASSWORD ?? '',
+    fromName: process.env.SMTP_FROM_NAME ?? 'ExchangeKit',
+    fromEmail: process.env.SMTP_FROM_EMAIL ?? 'noreply@exchangekit.io',
+  },
+
   // Optional seed admin (replaces the old hardcoded admin123).
   admin: {
     email: process.env.ADMIN_EMAIL ?? '',

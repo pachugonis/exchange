@@ -4,6 +4,7 @@ import { config } from './config.ts';
 import { pool, initSchema } from './db.ts';
 import { hashPassword, newUuid } from './lib/security.ts';
 import { authRouter } from './routes/auth.ts';
+import { kycRouter } from './routes/kyc.ts';
 
 /** Seed an admin account from env if one does not already exist. */
 async function ensureAdmin(): Promise<void> {
@@ -31,10 +32,12 @@ async function main(): Promise<void> {
   const app = express();
   app.set('trust proxy', 1); // correct client IPs behind a proxy (for rate limiting)
   app.use(cors({ origin: config.corsOrigin, credentials: true }));
-  app.use(express.json({ limit: '100kb' }));
+  // Larger limit accommodates base64-encoded KYC documents.
+  app.use(express.json({ limit: '12mb' }));
 
   app.get('/health', (_req, res) => res.json({ ok: true }));
   app.use('/api/auth', authRouter);
+  app.use('/api/kyc', kycRouter);
 
   // Centralised error handler so route handlers can stay lean.
   app.use((err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {

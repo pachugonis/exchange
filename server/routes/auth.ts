@@ -13,6 +13,7 @@ import {
   newUuid,
 } from '../lib/security.ts';
 import { requireAuth, type AuthedRequest } from '../middleware/auth.ts';
+import { sendVerificationEmail, sendPasswordResetEmail } from '../lib/email.ts';
 
 export const authRouter = Router();
 
@@ -44,12 +45,6 @@ async function findUserById(id: string): Promise<UserRow | null> {
 function issueSession(res: Response, user: UserRow) {
   const token = signAccessToken({ sub: user.id, role: user.role });
   res.json({ success: true, token, user: toPublicUser(user) });
-}
-
-// In a real deployment this would dispatch through SMTP. Here we log the link
-// so the flow is testable without an email provider.
-function sendLink(kind: string, email: string, token: string) {
-  console.log(`[email:${kind}] to=${email} token=${token}`);
 }
 
 // Rate limiters protect the credential endpoints from online brute force.
@@ -99,7 +94,7 @@ authRouter.post('/register', writeLimiter, async (req, res) => {
      VALUES ($1, $2, 'email_verification', now() + interval '24 hours')`,
     [verifyToken, user.id],
   );
-  sendLink('email_verification', user.email, verifyToken);
+  await sendVerificationEmail(user.email, user.name, verifyToken);
 
   issueSession(res, user);
 });
@@ -237,7 +232,7 @@ authRouter.post('/password/forgot', writeLimiter, async (req, res) => {
          VALUES ($1, $2, 'password_reset', now() + interval '24 hours')`,
         [token, user.id],
       );
-      sendLink('password_reset', user.email, token);
+      await sendPasswordResetEmail(user.email, user.name, token);
     }
   }
   // Always succeed to avoid user enumeration.

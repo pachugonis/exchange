@@ -58,7 +58,54 @@ export async function initSchema(): Promise<void> {
 
     CREATE INDEX IF NOT EXISTS idx_auth_tokens_user ON auth_tokens(user_id);
     CREATE INDEX IF NOT EXISTS idx_auth_tokens_type ON auth_tokens(type);
+
+    CREATE TABLE IF NOT EXISTS kyc_submissions (
+      user_id          UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+      level            INT  NOT NULL DEFAULT 0,
+      status           TEXT NOT NULL DEFAULT 'pending',
+      data             JSONB NOT NULL DEFAULT '{}'::jsonb,
+      documents        JSONB NOT NULL DEFAULT '[]'::jsonb,
+      daily_limit      NUMERIC,
+      monthly_limit    NUMERIC,
+      submitted_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
+      reviewed_at      TIMESTAMPTZ,
+      reviewed_by      TEXT,
+      rejection_reason TEXT
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_kyc_status ON kyc_submissions(status);
   `);
+}
+
+export interface KycRow {
+  user_id: string;
+  level: number;
+  status: string;
+  data: Record<string, unknown>;
+  documents: unknown[];
+  daily_limit: string | null;
+  monthly_limit: string | null;
+  submitted_at: Date;
+  reviewed_at: Date | null;
+  reviewed_by: string | null;
+  rejection_reason: string | null;
+}
+
+/** Shape a KYC row like the frontend `KYCData` type. */
+export function toKyc(row: KycRow) {
+  return {
+    userId: row.user_id,
+    level: row.level,
+    status: row.status,
+    ...row.data,
+    documents: row.documents,
+    dailyLimit: row.daily_limit !== null ? Number(row.daily_limit) : undefined,
+    monthlyLimit: row.monthly_limit !== null ? Number(row.monthly_limit) : undefined,
+    submittedAt: row.submitted_at.getTime(),
+    reviewedAt: row.reviewed_at ? row.reviewed_at.getTime() : undefined,
+    reviewedBy: row.reviewed_by ?? undefined,
+    rejectionReason: row.rejection_reason ?? undefined,
+  };
 }
 
 /** Strip sensitive fields and shape the row like the frontend `User` type. */
