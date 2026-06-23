@@ -2,7 +2,30 @@
 
 Разворачивается на **вашем** сервере. Полная документация — [README.md](./README.md).
 
-## За несколько минут
+## Автоматическая установка на домен (рекомендуется)
+
+Один скрипт ставит Node.js, nginx, certbot, создаёт пользователя `license`,
+копирует сервер в `/opt/license-server`, генерирует `.env` с секретами, поднимает
+systemd-сервис и nginx reverse-proxy на ваш домен с HTTPS.
+
+```bash
+# на VPS, из корня репозитория (где лежит папка LICENSE)
+sudo bash LICENSE/install-license-server.sh
+```
+
+Скрипт спросит домен, логин/пароль администратора (пароль можно сгенерировать),
+порт и e-mail для Let's Encrypt. Всё можно задать заранее через переменные
+окружения:
+
+```bash
+sudo DOMAIN=license.example.com ENABLE_SSL=y LE_EMAIL=you@example.com \
+  bash LICENSE/install-license-server.sh
+```
+
+После установки веб-админка доступна на `https://<домен>/admin`. Повторный запуск
+безопасен — `.env` и `license-database.json` не перезаписываются.
+
+## Ручная установка за несколько минут
 
 ```bash
 # 1. Node.js 20

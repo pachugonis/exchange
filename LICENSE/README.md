@@ -48,6 +48,15 @@ curl http://localhost:3001/api/health
 Требования: Node.js >= 18, Ubuntu 22.04+/24.04, 512 МБ RAM. Деплой через systemd
 (pm2 больше не используется).
 
+**Проще всего — автоустановщик на домен** (ставит Node/nginx/certbot, systemd-сервис
+и reverse-proxy c HTTPS одной командой):
+
+```bash
+sudo bash LICENSE/install-license-server.sh
+```
+
+Подробности — [DEPLOY.md](./DEPLOY.md). Ниже — ручная установка по шагам.
+
 ```bash
 # 1. Пользователь и каталоги
 sudo useradd --system --create-home --shell /usr/sbin/nologin license
