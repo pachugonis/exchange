@@ -1,11 +1,8 @@
 /** Client for the server-side KYC API (server/routes/kyc.ts). */
 import type { KYCData } from '../types/kyc';
+import { API_BASE } from './base';
 
-const BASE_URL =
-  (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, '') ||
-  'http://localhost:4000';
-
-const API = `${BASE_URL}/api/kyc`;
+const API = `${API_BASE}/api/kyc`;
 
 interface ApiResult<T> {
   ok: boolean;

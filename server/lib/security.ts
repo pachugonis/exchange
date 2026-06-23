@@ -1,10 +1,12 @@
 import crypto from 'node:crypto';
-import bcrypt from 'bcrypt';
+// bcryptjs — чистый JS, без нативных бинарников: даёт самодостаточный server.mjs
+// после esbuild-бандла. Хеши совместимы с прежним bcrypt ($2a$/$2b$).
+import bcrypt from 'bcryptjs';
 import jwt, { type SignOptions } from 'jsonwebtoken';
 import { authenticator } from 'otplib';
 import { config } from '../config.ts';
 
-// ---- Password hashing (bcrypt) ----
+// ---- Password hashing (bcryptjs) ----
 export function hashPassword(plain: string): Promise<string> {
   return bcrypt.hash(plain, config.bcryptRounds);
 }

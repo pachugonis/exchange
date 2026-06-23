@@ -15,40 +15,60 @@ const APP_DIR = process.cwd();
 const TRIGGER = process.env.UPDATE_TRIGGER ?? path.join(APP_DIR, 'INSTALL', 'trigger-update.sh');
 const STATUS_FILE = path.join(APP_DIR, '.update-status.json');
 const LOG_FILE = path.join(APP_DIR, '.update.log');
+const VERSION_FILE = path.join(APP_DIR, 'VERSION');
 
-/** Запустить git в каталоге приложения с таймаутом. Возвращает stdout без переводов строк по краям. */
-async function git(args: string[], timeout = 20_000): Promise<string> {
-  const { stdout } = await run('git', args, { cwd: APP_DIR, timeout });
-  return stdout.trim();
+/** Текущая установленная версия (из файла VERSION, кладётся артефактом релиза). */
+async function currentVersion(): Promise<string> {
+  try {
+    return (await readFile(VERSION_FILE, 'utf8')).trim();
+  } catch {
+    return '';
+  }
 }
 
-// ---- GET /update/check ---- есть ли обновление в удалённом репозитории
+// ---- GET /update/check ---- есть ли более свежий релиз на лицензионном сервере
 systemRouter.get('/update/check', requireAuth, requireAdmin, async (_req, res) => {
+  const licenseServer = process.env.LICENSE_SERVER_URL;
+  const licenseKey = process.env.LICENSE_KEY;
+  const domain = process.env.LICENSE_DOMAIN;
+  const channel = process.env.RELEASE_CHANNEL || 'stable';
+  const current = await currentVersion();
+
+  if (!licenseServer || !licenseKey || !domain) {
+    return res.json({
+      updateAvailable: false,
+      current,
+      error: 'Обновления не настроены (нет LICENSE_SERVER_URL / LICENSE_KEY в .env)',
+    });
+  }
+
   try {
-    const branch = await git(['rev-parse', '--abbrev-ref', 'HEAD']);
-    // Тянем свежие данные ветки (использует deploy-ключ сервисного пользователя).
-    await git(['fetch', '--quiet', 'origin', branch], 30_000);
+    const url = `${licenseServer}/api/release/latest?licenseKey=${encodeURIComponent(licenseKey)}&domain=${encodeURIComponent(domain)}&channel=${encodeURIComponent(channel)}`;
+    const resp = await fetch(url, { signal: AbortSignal.timeout(15_000) });
+    const data = (await resp.json()) as { version?: string; message?: string; error?: string };
 
-    const current = await git(['rev-parse', '--short', 'HEAD']);
-    const latest = await git(['rev-parse', '--short', `origin/${branch}`]);
-    const behind = Number(await git(['rev-list', '--count', `HEAD..origin/${branch}`]));
-    const currentSubject = await git(['log', '-1', '--format=%s', 'HEAD']);
-    const latestSubject = await git(['log', '-1', '--format=%s', `origin/${branch}`]);
+    if (!resp.ok || !data.version) {
+      return res.json({
+        updateAvailable: false,
+        current,
+        error: data.message || data.error || 'Лицензия не даёт доступ к обновлениям',
+      });
+    }
 
+    const latest = data.version;
     res.json({
-      updateAvailable: behind > 0,
-      behind,
-      branch,
+      updateAvailable: latest !== current,
       current,
       latest,
-      currentSubject,
-      latestSubject,
+      channel,
+      currentSubject: current ? `Версия ${current}` : 'Версия неизвестна',
+      latestSubject: `Версия ${latest}`,
     });
   } catch (err) {
-    // Не git-репозиторий, нет доступа к remote и т.п. — обновление через UI недоступно.
     res.json({
       updateAvailable: false,
-      error: 'Не удалось проверить обновления (нет git-репозитория или доступа к нему)',
+      current,
+      error: 'Не удалось связаться с лицензионным сервером',
       detail: err instanceof Error ? err.message : String(err),
     });
   }

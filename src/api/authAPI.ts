@@ -4,11 +4,9 @@
  * stores the issued JWT access token.
  */
 
-const BASE_URL =
-  (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, '') ||
-  'http://localhost:4000';
+import { API_BASE } from './base';
 
-const API = `${BASE_URL}/api/auth`;
+const API = `${API_BASE}/api/auth`;
 
 export interface ApiResult<T = Record<string, unknown>> {
   ok: boolean;

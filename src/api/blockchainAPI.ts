@@ -8,10 +8,7 @@
  */
 
 import type { Order } from '../types';
-
-const BASE_URL =
-  (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, '') ||
-  'http://localhost:4000';
+import { API_BASE } from './base';
 
 export type PaymentCheckResult =
   | { status: 'unsupported' } // сеть не отслеживается автоматически
@@ -27,7 +24,7 @@ export async function checkIncomingPayment(order: Order): Promise<PaymentCheckRe
   if (!order.paymentAddress) return { status: 'unsupported' };
 
   try {
-    const response = await fetch(`${BASE_URL}/api/payments/check`, {
+    const response = await fetch(`${API_BASE}/api/payments/check`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

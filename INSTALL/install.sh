@@ -2,17 +2,20 @@
 
 #############################################################################
 # ExchangeKit — автоматическая установка на VPS
-# Версия: 2.0.0  (нативная схема: systemd + PostgreSQL + nginx)
+# Версия: 3.0.0  (модель: лицензия + подписанный артефакт релиза)
 # Цель:   Ubuntu 24.04 LTS
 #
 # Что разворачивается:
 #   - Node.js 20 LTS, PostgreSQL 16, nginx, certbot
-#   - Бэкенд (server/, Express + tsx) как systemd-сервис exchangekit-api
-#   - Фронтенд собирается в dist/ и раздаётся nginx
-#   - nginx проксирует /api -> 127.0.0.1:4000, отдаёт SPA, опционально HTTPS
+#   - Бэкенд — самодостаточный бандл server.mjs как systemd-сервис exchangekit-api
+#   - Фронтенд (dist/) раздаётся nginx; API проксируется на 127.0.0.1:4000
 #
-# Схема БД (таблицы users/auth_tokens/kyc_submissions) и админ-аккаунт
-# создаются самим сервером при первом запуске (initSchema + seed из .env).
+# Откуда берётся код:
+#   Клиенту НЕ выдаётся git-доступ. Установщик активирует лицензию на
+#   лицензионном сервере, скачивает подписанный архив релиза, проверяет sha256
+#   и ed25519-подпись и распаковывает его в /opt/exchangekit.
+#
+# Схема БД и админ-аккаунт создаются самим сервером при первом запуске.
 #############################################################################
 
 set -euo pipefail
@@ -20,9 +23,6 @@ set -euo pipefail
 # ---------------------------------------------------------------------------
 # Константы
 # ---------------------------------------------------------------------------
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
-
 APP_DIR="/opt/exchangekit"
 SERVICE_USER="exchangekit"
 SERVICE_NAME="exchangekit-api"
@@ -33,7 +33,19 @@ DB_USER="exchange_user"
 
 NODE_MAJOR=20
 
-INSTALL_LOG="${SCRIPT_DIR}/installation.log"
+# Адрес вашего лицензионного сервера (можно переопределить переменной окружения).
+LICENSE_SERVER_URL="${LICENSE_SERVER_URL:-https://license.exchangekit.io}"
+RELEASE_CHANNEL="${RELEASE_CHANNEL:-stable}"
+
+INSTALL_LOG="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/installation.log"
+
+# Публичный ключ ed25519 для проверки подписи релизов (см. INSTALL/release.sh keygen).
+# Должен соответствовать приватному ключу, которым подписываются артефакты.
+read -r -d '' RELEASE_PUBLIC_KEY <<'PUBKEY' || true
+-----BEGIN PUBLIC KEY-----
+MCowBQYDK2VwAyEAQb+I+iNsZxNIR2KU3zNJ+YYnKRAXgnV/AR9iLm9efeQ=
+-----END PUBLIC KEY-----
+PUBKEY
 
 # Цвета
 RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'
@@ -53,7 +65,6 @@ require_root() {
   [[ $EUID -eq 0 ]] || die "Скрипт нужно запускать от root (sudo bash INSTALL/install.sh)."
 }
 
-# Прочитать значение ключа из существующего .env (для безопасного повторного запуска)
 read_env_value() {
   local key="$1" file="${APP_DIR}/.env"
   [[ -f "$file" ]] || return 0
@@ -63,22 +74,48 @@ read_env_value() {
 gen_secret() { openssl rand -hex 32; }
 gen_pass()   { openssl rand -base64 24 | tr -d '/+=' | cut -c1-24; }
 
+# Достать строковое поле из JSON (через node — он ставится на шаге 3).
+json_get() { # $1=json  $2=key
+  printf '%s' "$1" | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{try{const j=JSON.parse(s);const v=j[process.argv[1]];process.stdout.write(v==null?"":String(v));}catch(e){process.exit(1);}})' "$2"
+}
+
+# Проверить ed25519-подпись файла. $1=файл $2=подпись(base64)
+verify_signature() {
+  local file="$1" sig_b64="$2" pub sig rc
+  pub="$(mktemp)"; sig="$(mktemp)"
+  printf '%s\n' "$RELEASE_PUBLIC_KEY" > "$pub"
+  printf '%s' "$sig_b64" | base64 -d > "$sig" 2>/dev/null || { rm -f "$pub" "$sig"; return 1; }
+  openssl pkeyutl -verify -pubin -inkey "$pub" -rawin -in "$file" -sigfile "$sig" >/dev/null 2>&1
+  rc=$?
+  rm -f "$pub" "$sig"
+  return $rc
+}
+
 # ---------------------------------------------------------------------------
 # Конфигурация (интерактивный ввод)
 # ---------------------------------------------------------------------------
 DOMAIN=""; ADMIN_EMAIL=""; ADMIN_PASSWORD=""; ADMIN_NAME="Administrator"
+LICENSE_KEY=""; LICENSE_EMAIL=""; LICENSE_TOKEN=""
 ENABLE_SSL="n"
 SMTP_HOST=""; SMTP_PORT="587"; SMTP_USER=""; SMTP_PASSWORD=""
 SMTP_FROM_EMAIL="noreply@exchangekit.io"; SMTP_FROM_NAME="ExchangeKit"
 ETHERSCAN_API_KEY=""
 
 collect_config() {
-  phase "Шаг 1/10 — Конфигурация"
+  phase "Шаг 1/9 — Конфигурация"
 
   read -rp "Домен сайта (например exchange.example.com): " DOMAIN
   [[ -n "$DOMAIN" ]] || die "Домен обязателен."
 
-  read -rp "E-mail администратора: " ADMIN_EMAIL
+  echo
+  info "Лицензия (выдаётся после оплаты)."
+  read -rp "Лицензионный ключ (LIC-XXXX-XXXX-XXXX-XXXX): " LICENSE_KEY
+  [[ "$LICENSE_KEY" == LIC-* ]] || die "Некорректный формат лицензионного ключа."
+  read -rp "E-mail, на который оформлена лицензия: " LICENSE_EMAIL
+  [[ "$LICENSE_EMAIL" == *@*.* ]] || die "Некорректный e-mail лицензии."
+
+  echo
+  read -rp "E-mail администратора сайта: " ADMIN_EMAIL
   [[ "$ADMIN_EMAIL" == *@*.* ]] || die "Некорректный e-mail."
 
   while true; do
@@ -111,6 +148,8 @@ collect_config() {
   echo
   echo -e "${CYAN}─────────────────────────────────────────────${NC}"
   echo "Домен:        $DOMAIN"
+  echo "Лицензия:     $LICENSE_KEY ($LICENSE_EMAIL)"
+  echo "Лиц-сервер:   $LICENSE_SERVER_URL"
   echo "Админ:        $ADMIN_EMAIL"
   echo "HTTPS:        $([[ "$ENABLE_SSL" == y* ]] && echo да || echo нет)"
   echo "SMTP:         $([[ -n "$SMTP_HOST" ]] && echo "$SMTP_HOST:$SMTP_PORT" || echo 'лог в консоль')"
@@ -124,17 +163,17 @@ collect_config() {
 # Системные пакеты
 # ---------------------------------------------------------------------------
 install_system_packages() {
-  phase "Шаг 2/10 — Системные пакеты"
+  phase "Шаг 2/9 — Системные пакеты"
   export DEBIAN_FRONTEND=noninteractive
-  info "apt update / upgrade…"
+  info "apt update / установка пакетов…"
   apt-get update -qq
-  apt-get install -y -qq ca-certificates curl gnupg git rsync ufw openssl \
+  apt-get install -y -qq ca-certificates curl gnupg tar rsync ufw openssl \
     nginx postgresql postgresql-contrib >/dev/null
   ok "Базовые пакеты установлены"
 }
 
 install_node() {
-  phase "Шаг 3/10 — Node.js ${NODE_MAJOR} LTS"
+  phase "Шаг 3/9 — Node.js ${NODE_MAJOR} LTS"
   if command -v node >/dev/null && [[ "$(node -v | sed 's/v\([0-9]*\).*/\1/')" -ge "$NODE_MAJOR" ]]; then
     ok "Node $(node -v) уже установлен"
     return
@@ -145,94 +184,75 @@ install_node() {
 }
 
 # ---------------------------------------------------------------------------
-# Пользователь сервиса и код приложения
+# Пользователь сервиса
 # ---------------------------------------------------------------------------
-setup_user_and_code() {
-  phase "Шаг 4/10 — Пользователь сервиса и файлы приложения"
-
+setup_user() {
+  phase "Шаг 4/9 — Пользователь сервиса"
   if ! id "$SERVICE_USER" >/dev/null 2>&1; then
     useradd --system --create-home --shell /usr/sbin/nologin "$SERVICE_USER"
     ok "Создан пользователь $SERVICE_USER"
   else
     ok "Пользователь $SERVICE_USER уже существует"
   fi
-
   mkdir -p "$APP_DIR"
-  info "Копирую файлы проекта в ${APP_DIR}…"
-  # .git сохраняем — он нужен кнопке «Обновить» (git pull). .env/секреты не трогаем.
-  rsync -a --delete \
-    --exclude 'node_modules' \
-    --exclude 'dist' \
-    --exclude '.env' \
-    --exclude '.credentials' \
-    --exclude 'INSTALL/installation.log' \
-    "${REPO_ROOT}/" "${APP_DIR}/"
-
-  chmod +x "${APP_DIR}/INSTALL/"*.sh 2>/dev/null || true
-  chown -R "$SERVICE_USER:$SERVICE_USER" "$APP_DIR"
-  ok "Файлы приложения на месте"
+  chown "$SERVICE_USER:$SERVICE_USER" "$APP_DIR"
 }
 
 # ---------------------------------------------------------------------------
-# Deploy-ключ для обновлений из приватного репозитория
+# Активация лицензии
 # ---------------------------------------------------------------------------
-REPO_SSH_URL=""
-setup_deploy_key() {
-  phase "Шаг 5/10 — Deploy-ключ для обновлений (приватный репозиторий)"
+activate_license() {
+  phase "Шаг 5/9 — Активация лицензии"
+  local proto="http"; [[ "$ENABLE_SSL" == y* ]] && proto="https"
+  local payload resp
+  payload="$(node -e 'console.log(JSON.stringify({licenseKey:process.argv[1],customerEmail:process.argv[2],domain:process.argv[3],protocol:process.argv[4],termsAgreed:true}))' \
+    "$LICENSE_KEY" "$LICENSE_EMAIL" "$DOMAIN" "$proto")"
 
-  local home sshdir keyfile ans
-  home="$(getent passwd "$SERVICE_USER" | cut -d: -f6)"
-  sshdir="${home}/.ssh"
-  keyfile="${sshdir}/id_ed25519"
+  resp="$(curl -fsS -X POST "${LICENSE_SERVER_URL}/api/license/activate" \
+    -H 'Content-Type: application/json' -d "$payload" 2>/dev/null)" \
+    || die "Не удалось активировать лицензию. Проверьте ключ, e-mail, домен и доступность ${LICENSE_SERVER_URL}."
 
-  # URL origin берём из исходного репозитория и приводим к SSH-форме
-  REPO_SSH_URL="$(git -C "$REPO_ROOT" remote get-url origin 2>/dev/null || true)"
-  if [[ "$REPO_SSH_URL" == https://github.com/* ]]; then
-    REPO_SSH_URL="git@github.com:${REPO_SSH_URL#https://github.com/}"
-    [[ "$REPO_SSH_URL" == *.git ]] || REPO_SSH_URL="${REPO_SSH_URL}.git"
-  fi
+  LICENSE_TOKEN="$(json_get "$resp" token)"
+  [[ -n "$LICENSE_TOKEN" ]] || die "Активация отклонена сервером: $(json_get "$resp" message)"
+  ok "Лицензия активирована, домен ${DOMAIN} привязан"
+}
 
-  install -d -m 700 -o "$SERVICE_USER" -g "$SERVICE_USER" "$sshdir"
+# ---------------------------------------------------------------------------
+# Скачивание и распаковка подписанного релиза
+# ---------------------------------------------------------------------------
+RELEASE_VERSION=""
+fetch_release() {
+  phase "Шаг 6/9 — Загрузка релиза"
+  local meta version sha sig dl tmp got
 
-  if [[ -f "$keyfile" ]]; then
-    ok "Deploy-ключ уже существует"
-  else
-    sudo -u "$SERVICE_USER" ssh-keygen -t ed25519 -N "" \
-      -C "exchangekit-deploy@${DOMAIN}" -f "$keyfile" >/dev/null
-    ok "Сгенерирован deploy-ключ (ed25519)"
-  fi
+  meta="$(curl -fsS "${LICENSE_SERVER_URL}/api/release/latest?licenseKey=${LICENSE_KEY}&domain=${DOMAIN}&channel=${RELEASE_CHANNEL}" 2>/dev/null)" \
+    || die "Не удалось получить сведения о релизе (лицензия не даёт доступ или сервер недоступен)."
 
-  # known_hosts для github.com (чтобы git pull не спрашивал подтверждение)
-  sudo -u "$SERVICE_USER" bash -c \
-    "ssh-keyscan -t ed25519,rsa github.com >> '${sshdir}/known_hosts' 2>/dev/null" || true
-  sudo -u "$SERVICE_USER" bash -c \
-    "sort -u '${sshdir}/known_hosts' -o '${sshdir}/known_hosts' 2>/dev/null" || true
-  chown -R "$SERVICE_USER:$SERVICE_USER" "$sshdir"
+  version="$(json_get "$meta" version)"
+  sha="$(json_get "$meta" sha256)"
+  sig="$(json_get "$meta" signature)"
+  [[ -n "$version" && -n "$sha" && -n "$sig" ]] || die "Некорректный ответ лиц-сервера: $meta"
+  RELEASE_VERSION="$version"
+  info "Версия релиза: ${version}"
 
-  # Привязываем origin к SSH-форме, чтобы кнопка «Обновить» тянула по ключу
-  if [[ -d "${APP_DIR}/.git" && -n "$REPO_SSH_URL" ]]; then
-    sudo -u "$SERVICE_USER" git -C "$APP_DIR" remote set-url origin "$REPO_SSH_URL"
-    ok "origin → ${REPO_SSH_URL}"
-  fi
+  tmp="$(mktemp)"
+  info "Скачиваю архив…"
+  curl -fsS -o "$tmp" "${LICENSE_SERVER_URL}/api/release/download/${version}?licenseKey=${LICENSE_KEY}&domain=${DOMAIN}" \
+    || { rm -f "$tmp"; die "Не удалось скачать архив релиза."; }
 
-  echo
-  echo -e "${YELLOW}Добавьте этот публичный ключ как Deploy key в GitHub:${NC}"
-  echo -e "  Репозиторий → Settings → Deploy keys → Add deploy key (read-only достаточно)"
-  echo -e "${CYAN}────────────────────────────────────────────────────────────${NC}"
-  cat "${keyfile}.pub"
-  echo -e "${CYAN}────────────────────────────────────────────────────────────${NC}"
-  read -rp "Enter — когда ключ добавлен, либо 's' — пропустить проверку: " ans
+  got="$(sha256sum "$tmp" | awk '{print $1}')"
+  [[ "$got" == "$sha" ]] || { rm -f "$tmp"; die "Контрольная сумма не совпала (ожидалось ${sha}, получено ${got})."; }
+  verify_signature "$tmp" "$sig" || { rm -f "$tmp"; die "Подпись релиза неверна — архив отвергнут."; }
+  ok "sha256 и подпись проверены"
 
-  if [[ "${ans,,}" != s* && -n "$REPO_SSH_URL" ]]; then
-    info "Проверяю SSH-доступ к репозиторию…"
-    if sudo -u "$SERVICE_USER" git -C "$APP_DIR" ls-remote origin >/dev/null 2>&1; then
-      ok "Доступ подтверждён — обновление через git pull будет работать"
-    else
-      warn "SSH-доступ к репозиторию не получен."
-      warn "Проверьте, что deploy-ключ добавлен в GitHub. Установка продолжится,"
-      warn "но кнопка «Обновить» не сможет тянуть код, пока доступ не настроен."
-    fi
-  fi
+  info "Распаковываю в ${APP_DIR}…"
+  tar -xzf "$tmp" -C "$APP_DIR"
+  rm -f "$tmp"
+  chmod +x "${APP_DIR}/INSTALL/"*.sh 2>/dev/null || true
+  chown -R "$SERVICE_USER:$SERVICE_USER" "$APP_DIR"
+  [[ -f "${APP_DIR}/server.mjs" && -f "${APP_DIR}/dist/index.html" ]] \
+    || die "В архиве нет server.mjs или dist/index.html."
+  ok "Релиз ${version} распакован"
 }
 
 # ---------------------------------------------------------------------------
@@ -240,10 +260,9 @@ setup_deploy_key() {
 # ---------------------------------------------------------------------------
 DB_PASSWORD=""
 setup_database() {
-  phase "Шаг 6/10 — PostgreSQL"
+  phase "Шаг 7/9 — PostgreSQL"
   systemctl enable --now postgresql >/dev/null 2>&1 || true
 
-  # Повторно используем существующий пароль, если установка запускается заново
   DB_PASSWORD="$(read_env_value POSTGRES_PASSWORD)"
   [[ -n "$DB_PASSWORD" ]] || DB_PASSWORD="$(gen_pass)"
 
@@ -261,20 +280,18 @@ setup_database() {
   else
     ok "База ${DB_NAME} уже существует"
   fi
-  # Схему таблиц сервер создаёт сам при старте (initSchema).
 }
 
 # ---------------------------------------------------------------------------
 # .env
 # ---------------------------------------------------------------------------
 write_env() {
-  phase "Шаг 7/10 — Файл окружения (.env)"
+  phase "Шаг 8/9 — Файл окружения (.env)"
 
   local scheme="http" jwt_secret
   [[ "$ENABLE_SSL" == y* ]] && scheme="https"
   local public_url="${scheme}://${DOMAIN}"
 
-  # Сохраняем JWT_SECRET между запусками, чтобы не разлогинивать пользователей
   jwt_secret="$(read_env_value JWT_SECRET)"
   [[ -n "$jwt_secret" ]] || jwt_secret="$(gen_secret)"
 
@@ -285,21 +302,7 @@ write_env() {
 # ExchangeKit — production config
 # Сгенерировано: $(date)
 
-# ── Frontend (встраивается в сборку Vite, только VITE_*) ──────────────────
-VITE_APP_ENV=production
-VITE_APP_URL=${public_url}
-# Фронтенд и API на одном домене, nginx проксирует /api → backend
-VITE_API_BASE_URL=${public_url}
-VITE_COINGECKO_API_URL=https://api.coingecko.com/api/v3
-VITE_DEBUG=false
-VITE_ENABLE_ANALYTICS=true
-VITE_ENABLE_TELEGRAM=false
-VITE_ENABLE_2FA=true
-VITE_DEFAULT_THEME=dark
-VITE_DEFAULT_LANGUAGE=ru
-VITE_SESSION_TIMEOUT=30
-
-# ── Backend (server/, в браузер не попадает) ──────────────────────────────
+# ── Backend (server.mjs) ──────────────────────────────────────────────────
 NODE_ENV=production
 AUTH_PORT=${API_PORT}
 CORS_ORIGIN=${public_url}
@@ -332,7 +335,15 @@ SMTP_PASSWORD=${SMTP_PASSWORD}
 SMTP_FROM_NAME=${SMTP_FROM_NAME}
 SMTP_FROM_EMAIL=${SMTP_FROM_EMAIL}
 
-# Для внутреннего использования скриптами (docker-compose не используется)
+# ── Лицензия и обновления ─────────────────────────────────────────────────
+LICENSE_KEY=${LICENSE_KEY}
+LICENSE_EMAIL=${LICENSE_EMAIL}
+LICENSE_TOKEN=${LICENSE_TOKEN}
+LICENSE_SERVER_URL=${LICENSE_SERVER_URL}
+LICENSE_DOMAIN=${DOMAIN}
+RELEASE_CHANNEL=${RELEASE_CHANNEL}
+
+# Внутреннее (для скриптов)
 POSTGRES_DB=${DB_NAME}
 POSTGRES_USER=${DB_USER}
 POSTGRES_PASSWORD=${DB_PASSWORD}
@@ -344,26 +355,15 @@ EOF
 }
 
 # ---------------------------------------------------------------------------
-# Сборка
-# ---------------------------------------------------------------------------
-build_app() {
-  phase "Шаг 8/10 — Установка зависимостей и сборка фронтенда"
-  info "npm install (включая devDependencies — нужны tsx и vite)…"
-  sudo -u "$SERVICE_USER" bash -lc "cd '$APP_DIR' && npm install --no-audit --no-fund"
-  info "npm run build…"
-  sudo -u "$SERVICE_USER" bash -lc "cd '$APP_DIR' && npm run build"
-  [[ -f "${APP_DIR}/dist/index.html" ]] || die "Сборка не создала dist/index.html"
-  ok "Фронтенд собран в ${APP_DIR}/dist"
-}
-
-# ---------------------------------------------------------------------------
 # systemd-сервис бэкенда
 # ---------------------------------------------------------------------------
 setup_systemd() {
-  phase "Шаг 9/10 — systemd-сервис бэкенда"
+  phase "Шаг 9/9 — systemd, nginx и брандмауэр"
+  local node_bin; node_bin="$(command -v node)"
+
   cat > "/etc/systemd/system/${SERVICE_NAME}.service" <<EOF
 [Unit]
-Description=ExchangeKit API server (Express)
+Description=ExchangeKit API server (bundled)
 After=network.target postgresql.service
 Wants=postgresql.service
 
@@ -372,7 +372,7 @@ Type=simple
 User=${SERVICE_USER}
 WorkingDirectory=${APP_DIR}
 Environment=NODE_ENV=production
-ExecStart=${APP_DIR}/node_modules/.bin/tsx server/index.ts
+ExecStart=${node_bin} ${APP_DIR}/server.mjs
 Restart=on-failure
 RestartSec=5
 StandardOutput=journal
@@ -387,7 +387,6 @@ EOF
   systemctl enable "${SERVICE_NAME}" >/dev/null 2>&1
   systemctl restart "${SERVICE_NAME}"
 
-  # Ждём, пока поднимется /health
   info "Жду запуска API…"
   local ok_health="" i
   for i in $(seq 1 20); do
@@ -397,9 +396,7 @@ EOF
   [[ -n "$ok_health" ]] || { journalctl -u "${SERVICE_NAME}" -n 30 --no-pager || true; die "API не отвечает на /health — см. journalctl -u ${SERVICE_NAME}"; }
   ok "API запущен (systemd: ${SERVICE_NAME})"
 
-  # Правило sudoers для кнопки «Обновить» в админке: сервис может запустить
-  # триггер обновления без пароля. Триггер стартует обновление отдельным
-  # systemd-юнitом (см. trigger-update.sh / run-update.sh).
+  # Правило sudoers для кнопки «Обновить» в админке.
   cat > "/etc/sudoers.d/exchangekit-update" <<EOF
 ${SERVICE_USER} ALL=(root) NOPASSWD: ${APP_DIR}/INSTALL/trigger-update.sh
 EOF
@@ -410,8 +407,6 @@ EOF
 # nginx + SSL + firewall
 # ---------------------------------------------------------------------------
 setup_nginx() {
-  phase "Шаг 10/10 — nginx и брандмауэр"
-
   cat > "/etc/nginx/sites-available/exchangekit" <<EOF
 server {
     listen 80;
@@ -465,13 +460,11 @@ EOF
   systemctl restart nginx
   ok "nginx настроен (раздаёт SPA, проксирует /api → :${API_PORT})"
 
-  # Брандмауэр
   ufw allow OpenSSH >/dev/null 2>&1 || true
   ufw allow 'Nginx Full' >/dev/null 2>&1 || true
   yes | ufw enable >/dev/null 2>&1 || true
   ok "UFW: разрешены SSH, HTTP, HTTPS"
 
-  # SSL
   if [[ "$ENABLE_SSL" == y* ]]; then
     info "Получаю сертификат Let's Encrypt…"
     apt-get install -y -qq certbot python3-certbot-nginx >/dev/null
@@ -494,6 +487,7 @@ finish() {
   cat > "${APP_DIR}/.credentials" <<EOF
 ExchangeKit — учётные данные администратора
 Дата установки: $(date)
+Версия релиза:  ${RELEASE_VERSION}
 
 URL:           ${scheme}://${DOMAIN}
 Админ-панель:  ${scheme}://${DOMAIN}/admin/login
@@ -506,7 +500,7 @@ EOF
 
   echo
   echo -e "${GREEN}═══════════════════════════════════════════════${NC}"
-  echo -e "${GREEN}  Установка завершена${NC}"
+  echo -e "${GREEN}  Установка завершена (релиз ${RELEASE_VERSION})${NC}"
   echo -e "${GREEN}═══════════════════════════════════════════════${NC}"
   echo -e "  Сайт:         ${CYAN}${scheme}://${DOMAIN}${NC}"
   echo -e "  Админ-панель: ${CYAN}${scheme}://${DOMAIN}/admin/login${NC}"
@@ -518,11 +512,10 @@ EOF
   echo "  Логи API:      journalctl -u ${SERVICE_NAME} -f"
   echo "  Рестарт API:   systemctl restart ${SERVICE_NAME}"
   echo "  Статус:        systemctl status ${SERVICE_NAME}"
-  echo "  Логи nginx:    tail -f /var/log/nginx/error.log"
   echo "  Обновление:    bash ${APP_DIR}/INSTALL/update.sh"
   echo
   [[ "$ENABLE_SSL" == y* ]] || echo -e "${YELLOW}HTTPS не настроен. Включить: certbot --nginx -d ${DOMAIN}${NC}"
-  log "=== Установка успешно завершена ==="
+  log "=== Установка успешно завершена (релиз ${RELEASE_VERSION}) ==="
 }
 
 # ---------------------------------------------------------------------------
@@ -533,11 +526,11 @@ main() {
   collect_config
   install_system_packages
   install_node
-  setup_user_and_code
-  setup_deploy_key
+  setup_user
+  activate_license
+  fetch_release
   setup_database
   write_env
-  build_app
   setup_systemd
   setup_nginx
   finish

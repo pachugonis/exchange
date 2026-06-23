@@ -1,10 +1,7 @@
 /** Client for the server-side system/update API (server/routes/system.ts). */
+import { API_BASE } from './base';
 
-const BASE_URL =
-  (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, '') ||
-  'http://localhost:4000';
-
-const API = `${BASE_URL}/api/system`;
+const API = `${API_BASE}/api/system`;
 
 interface ApiResult<T> {
   ok: boolean;

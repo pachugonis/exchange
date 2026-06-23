@@ -28,9 +28,15 @@ write_status "{\"state\":\"running\",\"startedAt\":\"$(date -Iseconds)\"}"
 chown "${SERVICE_USER}:${SERVICE_USER}" "$LOG" 2>/dev/null || true
 chmod 644 "$LOG"
 
-if bash "${APP_DIR}/INSTALL/update.sh" > "$LOG" 2>&1; then
+# Запускаем КОПИЮ update.sh: обновление перезаписывает INSTALL/update.sh на месте,
+# а исполнение из /tmp защищает от повреждения работающего скрипта.
+TMP_UPDATE="$(mktemp /tmp/exchangekit-update.XXXXXX.sh)"
+cp "${APP_DIR}/INSTALL/update.sh" "$TMP_UPDATE"
+
+if bash "$TMP_UPDATE" > "$LOG" 2>&1; then
   write_status "{\"state\":\"success\",\"finishedAt\":\"$(date -Iseconds)\"}"
 else
   code=$?
   write_status "{\"state\":\"error\",\"finishedAt\":\"$(date -Iseconds)\",\"code\":${code}}"
 fi
+rm -f "$TMP_UPDATE"
