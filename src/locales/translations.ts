@@ -1023,7 +1023,6 @@ export const translations = {
         newsletter: 'Рассылка',
         reviews: 'Отзывы',
         siteSettings: 'Настройки сайта',
-        license: 'Лицензия',
         settings: 'Настройки',
         security: 'Безопасность',
         logout: 'Выход',
@@ -1751,7 +1750,6 @@ export const translations = {
         newsletter: 'Newsletter',
         reviews: 'Reviews',
         siteSettings: 'Site Settings',
-        license: 'License',
         settings: 'Settings',
         security: 'Security',
         logout: 'Logout',
@@ -2611,92 +2609,6 @@ export const translations = {
           message: 'Message',
           submit: 'Send',
         },
-      },
-    },
-  },
-
-  // License Banner
-  licenseBanner: {
-    ru: {
-      critical: {
-        title: 'Критическая ошибка: Проверка лицензии не удалась',
-        message: 'Льготный период истекает через {days} дн. Платформа станет недоступной. Пожалуйста, немедленно восстановите подключение к интернету.',
-      },
-      urgent: {
-        title: 'Проблема с проверкой лицензии',
-        message: 'Работа в льготном периоде. Осталось {days} дн. Проверьте подключение к интернету.',
-      },
-      warning: {
-        message: 'Проверка лицензии ожидается. Льготный период: осталось {days} дн.',
-      },
-      expired: {
-        title: 'Лицензия истекла',
-        message: 'Ваша лицензия истекла {date}. Продлите сейчас, чтобы продолжить использование платформы.',
-      },
-      suspended: {
-        title: 'Лицензия приостановлена',
-        message: 'Ваша лицензия была приостановлена. Пожалуйста, свяжитесь с поддержкой для получения помощи.',
-      },
-      expiringSoon7: {
-        title: 'Лицензия скоро истекает',
-        message: 'Ваша лицензия истекает через {days}. Продлите сейчас, чтобы избежать перерывов в обслуживании.',
-      },
-      expiringSoon30: {
-        message: 'Ваша лицензия истекает через {days}. Рассмотрите возможность продления в ближайшее время.',
-      },
-      domainMismatch: {
-        title: 'Несоответствие домена',
-        message: 'Эта лицензия не авторизована для домена: {domain}',
-      },
-      buttons: {
-        viewLicense: 'Просмотр лицензии',
-        troubleshoot: 'Диагностика',
-        details: 'Подробности',
-        renew: 'Продлить',
-        renewNow: 'Продлить сейчас',
-        contactSupport: 'Связаться с поддержкой',
-        manageDomains: 'Управление доменами',
-      },
-    },
-    en: {
-      critical: {
-        title: 'Critical: License Validation Failed',
-        message: 'Grace period expires in {days} days. Platform will become inaccessible. Please restore network connection immediately.',
-      },
-      urgent: {
-        title: 'License Validation Issue',
-        message: 'Operating in grace period mode. {days} days remaining. Check your network connection.',
-      },
-      warning: {
-        message: 'License validation pending. Grace period: {days} days remaining.',
-      },
-      expired: {
-        title: 'License Expired',
-        message: 'Your license expired on {date}. Renew now to continue using the platform.',
-      },
-      suspended: {
-        title: 'License Suspended',
-        message: 'Your license has been suspended. Please contact support for assistance.',
-      },
-      expiringSoon7: {
-        title: 'License Expiring Soon',
-        message: 'Your license expires in {days}. Renew now to avoid service interruption.',
-      },
-      expiringSoon30: {
-        message: 'Your license expires in {days}. Consider renewing soon.',
-      },
-      domainMismatch: {
-        title: 'Domain Mismatch',
-        message: 'This license is not authorized for domain: {domain}',
-      },
-      buttons: {
-        viewLicense: 'View License',
-        troubleshoot: 'Troubleshoot',
-        details: 'Details',
-        renew: 'Renew',
-        renewNow: 'Renew Now',
-        contactSupport: 'Contact Support',
-        manageDomains: 'Manage Domains',
       },
     },
   },

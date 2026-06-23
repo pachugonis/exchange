@@ -212,7 +212,7 @@ export const OrderTracking: React.FC = () => {
                     <Alert variant="info" className="mb-4 text-left">
                       {t('orders.tracking.reviewLoginRequired')}
                     </Alert>
-                    <Link to="/login">
+                    <Link to="/user/login">
                       <Button>{t('orders.tracking.loginButton')}</Button>
                     </Link>
                   </div>

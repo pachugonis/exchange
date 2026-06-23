@@ -1,9 +1,0 @@
-node_modules/
-*.log
-logs/
-.DS_Store
-.env
-license-database.json
-*.bak
-*.tmp
-.vscode/

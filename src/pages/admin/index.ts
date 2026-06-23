@@ -8,4 +8,3 @@ export { AdminKYC } from './AdminKYC';
 export { AdminAnnouncements } from './AdminAnnouncements';
 export { AdminUsers } from './AdminUsers';
 export { AdminSiteSettings } from './AdminSiteSettings';
-export { default as AdminLicense } from './AdminLicense';
