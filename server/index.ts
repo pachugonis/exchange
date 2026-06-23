@@ -6,6 +6,7 @@ import { hashPassword, newUuid } from './lib/security.ts';
 import { authRouter } from './routes/auth.ts';
 import { kycRouter } from './routes/kyc.ts';
 import { paymentsRouter } from './routes/payments.ts';
+import { systemRouter } from './routes/system.ts';
 
 /** Seed an admin account from env if one does not already exist. */
 async function ensureAdmin(): Promise<void> {
@@ -40,6 +41,7 @@ async function main(): Promise<void> {
   app.use('/api/auth', authRouter);
   app.use('/api/kyc', kycRouter);
   app.use('/api/payments', paymentsRouter);
+  app.use('/api/system', systemRouter);
 
   // Centralised error handler so route handlers can stay lean.
   app.use((err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {

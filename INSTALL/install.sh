@@ -1,365 +1,546 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 #############################################################################
-# ExchangeKit - Automated Installation Script
-# Version: 1.0.0
-# Target: Ubuntu 24.04 LTS
-# Description: One-click installation with Docker containerization
+# ExchangeKit — автоматическая установка на VPS
+# Версия: 2.0.0  (нативная схема: systemd + PostgreSQL + nginx)
+# Цель:   Ubuntu 24.04 LTS
+#
+# Что разворачивается:
+#   - Node.js 20 LTS, PostgreSQL 16, nginx, certbot
+#   - Бэкенд (server/, Express + tsx) как systemd-сервис exchangekit-api
+#   - Фронтенд собирается в dist/ и раздаётся nginx
+#   - nginx проксирует /api -> 127.0.0.1:4000, отдаёт SPA, опционально HTTPS
+#
+# Схема БД (таблицы users/auth_tokens/kyc_submissions) и админ-аккаунт
+# создаются самим сервером при первом запуске (initSchema + seed из .env).
 #############################################################################
 
-set -e
+set -euo pipefail
 
-# Colors for output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-CYAN='\033[0;36m'
-NC='\033[0m' # No Color
-
-# Script directory
+# ---------------------------------------------------------------------------
+# Константы
+# ---------------------------------------------------------------------------
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+
+APP_DIR="/opt/exchangekit"
+SERVICE_USER="exchangekit"
+SERVICE_NAME="exchangekit-api"
+API_PORT=4000
+
+DB_NAME="exchange"
+DB_USER="exchange_user"
+
+NODE_MAJOR=20
+
 INSTALL_LOG="${SCRIPT_DIR}/installation.log"
-DEPLOYMENT_DIR="/opt/exchangekit"
 
-# Source utility scripts
-source "${SCRIPT_DIR}/utils/translations.sh"
-source "${SCRIPT_DIR}/utils/messages.sh"
-source "${SCRIPT_DIR}/utils/helpers.sh"
-source "${SCRIPT_DIR}/utils/validators.sh"
+# Цвета
+RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'
+BLUE='\033[0;34m'; CYAN='\033[0;36m'; NC='\033[0m'
 
-# Log function
-log() {
-    echo "[$(date +'%Y-%m-%d %H:%M:%S')] $*" | tee -a "${INSTALL_LOG}"
+# ---------------------------------------------------------------------------
+# Хелперы
+# ---------------------------------------------------------------------------
+log()      { echo -e "[$(date +'%Y-%m-%d %H:%M:%S')] $*" | tee -a "${INSTALL_LOG}"; }
+info()     { echo -e "${CYAN}➜${NC} $*"; }
+ok()       { echo -e "${GREEN}✓${NC} $*"; }
+warn()     { echo -e "${YELLOW}⚠${NC} $*"; }
+phase()    { echo -e "\n${BLUE}━━━ $* ━━━${NC}"; }
+die()      { echo -e "${RED}✗ ОШИБКА:${NC} $*" >&2; log "ERROR: $*"; exit 1; }
+
+require_root() {
+  [[ $EUID -eq 0 ]] || die "Скрипт нужно запускать от root (sudo bash INSTALL/install.sh)."
 }
 
-# Error handler
-error_exit() {
-    echo -e "${RED}ERROR: $1${NC}" >&2
-    log "ERROR: $1"
-    exit 1
+# Прочитать значение ключа из существующего .env (для безопасного повторного запуска)
+read_env_value() {
+  local key="$1" file="${APP_DIR}/.env"
+  [[ -f "$file" ]] || return 0
+  sed -n "s/^${key}=//p" "$file" | head -n1
 }
 
-# Check if running as root
-check_root() {
-    if [[ $EUID -ne 0 ]]; then
-        error_exit "$(t 'must_run_as_root')"
-    fi
+gen_secret() { openssl rand -hex 32; }
+gen_pass()   { openssl rand -base64 24 | tr -d '/+=' | cut -c1-24; }
+
+# ---------------------------------------------------------------------------
+# Конфигурация (интерактивный ввод)
+# ---------------------------------------------------------------------------
+DOMAIN=""; ADMIN_EMAIL=""; ADMIN_PASSWORD=""; ADMIN_NAME="Administrator"
+ENABLE_SSL="n"
+SMTP_HOST=""; SMTP_PORT="587"; SMTP_USER=""; SMTP_PASSWORD=""
+SMTP_FROM_EMAIL="noreply@exchangekit.io"; SMTP_FROM_NAME="ExchangeKit"
+ETHERSCAN_API_KEY=""
+
+collect_config() {
+  phase "Шаг 1/10 — Конфигурация"
+
+  read -rp "Домен сайта (например exchange.example.com): " DOMAIN
+  [[ -n "$DOMAIN" ]] || die "Домен обязателен."
+
+  read -rp "E-mail администратора: " ADMIN_EMAIL
+  [[ "$ADMIN_EMAIL" == *@*.* ]] || die "Некорректный e-mail."
+
+  while true; do
+    read -rsp "Пароль администратора (мин. 8 символов): " ADMIN_PASSWORD; echo
+    [[ ${#ADMIN_PASSWORD} -ge 8 ]] || { warn "Слишком короткий пароль."; continue; }
+    read -rsp "Повторите пароль: " p2; echo
+    [[ "$ADMIN_PASSWORD" == "$p2" ]] && break || warn "Пароли не совпадают."
+  done
+
+  echo
+  read -rp "Настроить HTTPS (Let's Encrypt) сейчас? Домен должен указывать на этот сервер [y/N]: " ENABLE_SSL
+  ENABLE_SSL="${ENABLE_SSL,,}"
+
+  echo
+  info "SMTP для отправки писем (верификация e-mail, сброс пароля)."
+  info "Оставьте хост пустым — письма будут писаться в лог сервера вместо отправки."
+  read -rp "SMTP host (Enter — пропустить): " SMTP_HOST
+  if [[ -n "$SMTP_HOST" ]]; then
+    read -rp "SMTP port [587]: " _p; SMTP_PORT="${_p:-587}"
+    read -rp "SMTP user: " SMTP_USER
+    read -rsp "SMTP password: " SMTP_PASSWORD; echo
+    read -rp "From e-mail [${SMTP_FROM_EMAIL}]: " _f; SMTP_FROM_EMAIL="${_f:-$SMTP_FROM_EMAIL}"
+  fi
+
+  echo
+  info "Etherscan API key — для авто-отслеживания оплаты в сети Ethereum (ETH/ERC20)."
+  info "BTC/LTC/TRON отслеживаются без ключа. Без ключа ETH подтверждается вручную."
+  read -rp "Etherscan API key (Enter — пропустить): " ETHERSCAN_API_KEY
+
+  echo
+  echo -e "${CYAN}─────────────────────────────────────────────${NC}"
+  echo "Домен:        $DOMAIN"
+  echo "Админ:        $ADMIN_EMAIL"
+  echo "HTTPS:        $([[ "$ENABLE_SSL" == y* ]] && echo да || echo нет)"
+  echo "SMTP:         $([[ -n "$SMTP_HOST" ]] && echo "$SMTP_HOST:$SMTP_PORT" || echo 'лог в консоль')"
+  echo "Etherscan:    $([[ -n "$ETHERSCAN_API_KEY" ]] && echo задан || echo нет)"
+  echo -e "${CYAN}─────────────────────────────────────────────${NC}"
+  read -rp "Продолжить установку? [Y/n]: " c; c="${c,,}"
+  [[ -z "$c" || "$c" == y* ]] || die "Установка отменена."
 }
 
-# Main installation function
-main() {
-    # Select language first
-    select_language
-    
-    clear
-    show_banner
-    
-    log "=== $(t 'starting_installation') ==="
-    
-    # Phase 1: Prerequisites check
-    print_phase "$(t 'phase1')"
-    
-    # Update package repositories
-    log "$(t 'updating_packages')"
-    apt-get update -qq || log "Warning: apt update had some errors, continuing anyway..."
-    
-    LANG_CODE="${LANG_CODE}" bash "${SCRIPT_DIR}/scripts/check-prerequisites.sh" || error_exit "$(t 'prerequisites_failed')"
-    
-    # Phase 2: Interactive configuration
-    print_phase "$(t 'phase2')"
-    LANG_CODE="${LANG_CODE}" bash "${SCRIPT_DIR}/scripts/configure.sh" || error_exit "$(t 'configuration_failed')"
-    
-    # Load configuration
-    if [[ -f "${SCRIPT_DIR}/.install.conf" ]]; then
-        source "${SCRIPT_DIR}/.install.conf"
+# ---------------------------------------------------------------------------
+# Системные пакеты
+# ---------------------------------------------------------------------------
+install_system_packages() {
+  phase "Шаг 2/10 — Системные пакеты"
+  export DEBIAN_FRONTEND=noninteractive
+  info "apt update / upgrade…"
+  apt-get update -qq
+  apt-get install -y -qq ca-certificates curl gnupg git rsync ufw openssl \
+    nginx postgresql postgresql-contrib >/dev/null
+  ok "Базовые пакеты установлены"
+}
+
+install_node() {
+  phase "Шаг 3/10 — Node.js ${NODE_MAJOR} LTS"
+  if command -v node >/dev/null && [[ "$(node -v | sed 's/v\([0-9]*\).*/\1/')" -ge "$NODE_MAJOR" ]]; then
+    ok "Node $(node -v) уже установлен"
+    return
+  fi
+  curl -fsSL "https://deb.nodesource.com/setup_${NODE_MAJOR}.x" | bash - >/dev/null 2>&1
+  apt-get install -y -qq nodejs >/dev/null
+  ok "Установлен Node $(node -v)"
+}
+
+# ---------------------------------------------------------------------------
+# Пользователь сервиса и код приложения
+# ---------------------------------------------------------------------------
+setup_user_and_code() {
+  phase "Шаг 4/10 — Пользователь сервиса и файлы приложения"
+
+  if ! id "$SERVICE_USER" >/dev/null 2>&1; then
+    useradd --system --create-home --shell /usr/sbin/nologin "$SERVICE_USER"
+    ok "Создан пользователь $SERVICE_USER"
+  else
+    ok "Пользователь $SERVICE_USER уже существует"
+  fi
+
+  mkdir -p "$APP_DIR"
+  info "Копирую файлы проекта в ${APP_DIR}…"
+  # .git сохраняем — он нужен кнопке «Обновить» (git pull). .env/секреты не трогаем.
+  rsync -a --delete \
+    --exclude 'node_modules' \
+    --exclude 'dist' \
+    --exclude '.env' \
+    --exclude '.credentials' \
+    --exclude 'INSTALL/installation.log' \
+    "${REPO_ROOT}/" "${APP_DIR}/"
+
+  chmod +x "${APP_DIR}/INSTALL/"*.sh 2>/dev/null || true
+  chown -R "$SERVICE_USER:$SERVICE_USER" "$APP_DIR"
+  ok "Файлы приложения на месте"
+}
+
+# ---------------------------------------------------------------------------
+# Deploy-ключ для обновлений из приватного репозитория
+# ---------------------------------------------------------------------------
+REPO_SSH_URL=""
+setup_deploy_key() {
+  phase "Шаг 5/10 — Deploy-ключ для обновлений (приватный репозиторий)"
+
+  local home sshdir keyfile ans
+  home="$(getent passwd "$SERVICE_USER" | cut -d: -f6)"
+  sshdir="${home}/.ssh"
+  keyfile="${sshdir}/id_ed25519"
+
+  # URL origin берём из исходного репозитория и приводим к SSH-форме
+  REPO_SSH_URL="$(git -C "$REPO_ROOT" remote get-url origin 2>/dev/null || true)"
+  if [[ "$REPO_SSH_URL" == https://github.com/* ]]; then
+    REPO_SSH_URL="git@github.com:${REPO_SSH_URL#https://github.com/}"
+    [[ "$REPO_SSH_URL" == *.git ]] || REPO_SSH_URL="${REPO_SSH_URL}.git"
+  fi
+
+  install -d -m 700 -o "$SERVICE_USER" -g "$SERVICE_USER" "$sshdir"
+
+  if [[ -f "$keyfile" ]]; then
+    ok "Deploy-ключ уже существует"
+  else
+    sudo -u "$SERVICE_USER" ssh-keygen -t ed25519 -N "" \
+      -C "exchangekit-deploy@${DOMAIN}" -f "$keyfile" >/dev/null
+    ok "Сгенерирован deploy-ключ (ed25519)"
+  fi
+
+  # known_hosts для github.com (чтобы git pull не спрашивал подтверждение)
+  sudo -u "$SERVICE_USER" bash -c \
+    "ssh-keyscan -t ed25519,rsa github.com >> '${sshdir}/known_hosts' 2>/dev/null" || true
+  sudo -u "$SERVICE_USER" bash -c \
+    "sort -u '${sshdir}/known_hosts' -o '${sshdir}/known_hosts' 2>/dev/null" || true
+  chown -R "$SERVICE_USER:$SERVICE_USER" "$sshdir"
+
+  # Привязываем origin к SSH-форме, чтобы кнопка «Обновить» тянула по ключу
+  if [[ -d "${APP_DIR}/.git" && -n "$REPO_SSH_URL" ]]; then
+    sudo -u "$SERVICE_USER" git -C "$APP_DIR" remote set-url origin "$REPO_SSH_URL"
+    ok "origin → ${REPO_SSH_URL}"
+  fi
+
+  echo
+  echo -e "${YELLOW}Добавьте этот публичный ключ как Deploy key в GitHub:${NC}"
+  echo -e "  Репозиторий → Settings → Deploy keys → Add deploy key (read-only достаточно)"
+  echo -e "${CYAN}────────────────────────────────────────────────────────────${NC}"
+  cat "${keyfile}.pub"
+  echo -e "${CYAN}────────────────────────────────────────────────────────────${NC}"
+  read -rp "Enter — когда ключ добавлен, либо 's' — пропустить проверку: " ans
+
+  if [[ "${ans,,}" != s* && -n "$REPO_SSH_URL" ]]; then
+    info "Проверяю SSH-доступ к репозиторию…"
+    if sudo -u "$SERVICE_USER" git -C "$APP_DIR" ls-remote origin >/dev/null 2>&1; then
+      ok "Доступ подтверждён — обновление через git pull будет работать"
     else
-        error_exit "Configuration file not found"
+      warn "SSH-доступ к репозиторию не получен."
+      warn "Проверьте, что deploy-ключ добавлен в GitHub. Установка продолжится,"
+      warn "но кнопка «Обновить» не сможет тянуть код, пока доступ не настроен."
     fi
-    
-    # Phase 3: System preparation
-    print_phase "$(t 'phase3')"
-    LANG_CODE="${LANG_CODE}" bash "${SCRIPT_DIR}/scripts/setup-docker.sh" || error_exit "$(t 'docker_setup_failed')"
-    
-    # Phase 4: Application deployment
-    print_phase "$(t 'phase4')"
-    deploy_application
-    
-    # Phase 5: SSL certificate setup (SKIPPED - run enable-ssl.sh after installation)
-    # SSL will be configured separately to avoid installation failures
-    # To enable HTTPS: cd /root/INSTALL && bash enable-ssl.sh
-    
-    # Phase 6: Database initialization
-    print_phase "$(t 'phase5')"
-    LANG_CODE="${LANG_CODE}" bash "${SCRIPT_DIR}/scripts/setup-database.sh" || error_exit "$(t 'database_setup_failed')"
-    
-    # Phase 7: License activation
-    print_phase "$(t 'phase6')"
-    activate_license
-    
-    # Phase 7: Admin account creation
-    print_phase "$(t 'phase7')"
-    LANG_CODE="${LANG_CODE}" bash "${SCRIPT_DIR}/scripts/setup-admin.sh" "${ADMIN_EMAIL}" "${ADMIN_PASSWORD}" || error_exit "$(t 'admin_setup_failed')"
-    
-    # Phase 8: Health check
-    print_phase "$(t 'phase8')"
-    LANG_CODE="${LANG_CODE}" bash "${SCRIPT_DIR}/scripts/health-check.sh" "${DOMAIN}" || error_exit "Health check failed"
-    
-    # Installation complete
-    show_completion
-    
-    # Phase 9: SSL Setup (Optional)
-    echo ""
-    echo -e "${YELLOW}========================================${NC}"
-    echo -e "${YELLOW}  $(t 'ssl_optional_title')${NC}"
-    echo -e "${YELLOW}========================================${NC}"
-    echo ""
-    echo "$(t 'ssl_site_running_http')"
-    echo "$(t 'ssl_would_like_setup')"
-    echo ""
-    echo "$(t 'ssl_requirements'):"
-    printf "  - $(t 'ssl_domain_must_point')\n" "${DOMAIN}"
-    echo "  - $(t 'ssl_port_accessible')"
-    echo ""
-    read -p "$(t 'ssl_setup_now'): " -n 1 -r
-    echo
-    if [[ $REPLY =~ ^[Yy]$ ]]; then
-        echo ""
-        print_phase "$(t 'ssl_phase_9')"
-        LANG_CODE="${LANG_CODE}" bash "${SCRIPT_DIR}/scripts/setup-ssl.sh" "${DOMAIN}" "${ADMIN_EMAIL}"
-        
-        if [[ $? -eq 0 ]]; then
-            echo ""
-            echo -e "${GREEN}========================================${NC}"
-            echo -e "${GREEN}  $(t 'ssl_setup_complete')${NC}"
-            echo -e "${GREEN}========================================${NC}"
-            echo ""
-            echo -e "$(t 'ssl_site_available_at'): ${GREEN}https://${DOMAIN}${NC}"
-            echo ""
-        else
-            echo ""
-            echo -e "${YELLOW}$(t 'ssl_setup_failed')${NC}"
-            echo -e "$(t 'ssl_run_later'): ${CYAN}cd /root/INSTALL && bash enable-ssl.sh${NC}"
-            echo ""
-        fi
-    else
-        echo ""
-        echo -e "${YELLOW}$(t 'ssl_setup_skipped')${NC}"
-        echo -e "$(t 'ssl_enable_later'): ${CYAN}cd /root/INSTALL && bash enable-ssl.sh${NC}"
-        echo ""
-    fi
+  fi
 }
 
-# Deploy application
-deploy_application() {
-    log "Creating deployment directory: ${DEPLOYMENT_DIR}"
-    mkdir -p "${DEPLOYMENT_DIR}"
-    
-    log "Copying application files..."
-    # Copy from INSTALL/app directory (prepared for deployment)
-    local APP_DIR="${SCRIPT_DIR}/app"
-    
-    if [[ ! -d "${APP_DIR}" ]]; then
-        error_exit "Application directory not found: ${APP_DIR}"
-    fi
-    
-    # Copy all application files
-    cp -r "${APP_DIR}"/* "${DEPLOYMENT_DIR}/" || error_exit "Failed to copy application files"
-    
-    # Copy Docker files
-    cp "${SCRIPT_DIR}/config/Dockerfile" "${DEPLOYMENT_DIR}/"
-    cp "${SCRIPT_DIR}/config/docker-compose.yml" "${DEPLOYMENT_DIR}/"
-    
-    # Create nginx.conf from template
-    log "Generating nginx.conf from template..."
-    rm -rf "${DEPLOYMENT_DIR}/nginx.conf" 2>/dev/null || true
-    
-    # Use HTTP-only template for initial deployment
-    sed "s/DOMAIN_PLACEHOLDER/${DOMAIN}/g" "${SCRIPT_DIR}/config/nginx.conf.http-only.template" > "${DEPLOYMENT_DIR}/nginx.conf"
-    
-    # Save the full template for later SSL setup
-    sed "s/DOMAIN_PLACEHOLDER/${DOMAIN}/g" "${SCRIPT_DIR}/config/nginx.conf.template" > "${DEPLOYMENT_DIR}/nginx.conf.with-ssl"
-    
-    log "Creating .env file from configuration..."
-    create_env_file
-    
-    log "Building Docker images..."
-    cd "${DEPLOYMENT_DIR}"
-    docker compose build --no-cache || error_exit "Docker build failed"
-    
-    log "Starting Docker containers..."
-    docker compose up -d || error_exit "Failed to start containers"
-    
-    log "Waiting for services to be ready..."
-    sleep 15
-    
-    # Copy admin initialization file into the running container
-    if [[ -f "${DEPLOYMENT_DIR}/.admin-storage-init.json" ]]; then
-        log "Copying admin initialization file to container..."
-        local max_attempts=5
-        local attempt=1
-        
-        while [ $attempt -le $max_attempts ]; do
-            if docker cp "${DEPLOYMENT_DIR}/.admin-storage-init.json" exchangekit-app:/usr/share/nginx/html/.admin-storage-init.json 2>/dev/null; then
-                log "Admin initialization file copied successfully"
-                break
-            else
-                log "Attempt $attempt/$max_attempts failed, retrying..."
-                sleep 2
-                attempt=$((attempt + 1))
-            fi
-        done
-        
-        if [ $attempt -gt $max_attempts ]; then
-            log "Warning: Failed to copy admin init file after $max_attempts attempts"
-        fi
-    else
-        log "Warning: Admin initialization file not found at ${DEPLOYMENT_DIR}/.admin-storage-init.json"
-    fi
+# ---------------------------------------------------------------------------
+# PostgreSQL
+# ---------------------------------------------------------------------------
+DB_PASSWORD=""
+setup_database() {
+  phase "Шаг 6/10 — PostgreSQL"
+  systemctl enable --now postgresql >/dev/null 2>&1 || true
+
+  # Повторно используем существующий пароль, если установка запускается заново
+  DB_PASSWORD="$(read_env_value POSTGRES_PASSWORD)"
+  [[ -n "$DB_PASSWORD" ]] || DB_PASSWORD="$(gen_pass)"
+
+  if sudo -u postgres psql -tAc "SELECT 1 FROM pg_roles WHERE rolname='${DB_USER}'" | grep -q 1; then
+    sudo -u postgres psql -qc "ALTER ROLE ${DB_USER} WITH LOGIN PASSWORD '${DB_PASSWORD}';"
+    ok "Роль ${DB_USER} обновлена"
+  else
+    sudo -u postgres psql -qc "CREATE ROLE ${DB_USER} WITH LOGIN PASSWORD '${DB_PASSWORD}';"
+    ok "Роль ${DB_USER} создана"
+  fi
+
+  if ! sudo -u postgres psql -tAc "SELECT 1 FROM pg_database WHERE datname='${DB_NAME}'" | grep -q 1; then
+    sudo -u postgres createdb -O "${DB_USER}" "${DB_NAME}"
+    ok "База ${DB_NAME} создана"
+  else
+    ok "База ${DB_NAME} уже существует"
+  fi
+  # Схему таблиц сервер создаёт сам при старте (initSchema).
 }
 
-# Create environment file
-create_env_file() {
-    log "Generating .env file..."
-    cat > "${DEPLOYMENT_DIR}/.env" <<EOF
-# ExchangeKit - Production Configuration
-# Generated: $(date)
+# ---------------------------------------------------------------------------
+# .env
+# ---------------------------------------------------------------------------
+write_env() {
+  phase "Шаг 7/10 — Файл окружения (.env)"
 
-# License Configuration
-VITE_LICENSE_KEY=${LICENSE_KEY}
-VITE_LICENSE_SERVER_URL=https://license.exchangekit.io
-VITE_LICENSE_ENABLE_VALIDATION=true
-VITE_LICENSE_CHECK_INTERVAL=24
-VITE_LICENSE_GRACE_PERIOD=7
+  local scheme="http" jwt_secret
+  [[ "$ENABLE_SSL" == y* ]] && scheme="https"
+  local public_url="${scheme}://${DOMAIN}"
 
-# Application Configuration
+  # Сохраняем JWT_SECRET между запусками, чтобы не разлогинивать пользователей
+  jwt_secret="$(read_env_value JWT_SECRET)"
+  [[ -n "$jwt_secret" ]] || jwt_secret="$(gen_secret)"
+
+  local smtp_secure="false"
+  [[ "$SMTP_PORT" == "465" ]] && smtp_secure="true"
+
+  cat > "${APP_DIR}/.env" <<EOF
+# ExchangeKit — production config
+# Сгенерировано: $(date)
+
+# ── Frontend (встраивается в сборку Vite, только VITE_*) ──────────────────
 VITE_APP_ENV=production
-VITE_APP_URL=https://${DOMAIN}
-VITE_DEBUG=false
-
-# API Configuration
+VITE_APP_URL=${public_url}
+# Фронтенд и API на одном домене, nginx проксирует /api → backend
+VITE_API_BASE_URL=${public_url}
 VITE_COINGECKO_API_URL=https://api.coingecko.com/api/v3
-
-# Feature Flags
+VITE_DEBUG=false
 VITE_ENABLE_ANALYTICS=true
 VITE_ENABLE_TELEGRAM=false
 VITE_ENABLE_2FA=true
-
-# UI Configuration
 VITE_DEFAULT_THEME=dark
 VITE_DEFAULT_LANGUAGE=ru
-
-# Security
 VITE_SESSION_TIMEOUT=30
 
-# Database Configuration
-POSTGRES_DB=exchange_db
-POSTGRES_USER=exchange_user
+# ── Backend (server/, в браузер не попадает) ──────────────────────────────
+NODE_ENV=production
+AUTH_PORT=${API_PORT}
+CORS_ORIGIN=${public_url}
+APP_URL=${public_url}
+
+DATABASE_URL=postgres://${DB_USER}:${DB_PASSWORD}@localhost:5432/${DB_NAME}
+
+JWT_SECRET=${jwt_secret}
+JWT_ACCESS_TTL=7d
+BCRYPT_ROUNDS=12
+TOTP_ISSUER=ExchangeKit
+
+MAX_FAILED_LOGINS=5
+LOCK_MINUTES=15
+
+# Seed-админ (создаётся сервером при первом запуске, если админа ещё нет)
+ADMIN_EMAIL=${ADMIN_EMAIL}
+ADMIN_PASSWORD=${ADMIN_PASSWORD}
+ADMIN_NAME=${ADMIN_NAME}
+
+# Отслеживание оплаты в Ethereum (ETH/ERC20)
+ETHERSCAN_API_KEY=${ETHERSCAN_API_KEY}
+
+# SMTP (пустой SMTP_HOST → письма в лог)
+SMTP_HOST=${SMTP_HOST}
+SMTP_PORT=${SMTP_PORT}
+SMTP_SECURE=${smtp_secure}
+SMTP_USER=${SMTP_USER}
+SMTP_PASSWORD=${SMTP_PASSWORD}
+SMTP_FROM_NAME=${SMTP_FROM_NAME}
+SMTP_FROM_EMAIL=${SMTP_FROM_EMAIL}
+
+# Для внутреннего использования скриптами (docker-compose не используется)
+POSTGRES_DB=${DB_NAME}
+POSTGRES_USER=${DB_USER}
 POSTGRES_PASSWORD=${DB_PASSWORD}
-POSTGRES_HOST=postgres
-POSTGRES_PORT=5432
-
-# Application Ports
-APP_PORT=${APP_PORT:-3000}
-HTTP_PORT=${HTTP_PORT:-80}
-HTTPS_PORT=${HTTPS_PORT:-443}
 EOF
-    
-    chmod 600 "${DEPLOYMENT_DIR}/.env"
-    log ".env file created successfully"
+
+  chown "$SERVICE_USER:$SERVICE_USER" "${APP_DIR}/.env"
+  chmod 600 "${APP_DIR}/.env"
+  ok ".env создан"
 }
 
-# Activate license
-activate_license() {
-    log "Activating license for domain: ${DOMAIN}"
-    
-    # Wait for application to be ready
-    sleep 5
-    
-    # License activation happens automatically when the app starts
-    # The app will contact the license server with the configured key
-    log "License activation initiated. The application will validate on startup."
-    
-    print_success "License configured for automatic activation"
+# ---------------------------------------------------------------------------
+# Сборка
+# ---------------------------------------------------------------------------
+build_app() {
+  phase "Шаг 8/10 — Установка зависимостей и сборка фронтенда"
+  info "npm install (включая devDependencies — нужны tsx и vite)…"
+  sudo -u "$SERVICE_USER" bash -lc "cd '$APP_DIR' && npm install --no-audit --no-fund"
+  info "npm run build…"
+  sudo -u "$SERVICE_USER" bash -lc "cd '$APP_DIR' && npm run build"
+  [[ -f "${APP_DIR}/dist/index.html" ]] || die "Сборка не создала dist/index.html"
+  ok "Фронтенд собран в ${APP_DIR}/dist"
 }
 
-# Show completion message
-show_completion() {
-    clear
-    echo -e "${GREEN}"
-    cat << "EOF"
-===============================================================
-|                                                             |
-EOF
-    printf "|%*s|\n" 61 "$(t 'installation_success_title')"
-    cat << "EOF"
-|                                                             |
-===============================================================
-EOF
-    echo -e "${NC}"
-    
-    echo -e "${CYAN}================================================================${NC}"
-    echo -e "${GREEN}$(t 'application_url'):${NC}      http://${DOMAIN}"
-    echo -e "${GREEN}$(t 'admin_panel'):${NC}          http://${DOMAIN}/admin/login"
-    echo -e "${GREEN}$(t 'admin_email'):${NC}          ${ADMIN_EMAIL}"
-    echo -e "${GREEN}$(t 'admin_password'):${NC}       ${ADMIN_PASSWORD}"
-    echo -e "${CYAN}================================================================${NC}"
-    echo ""
-    echo -e "${YELLOW}$(t 'security_notes'):${NC}"
-    echo "  - $(t 'security_save_credentials')"
-    echo "  - $(t 'security_change_password')"
-    echo "  - $(t 'security_enable_2fa')"
-    echo "  - $(t 'credentials_saved_to'): ${DEPLOYMENT_DIR}/.credentials"
-    echo "  - $(t 'site_running_http'):"
-    echo "    cd /root/INSTALL && bash enable-ssl.sh"
-    echo ""
-    echo -e "${CYAN}================================================================${NC}"
-    echo -e "${GREEN}$(t 'next_steps'):${NC}"
-    echo "  1. $(t 'step_visit_admin')"
-    echo "  2. $(t 'step_use_email'): ${ADMIN_EMAIL}"
-    echo "  3. $(t 'step_use_password'): ${ADMIN_PASSWORD}"
-    echo "  4. $(t 'step_clear_cache')"
-    echo "  5. $(t 'step_complete_profile')"
-    echo "  6. $(t 'step_configure_rates')"
-    echo "  7. $(t 'step_setup_ssl'):"
-    echo "     cd /root/INSTALL && bash scripts/setup-ssl.sh ${DOMAIN} ${ADMIN_EMAIL}"
-    echo ""
-    echo -e "${CYAN}================================================================${NC}"
-    echo -e "${GREEN}$(t 'useful_commands'):${NC}"
-    echo "  - $(t 'cmd_view_logs'):        cd ${DEPLOYMENT_DIR} && docker compose logs -f"
-    echo "  - $(t 'cmd_restart_services'): cd ${DEPLOYMENT_DIR} && docker compose restart"
-    echo "  - $(t 'cmd_stop_services'):    cd ${DEPLOYMENT_DIR} && docker compose stop"
-    echo "  - $(t 'cmd_start_services'):   cd ${DEPLOYMENT_DIR} && docker compose start"
-    echo "  - $(t 'cmd_check_status'):     cd ${DEPLOYMENT_DIR} && docker compose ps"
-    echo ""
-    echo -e "${CYAN}================================================================${NC}"
-    echo -e "${GREEN}$(t 'support'):${NC}"
-    echo "  - $(t 'documentation'): https://docs.4ex.com"
-    echo "  - $(t 'support_email'): support@exchangekit.io"
-    echo "  - $(t 'license_issues'): licenses@exchangekit.io"
-    echo ""
-    
-    # Save credentials to file
-    cat > "${DEPLOYMENT_DIR}/.credentials" <<EOF
-ExchangeKit - Admin Credentials
-Installation Date: $(date)
+# ---------------------------------------------------------------------------
+# systemd-сервис бэкенда
+# ---------------------------------------------------------------------------
+setup_systemd() {
+  phase "Шаг 9/10 — systemd-сервис бэкенда"
+  cat > "/etc/systemd/system/${SERVICE_NAME}.service" <<EOF
+[Unit]
+Description=ExchangeKit API server (Express)
+After=network.target postgresql.service
+Wants=postgresql.service
 
-Application URL: http://${DOMAIN}
-Admin Email: ${ADMIN_EMAIL}
-Admin Password: ${ADMIN_PASSWORD}
+[Service]
+Type=simple
+User=${SERVICE_USER}
+WorkingDirectory=${APP_DIR}
+Environment=NODE_ENV=production
+ExecStart=${APP_DIR}/node_modules/.bin/tsx server/index.ts
+Restart=on-failure
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=${SERVICE_NAME}
 
-IMPORTANT:
-- Site is currently running on HTTP only
-- To enable HTTPS, run: cd /root/INSTALL && bash scripts/setup-ssl.sh ${DOMAIN} ${ADMIN_EMAIL}
-- After SSL setup, URL will be: https://${DOMAIN}
-
-KEEP THIS FILE SECURE AND DELETE AFTER SAVING CREDENTIALS!
+[Install]
+WantedBy=multi-user.target
 EOF
-    chmod 600 "${DEPLOYMENT_DIR}/.credentials"
-    
-    log "=== Installation completed successfully ==="
+
+  systemctl daemon-reload
+  systemctl enable "${SERVICE_NAME}" >/dev/null 2>&1
+  systemctl restart "${SERVICE_NAME}"
+
+  # Ждём, пока поднимется /health
+  info "Жду запуска API…"
+  local ok_health="" i
+  for i in $(seq 1 20); do
+    if curl -fsS "http://127.0.0.1:${API_PORT}/health" >/dev/null 2>&1; then ok_health=1; break; fi
+    sleep 1
+  done
+  [[ -n "$ok_health" ]] || { journalctl -u "${SERVICE_NAME}" -n 30 --no-pager || true; die "API не отвечает на /health — см. journalctl -u ${SERVICE_NAME}"; }
+  ok "API запущен (systemd: ${SERVICE_NAME})"
+
+  # Правило sudoers для кнопки «Обновить» в админке: сервис может запустить
+  # триггер обновления без пароля. Триггер стартует обновление отдельным
+  # systemd-юнitом (см. trigger-update.sh / run-update.sh).
+  cat > "/etc/sudoers.d/exchangekit-update" <<EOF
+${SERVICE_USER} ALL=(root) NOPASSWD: ${APP_DIR}/INSTALL/trigger-update.sh
+EOF
+  chmod 440 "/etc/sudoers.d/exchangekit-update"
 }
 
-# Run main installation
-check_root
+# ---------------------------------------------------------------------------
+# nginx + SSL + firewall
+# ---------------------------------------------------------------------------
+setup_nginx() {
+  phase "Шаг 10/10 — nginx и брандмауэр"
+
+  cat > "/etc/nginx/sites-available/exchangekit" <<EOF
+server {
+    listen 80;
+    listen [::]:80;
+    server_name ${DOMAIN};
+
+    root ${APP_DIR}/dist;
+    index index.html;
+
+    # KYC-документы передаются base64 через /api — поднимаем лимит тела запроса
+    client_max_body_size 15m;
+
+    gzip on;
+    gzip_vary on;
+    gzip_min_length 1024;
+    gzip_types text/plain text/css application/javascript application/json image/svg+xml;
+
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header X-XSS-Protection "1; mode=block" always;
+
+    location /api/ {
+        proxy_pass http://127.0.0.1:${API_PORT};
+        proxy_http_version 1.1;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+    }
+
+    location = /health {
+        proxy_pass http://127.0.0.1:${API_PORT}/health;
+        access_log off;
+    }
+
+    location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff2?|ttf|eot)\$ {
+        expires 30d;
+        add_header Cache-Control "public, immutable";
+    }
+
+    location / {
+        try_files \$uri \$uri/ /index.html;
+    }
+}
+EOF
+
+  ln -sf /etc/nginx/sites-available/exchangekit /etc/nginx/sites-enabled/exchangekit
+  rm -f /etc/nginx/sites-enabled/default
+  nginx -t >/dev/null 2>&1 || die "Ошибка в конфигурации nginx (nginx -t)"
+  systemctl enable nginx >/dev/null 2>&1
+  systemctl restart nginx
+  ok "nginx настроен (раздаёт SPA, проксирует /api → :${API_PORT})"
+
+  # Брандмауэр
+  ufw allow OpenSSH >/dev/null 2>&1 || true
+  ufw allow 'Nginx Full' >/dev/null 2>&1 || true
+  yes | ufw enable >/dev/null 2>&1 || true
+  ok "UFW: разрешены SSH, HTTP, HTTPS"
+
+  # SSL
+  if [[ "$ENABLE_SSL" == y* ]]; then
+    info "Получаю сертификат Let's Encrypt…"
+    apt-get install -y -qq certbot python3-certbot-nginx >/dev/null
+    if certbot --nginx -d "${DOMAIN}" --non-interactive --agree-tos -m "${ADMIN_EMAIL}" --redirect; then
+      ok "HTTPS включён для ${DOMAIN}"
+    else
+      warn "Не удалось получить сертификат. Сайт работает по HTTP."
+      warn "Повторить позже: certbot --nginx -d ${DOMAIN}"
+    fi
+  fi
+}
+
+# ---------------------------------------------------------------------------
+# Финал
+# ---------------------------------------------------------------------------
+finish() {
+  local scheme="http"
+  [[ "$ENABLE_SSL" == y* ]] && scheme="https"
+
+  cat > "${APP_DIR}/.credentials" <<EOF
+ExchangeKit — учётные данные администратора
+Дата установки: $(date)
+
+URL:           ${scheme}://${DOMAIN}
+Админ-панель:  ${scheme}://${DOMAIN}/admin/login
+E-mail:        ${ADMIN_EMAIL}
+Пароль:        ${ADMIN_PASSWORD}
+
+ВАЖНО: сохраните эти данные и удалите файл .credentials.
+EOF
+  chmod 600 "${APP_DIR}/.credentials"
+
+  echo
+  echo -e "${GREEN}═══════════════════════════════════════════════${NC}"
+  echo -e "${GREEN}  Установка завершена${NC}"
+  echo -e "${GREEN}═══════════════════════════════════════════════${NC}"
+  echo -e "  Сайт:         ${CYAN}${scheme}://${DOMAIN}${NC}"
+  echo -e "  Админ-панель: ${CYAN}${scheme}://${DOMAIN}/admin/login${NC}"
+  echo -e "  E-mail:       ${ADMIN_EMAIL}"
+  echo -e "  Пароль:       ${ADMIN_PASSWORD}"
+  echo -e "${GREEN}═══════════════════════════════════════════════${NC}"
+  echo
+  echo "Полезные команды:"
+  echo "  Логи API:      journalctl -u ${SERVICE_NAME} -f"
+  echo "  Рестарт API:   systemctl restart ${SERVICE_NAME}"
+  echo "  Статус:        systemctl status ${SERVICE_NAME}"
+  echo "  Логи nginx:    tail -f /var/log/nginx/error.log"
+  echo "  Обновление:    bash ${APP_DIR}/INSTALL/update.sh"
+  echo
+  [[ "$ENABLE_SSL" == y* ]] || echo -e "${YELLOW}HTTPS не настроен. Включить: certbot --nginx -d ${DOMAIN}${NC}"
+  log "=== Установка успешно завершена ==="
+}
+
+# ---------------------------------------------------------------------------
+main() {
+  require_root
+  : > "${INSTALL_LOG}"
+  log "=== Запуск установки ExchangeKit ==="
+  collect_config
+  install_system_packages
+  install_node
+  setup_user_and_code
+  setup_deploy_key
+  setup_database
+  write_env
+  build_app
+  setup_systemd
+  setup_nginx
+  finish
+}
+
 main "$@"

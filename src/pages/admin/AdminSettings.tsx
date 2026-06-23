@@ -7,6 +7,7 @@ import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
 import { Save, Percent, Mail, Server, Eye, EyeOff } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { SystemUpdateCard } from './SystemUpdateCard';
 
 export const AdminSettings: React.FC = () => {
   const { isAuthenticated, settings, updateSettings, updateCommission } = useAdminStore();
@@ -396,6 +397,9 @@ export const AdminSettings: React.FC = () => {
           )}
         </div>
       </Card>
+
+      {/* System Update */}
+      <SystemUpdateCard />
     </div>
   );
 };
