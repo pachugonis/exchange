@@ -122,25 +122,32 @@ RELEASE_SSH_TARGET=license@HOST:/opt/license-server/releases \
 ```bash
 curl -X POST https://license.yourdomain.com/api/admin/licenses \
   -H "Content-Type: application/json" \
-  -H "X-Admin-Password: <ADMIN_PASSWORD>" \
-  -d '{"licenseType":"professional","customerEmail":"client@example.com"}'
+  -H "X-Admin-Password: <ADMIN_PASSWORD>"
 ```
-Сохраните `licenseKey` из ответа — его получает клиент после оплаты.
+Тело запроса не нужно — генерируется только ключ. Почта и домен **не**
+указываются при создании: они привязываются к лицензии при активации, когда
+клиент вводит их во время установки на своём сервере. Сохраните `licenseKey`
+из ответа — его получает клиент после оплаты.
 
 **Метаданные последнего релиза:**
 ```bash
 curl "https://license.yourdomain.com/api/release/latest?licenseKey=LIC-...&domain=exchange.example.com&channel=stable"
 ```
 
-## Типы лицензий
+## Лицензия
 
-| | Standard | Professional |
-|--|----------|--------------|
-| Цена | 70 000 ₽ | 800 000 ₽ |
-| Срок | 1 год | бессрочно |
-| Домены | 1 (фиксированный) | 1 (со сменой) |
-| Смена домена | ❌ | ✅ |
-| Функции | полный функционал | + брендинг + приоритетная поддержка |
+Один тип лицензии — **Professional**.
+
+| | Professional |
+|--|--------------|
+| Срок | бессрочно |
+| Домены | 1 (со сменой) |
+| Смена домена | ✅ (`/api/license/unbind-domain`) |
+| Функции | полный функционал + брендинг + приоритетная поддержка |
+
+Почта и домен привязываются к ключу при первой активации (вводятся клиентом
+при установке). Повторная активация требует тот же e-mail; домен можно сменить
+через отвязку.
 
 ## Безопасность и резервные копии
 

@@ -206,35 +206,24 @@ app.get('/api/health', (req, res) => {
 
 app.post('/api/admin/licenses', async (req, res) => {
   const adminPassword = req.headers['x-admin-password'];
-  
+
   if (adminPassword !== process.env.ADMIN_PASSWORD) {
     return res.status(403).json({ error: 'FORBIDDEN', message: 'Invalid admin password' });
   }
 
-  const {
-    licenseType = 'standard',
-    customerEmail,
-    customerId = crypto.randomBytes(8).toString('hex'),
-    duration = licenseType === 'professional' ? null : 365,
-  } = req.body;
-
-  if (!customerEmail) {
-    return res.status(400).json({ error: 'INVALID_REQUEST', message: 'Customer email is required' });
-  }
-
-  if (!['standard', 'professional'].includes(licenseType)) {
-    return res.status(400).json({ error: 'INVALID_REQUEST', message: 'Invalid license type' });
-  }
-
+  // Все лицензии одного типа: Professional, бессрочно, на один домен.
+  // При генерации указывается ТОЛЬКО ключ — почта и домен не задаются.
+  // Привязка к почте и домену происходит при активации клиентом на его сервере.
+  const licenseType = 'professional';
   const maxDomains = 1;
-  const canChangeDomain = licenseType === 'professional';
-  
+  const canChangeDomain = true;
+
   const features = {
     crypto: true,
     telegram: true,
     kyc: true,
-    customBranding: licenseType === 'professional',
-    prioritySupport: licenseType === 'professional',
+    customBranding: true,
+    prioritySupport: true,
     api: true,
     multiCurrency: true,
     analytics: true,
@@ -242,17 +231,17 @@ app.post('/api/admin/licenses', async (req, res) => {
 
   const licenseKey = generateLicenseKey();
   const now = Date.now();
-  const expiresAt = duration ? now + (duration * 24 * 60 * 60 * 1000) : null;
 
   const license = {
     id: database.nextId.license++,
     licenseKey,
     licenseType,
     status: 'active',
-    customerId,
-    customerEmail,
+    customerId: null,        // присваивается при активации
+    customerEmail: null,     // привязывается при активации
     issuedAt: now,
-    expiresAt,
+    expiresAt: null,         // бессрочно
+    activatedAt: null,
     maxDomains,
     canChangeDomain,
     features,
@@ -265,10 +254,7 @@ app.post('/api/admin/licenses', async (req, res) => {
 
   res.json({
     success: true,
-    license: {
-      ...license,
-      price: licenseType === 'standard' ? '70,000 ₽' : '800,000 ₽'
-    },
+    license,
     message: 'License created successfully',
   });
 });
@@ -302,11 +288,17 @@ app.post('/api/license/activate', async (req, res) => {
     });
   }
 
-  if (license.customerEmail !== customerEmail) {
+  // Первая активация: привязываем e-mail, введённый клиентом, к лицензии.
+  // Повторные активации должны использовать тот же e-mail.
+  if (!license.customerEmail) {
+    license.customerEmail = customerEmail;
+    if (!license.customerId) license.customerId = crypto.randomBytes(8).toString('hex');
+    license.activatedAt = Date.now();
+  } else if (license.customerEmail.toLowerCase() !== customerEmail.toLowerCase()) {
     return res.status(403).json({
       success: false,
       error: 'EMAIL_MISMATCH',
-      message: 'Email does not match license records',
+      message: 'Email does not match the one used to activate this license',
     });
   }
 
@@ -690,9 +682,8 @@ app.listen(PORT, () => {
   console.log(`  💾 Database: ${DB_FILE}`);
   console.log(`  📦 Releases:  ${RELEASES_DIR}`);
   console.log('');
-  console.log('  Available License Types:');
-  console.log('    • Standard: 1 year, 70,000 ₽');
-  console.log('    • Professional: Lifetime, 800,000 ₽');
+  console.log('  License model:');
+  console.log('    • Professional — бессрочно, 1 домен (привязка при активации)');
   console.log('');
   console.log('  Press Ctrl+C to stop');
   console.log('');

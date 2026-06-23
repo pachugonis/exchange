@@ -41,11 +41,12 @@ curl http://127.0.0.1:3001/api/health
 ```bash
 curl -X POST http://127.0.0.1:3001/api/admin/licenses \
   -H "Content-Type: application/json" \
-  -H "X-Admin-Password: <ADMIN_PASSWORD>" \
-  -d '{"licenseType":"professional","customerEmail":"client@example.com"}'
+  -H "X-Admin-Password: <ADMIN_PASSWORD>"
 ```
 
-Сохраните `licenseKey` из ответа — его получает клиент после оплаты.
+Генерируется только ключ — почта и домен не указываются. Клиент привязывает их
+сам при установке (вводит e-mail и домен). Сохраните `licenseKey` из ответа —
+его получает клиент после оплаты.
 
 ## Публикация релиза
 
