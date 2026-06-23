@@ -1,4 +1,4 @@
-import { useLanguageStore, Locale } from '../store/languageStore';
+import { useLanguageStore } from '../store/languageStore';
 import { getTranslation } from '../locales/translations';
 
 export const useTranslation = () => {

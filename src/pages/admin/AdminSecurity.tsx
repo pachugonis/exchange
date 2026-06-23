@@ -10,7 +10,7 @@ import { generateSecret, generateQRCodeURL, formatSecret, verifyTOTP } from '../
 import toast from 'react-hot-toast';
 
 export const AdminSecurity: React.FC = () => {
-  const { isAuthenticated, username, twoFactorEnabled, twoFactorSecret, changePassword, enableTwoFactor, disableTwoFactor } = useAdminStore();
+  const { isAuthenticated, username, twoFactorEnabled, changePassword, enableTwoFactor, disableTwoFactor } = useAdminStore();
   const { t } = useTranslation();
 
   // Password change state

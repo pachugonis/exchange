@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Megaphone, Plus, Edit2, Trash2, Eye, EyeOff, Calendar } from 'lucide-react';
+import { Megaphone, Plus, Edit2, Trash2, Eye, EyeOff } from 'lucide-react';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';

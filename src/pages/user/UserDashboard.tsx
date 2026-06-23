@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import {
-  User,
   Settings,
   LogOut,
   Mail,
@@ -85,9 +84,6 @@ export const UserDashboard: React.FC = () => {
   const totalVolume = orders
     .filter(order => order.userId === user.id)
     .reduce((sum, order) => sum + order.fromAmount, 0);
-  const completedOrders = orders.filter(
-    (o) => o.userId === user.id && o.status === 'completed'
-  ).length;
   const registeredDays = Math.floor(
     (Date.now() - user.createdAt) / (1000 * 60 * 60 * 24)
   );

@@ -85,7 +85,7 @@ const defaultFAQItems: FAQItem[] = [
 
 export const useContentStore = create<ContentState>()(
   persist(
-    (set, get) => ({
+    (set) => ({
       aboutUs: defaultAboutUs,
       faqItems: defaultFAQItems,
 

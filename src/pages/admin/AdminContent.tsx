@@ -7,7 +7,7 @@ import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { Tabs, TabPanel } from '../../components/ui/Tabs';
-import { Save, Plus, Trash2, Edit2, X, FileText, HelpCircle, MoveUp, MoveDown } from 'lucide-react';
+import { Save, Plus, Trash2, Edit2, FileText, HelpCircle, MoveUp, MoveDown } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export const AdminContent: React.FC = () => {

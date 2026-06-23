@@ -1,7 +1,6 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useExchangeFlowStore } from '../store/exchangeFlowStore';
-import { useAdminStore } from '../store/adminStore';
 import { useOrderStore } from '../store/orderStore';
 import { useUserStore } from '../store/userStore';
 import { usePromoStore } from '../store/promoStore';
@@ -24,7 +23,6 @@ export const Exchange: React.FC = () => {
   const { addOrder, cancelOrder, getOrderById } = useOrderStore();
   const { user } = useUserStore();
   const { incrementPromoUse, appliedPromo, removePromo } = usePromoStore();
-  const { settings } = useAdminStore(); // Move hook to top level
   const [isCreatingOrder, setIsCreatingOrder] = React.useState(false);
   const [showCancelModal, setShowCancelModal] = React.useState(false);
   const [renderKey, setRenderKey] = React.useState(0);
@@ -38,13 +36,11 @@ export const Exchange: React.FC = () => {
     commission,
     email,
     telegram,
-    promoCode,
     fromWallet,
     toWallet,
     agreedToTerms,
     agreedToAML,
     isLoadingRates,
-    lastRateUpdate,
     validationErrors,
     orderId,
     setFromCurrency,
@@ -54,7 +50,6 @@ export const Exchange: React.FC = () => {
     swapCurrencies,
     setEmail,
     setTelegram,
-    setPromoCode,
     setFromWallet,
     setToWallet,
     setAgreedToTerms,
@@ -65,7 +60,6 @@ export const Exchange: React.FC = () => {
     setOrderId,
     resetFlow,
     setCurrentStep,
-    refreshCurrencies,
   } = useExchangeFlowStore();
 
   const { currencies: currencyList, reloadCurrencies } = useExchangeStore();

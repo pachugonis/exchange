@@ -13,7 +13,7 @@ import { CryptoSelect } from '../../components/ui/CryptoSelect';
 import { NetworkSelector } from '../../components/ui/NetworkSelector';
 import { currencies as initialCurrencies } from '../../data/currencies';
 import type { Currency, CurrencyType, CryptoNetwork, CoinGeckoSimpleCoin, CoinDetailsResponse } from '../../types';
-import { Plus, Edit2, Trash2, Save, X, Upload, Search } from 'lucide-react';
+import { Plus, Edit2, Trash2, Save, X, Search } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { fetchCoinsList, fetchCoinDetails } from '../../api/cryptoAPI';
 import { getCryptoRussianName } from '../../utils/cryptoTranslations';

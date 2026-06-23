@@ -10,7 +10,7 @@ import toast from 'react-hot-toast';
 
 export const UserLogin: React.FC = () => {
   const navigate = useNavigate();
-  const { login, requires2FA } = useUserStore();
+  const { login } = useUserStore();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [twoFactorCode, setTwoFactorCode] = useState('');

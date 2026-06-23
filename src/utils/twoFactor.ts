@@ -5,10 +5,13 @@
 
 // Generate a random secret (32 characters, base32)
 export function generateSecret(): string {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567'; // Base32 alphabet
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567'; // Base32 alphabet (32 symbols)
+  // Use a cryptographically secure RNG. 256 % 32 === 0, so no modulo bias.
+  const randomBytes = new Uint8Array(32);
+  crypto.getRandomValues(randomBytes);
   let secret = '';
   for (let i = 0; i < 32; i++) {
-    secret += chars[Math.floor(Math.random() * chars.length)];
+    secret += chars[randomBytes[i] % chars.length];
   }
   return secret;
 }
@@ -24,32 +27,32 @@ export function generateQRCodeURL(email: string, secret: string, issuer: string 
 
 // Simple TOTP implementation for demo purposes
 // In production, use a proper library like otplib
-function base32Decode(secret: string): Uint8Array {
+function base32Decode(secret: string): Uint8Array<ArrayBuffer> {
   const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
   const bits: number[] = [];
-  
+
   for (let i = 0; i < secret.length; i++) {
     const val = alphabet.indexOf(secret[i].toUpperCase());
     if (val === -1) continue;
-    
+
     for (let j = 4; j >= 0; j--) {
       bits.push((val >> j) & 1);
     }
   }
-  
-  const bytes: number[] = [];
-  for (let i = 0; i + 8 <= bits.length; i += 8) {
+
+  const bytes = new Uint8Array(Math.floor(bits.length / 8));
+  for (let i = 0, b = 0; i + 8 <= bits.length; i += 8, b++) {
     let byte = 0;
     for (let j = 0; j < 8; j++) {
       byte = (byte << 1) | bits[i + j];
     }
-    bytes.push(byte);
+    bytes[b] = byte;
   }
-  
-  return new Uint8Array(bytes);
+
+  return bytes;
 }
 
-async function hmacSha1(key: Uint8Array, message: Uint8Array): Promise<Uint8Array> {
+async function hmacSha1(key: Uint8Array<ArrayBuffer>, message: Uint8Array<ArrayBuffer>): Promise<Uint8Array<ArrayBuffer>> {
   const cryptoKey = await crypto.subtle.importKey(
     'raw',
     key,
@@ -80,11 +83,12 @@ export async function generateTOTP(secret: string, timeStep: number = 30): Promi
   
   const secretBytes = base32Decode(secret);
   const counterBytes = new Uint8Array(8);
+  let tempCounter = counter;
   for (let i = 7; i >= 0; i--) {
-    counterBytes[i] = counter & 0xff;
-    counter >>> 8;
+    counterBytes[i] = tempCounter & 0xff;
+    tempCounter = Math.floor(tempCounter / 256);
   }
-  
+
   const hmac = await hmacSha1(secretBytes, counterBytes);
   const code = dynamicTruncate(hmac);
   

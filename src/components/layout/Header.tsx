@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Moon, Sun, User, LogOut } from 'lucide-react';
+import { Moon, Sun, User } from 'lucide-react';
 import { useThemeStore } from '../../store/themeStore';
 import { useUserStore } from '../../store/userStore';
 import { useSiteSettingsStore } from '../../store/siteSettingsStore';

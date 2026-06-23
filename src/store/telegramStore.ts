@@ -160,7 +160,7 @@ export const useTelegramStore = create<TelegramState>()(
       },
 
       // Session Management
-      createSession: (telegramId, chatId) => {
+      createSession: (telegramId, _chatId) => {
         const now = Date.now();
         const sessionId = generateId('SESSION');
         const telegramUser = get().telegramUsers.get(telegramId);

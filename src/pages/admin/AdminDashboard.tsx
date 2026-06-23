@@ -3,7 +3,7 @@ import { Navigate, Link } from 'react-router-dom';
 import { useAdminStore } from '../../store/adminStore';
 import { useTranslation } from '../../hooks/useTranslation';
 import { Card } from '../../components/ui/Card';
-import { TrendingUp, Clock, CheckCircle, Users, DollarSign, AlertCircle } from 'lucide-react';
+import { TrendingUp, Clock, CheckCircle, Users, DollarSign } from 'lucide-react';
 
 export const AdminDashboard: React.FC = () => {
   const { isAuthenticated, stats, loadStats } = useAdminStore();

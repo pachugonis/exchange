@@ -121,7 +121,7 @@ const defaultSettings: SiteSettings = {
 
 export const useSiteSettingsStore = create<SiteSettingsState>()(
   persist(
-    (set, get) => ({
+    (set) => ({
       settings: defaultSettings,
       
       updateSettings: (updates) => {

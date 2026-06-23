@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, Save, User, Mail, Phone, MessageSquare, Shield, QrCode, Key, CheckCircle, Clock, XCircle, AlertCircle, ArrowRight, Lock } from 'lucide-react';
+import { ArrowLeft, Save, User, Mail, Phone, MessageSquare, Shield, Key, CheckCircle, Clock, XCircle, AlertCircle, ArrowRight, Lock } from 'lucide-react';
 import { Card } from '../../components/ui/Card';
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
@@ -26,12 +26,6 @@ export const UserSettings: React.FC = () => {
   const [twoFactorSecret, setTwoFactorSecret] = useState('');
   const [verificationCode, setVerificationCode] = useState('');
   const [disableCode, setDisableCode] = useState('');
-  const [passwordForm, setPasswordForm] = useState({
-    currentPassword: '',
-    newPassword: '',
-    confirmPassword: '',
-  });
-  const [changingPassword, setChangingPassword] = useState(false);
 
   if (!isAuthenticated || !user) {
     navigate('/user/login');
@@ -77,27 +71,6 @@ export const UserSettings: React.FC = () => {
     } else {
       toast.error(result.error || t('user.settings.twoFA.disableError'));
     }
-  };
-
-  const handleChangePassword = () => {
-    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-      toast.error(t('user.settings.passwordMismatch'));
-      return;
-    }
-
-    if (passwordForm.newPassword.length < 6) {
-      toast.error(t('user.settings.passwordTooShort'));
-      return;
-    }
-
-    // In a real app, this would verify the current password on the backend
-    // For now, we'll show a message to use the forgot password flow
-    toast.success(t('user.settings.useForgotPassword'));
-    setPasswordForm({
-      currentPassword: '',
-      newPassword: '',
-      confirmPassword: '',
-    });
   };
 
   return (

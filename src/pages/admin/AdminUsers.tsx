@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Users, Search, Edit2, Trash2, CheckCircle, XCircle, Shield, Mail, Calendar, Eye, Ban } from 'lucide-react';
+import { Search, Edit2, Trash2, CheckCircle, XCircle, Shield, Mail, Calendar, Ban } from 'lucide-react';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';

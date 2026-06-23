@@ -7,12 +7,10 @@ import {
   FavoriteButton, 
   FavoritesList 
 } from '../components/exchange';
-import { useExchangeStore } from '../store/exchangeStore';
 import { TrendingUp, Tag, Star, BarChart3 } from 'lucide-react';
 
 export const NewFeatures: React.FC = () => {
   const [activeTab, setActiveTab] = useState('chart');
-  const { currencies } = useExchangeStore();
 
   return (
     <div className="min-h-screen py-12 px-4">

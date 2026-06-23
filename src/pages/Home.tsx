@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Zap, Shield, Clock, Award, TrendingUp, TrendingDown, Megaphone, X } from 'lucide-react';
+import { ArrowRight, Zap, Shield, Clock, Award, Megaphone, X } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
-import { Alert } from '../components/ui/Alert';
 import { CurrencyIcon } from '../components/ui/CurrencyIcon';
 import { fetchCryptoRates } from '../api/cryptoAPI';
 import { Testimonials, PopularDirections } from '../components/home';

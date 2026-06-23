@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Navigate } from 'react-router-dom';
-import { Settings, Image as ImageIcon, Type, Eye, EyeOff, Save, RotateCcw, Plus, Trash2, Link as LinkIcon, Palette } from 'lucide-react';
+import { Settings, Image as ImageIcon, Save, RotateCcw, Plus, Trash2, Palette } from 'lucide-react';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';

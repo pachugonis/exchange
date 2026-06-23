@@ -153,7 +153,6 @@ export const useAdminStore = create<AdminState>()(
             const { state } = JSON.parse(ordersStorage);
             const orders = state.orders || [];
             
-            const now = Date.now();
             const todayStart = new Date().setHours(0, 0, 0, 0);
             
             const stats: AdminStats = {

@@ -1,6 +1,6 @@
 // User Command Handlers for Telegram Bot
 
-import type { TelegramMessage, BotSession, Order } from '../../types/telegram';
+import type { TelegramMessage, BotSession } from '../../types/telegram';
 import { useTelegramStore } from '../../store/telegramStore';
 import { useUserStore } from '../../store/userStore';
 import { useOrderStore } from '../../store/orderStore';
@@ -12,7 +12,7 @@ import { createMainMenuKeyboard, createInlineKeyboard, callbackButton, formatDat
 /**
  * Handle /start command
  */
-export async function handleStart(message: TelegramMessage, session: BotSession) {
+export async function handleStart(message: TelegramMessage, _session: BotSession) {
   const telegramStore = useTelegramStore.getState();
   const userStore = useUserStore.getState();
   
@@ -43,7 +43,7 @@ export async function handleStart(message: TelegramMessage, session: BotSession)
 /**
  * Handle /menu command
  */
-export async function handleMenu(message: TelegramMessage, session: BotSession) {
+export async function handleMenu(_message: TelegramMessage, session: BotSession) {
   const keyboard = createMainMenuKeyboard(session.isAuthenticated);
 
   return {
@@ -55,7 +55,7 @@ export async function handleMenu(message: TelegramMessage, session: BotSession) 
 /**
  * Handle /orders command
  */
-export async function handleOrders(message: TelegramMessage, session: BotSession) {
+export async function handleOrders(_message: TelegramMessage, session: BotSession) {
   if (!session.userId) {
     return {
       text: MESSAGES.ERROR_AUTH_REQUIRED,
@@ -182,7 +182,7 @@ export async function handleTrack(message: TelegramMessage, session: BotSession)
 /**
  * Handle /profile command
  */
-export async function handleProfile(message: TelegramMessage, session: BotSession) {
+export async function handleProfile(_message: TelegramMessage, session: BotSession) {
   if (!session.userId) {
     return {
       text: MESSAGES.ERROR_AUTH_REQUIRED,
@@ -244,7 +244,7 @@ export async function handleProfile(message: TelegramMessage, session: BotSessio
 /**
  * Handle /favorites command
  */
-export async function handleFavorites(message: TelegramMessage, session: BotSession) {
+export async function handleFavorites(_message: TelegramMessage, session: BotSession) {
   if (!session.userId) {
     return {
       text: MESSAGES.ERROR_AUTH_REQUIRED,
@@ -287,7 +287,7 @@ export async function handleFavorites(message: TelegramMessage, session: BotSess
 /**
  * Handle /reviews command
  */
-export async function handleReviews(message: TelegramMessage, session: BotSession) {
+export async function handleReviews(_message: TelegramMessage, _session: BotSession) {
   const reviewStore = useReviewStore.getState();
   const reviews = reviewStore.getPublishedReviews();
 
@@ -329,7 +329,7 @@ export async function handleReviews(message: TelegramMessage, session: BotSessio
 /**
  * Handle /support command
  */
-export async function handleSupport(message: TelegramMessage, session: BotSession) {
+export async function handleSupport(_message: TelegramMessage, _session: BotSession) {
   const text = `📞 Customer Support\n\n` +
     `We're here to help! Contact us through:\n\n` +
     `✉️ Email: support@exchangekit.io\n` +
@@ -350,7 +350,7 @@ export async function handleSupport(message: TelegramMessage, session: BotSessio
 /**
  * Handle /help command
  */
-export async function handleHelp(message: TelegramMessage, session: BotSession) {
+export async function handleHelp(_message: TelegramMessage, _session: BotSession) {
   return {
     text: MESSAGES.HELP_TEXT,
     replyMarkup: createInlineKeyboard([
@@ -364,7 +364,7 @@ export async function handleHelp(message: TelegramMessage, session: BotSession) 
 /**
  * Handle /logout command
  */
-export async function handleLogout(message: TelegramMessage, session: BotSession) {
+export async function handleLogout(_message: TelegramMessage, session: BotSession) {
   const telegramStore = useTelegramStore.getState();
   const userStore = useUserStore.getState();
 

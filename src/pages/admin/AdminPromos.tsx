@@ -213,7 +213,7 @@ export const AdminPromos: React.FC = () => {
                     name="type"
                     value="commission"
                     checked={formData.type === 'commission'}
-                    onChange={(e) => setFormData({ ...formData, type: 'commission' })}
+                    onChange={() => setFormData({ ...formData, type: 'commission' })}
                     className="w-4 h-4"
                   />
                   <div>
@@ -227,7 +227,7 @@ export const AdminPromos: React.FC = () => {
                     name="type"
                     value="bonus"
                     checked={formData.type === 'bonus'}
-                    onChange={(e) => setFormData({ ...formData, type: 'bonus' })}
+                    onChange={() => setFormData({ ...formData, type: 'bonus' })}
                     className="w-4 h-4"
                   />
                   <div>

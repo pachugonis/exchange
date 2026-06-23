@@ -4,10 +4,9 @@ import { useAdminStore } from '../../store/adminStore';
 import { useOrderStore } from '../../store/orderStore';
 import { useTranslation } from '../../hooks/useTranslation';
 import { Card } from '../../components/ui/Card';
-import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
 import type { Order, OrderStatus } from '../../types';
-import { Clock, CheckCircle, XCircle, Search, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Clock, CheckCircle, Search, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export const AdminOrders: React.FC = () => {
@@ -61,20 +60,6 @@ export const AdminOrders: React.FC = () => {
   React.useEffect(() => {
     setCurrentPage(1);
   }, [searchQuery, statusFilter]);
-
-  const getStatusColor = (status: OrderStatus): string => {
-    const colors: Record<OrderStatus, string> = {
-      waiting_payment: 'yellow',
-      payment_pending: 'yellow',
-      payment_received: 'blue',
-      verification: 'blue',
-      sending: 'blue',
-      completed: 'green',
-      cancelled: 'red',
-      refund: 'orange',
-    };
-    return colors[status] || 'gray';
-  };
 
   const getStatusBgColor = (status: OrderStatus): string => {
     const colors: Record<OrderStatus, string> = {

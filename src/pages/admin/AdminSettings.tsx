@@ -9,7 +9,7 @@ import { Save, Percent, Mail, Server, Eye, EyeOff } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export const AdminSettings: React.FC = () => {
-  const { isAuthenticated, settings, updateSettings, updatePaymentAddress, updateCommission } = useAdminStore();
+  const { isAuthenticated, settings, updateSettings, updateCommission } = useAdminStore();
   const { t } = useTranslation();
   const [localSettings, setLocalSettings] = useState(settings);
   const [showSmtpPassword, setShowSmtpPassword] = useState(false);
