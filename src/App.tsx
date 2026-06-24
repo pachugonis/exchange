@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { Header } from './components/layout/Header';
@@ -12,6 +12,8 @@ import { OrderTracking } from './pages/OrderTracking';
 import { NotFound } from './pages/NotFound';
 import { UserLogin, UserRegister, UserDashboard, UserSettings, UserKYC, ForgotPassword, ResetPassword, VerifyEmail } from './pages/user';
 import { MaintenancePage } from './pages/MaintenancePage';
+import { LicenseLockedPage } from './pages/LicenseLockedPage';
+import { fetchLicenseState, type LicenseState } from './api/license';
 import { AdminLogin } from './pages/admin/AdminLogin';
 import { AdminDashboard } from './pages/admin/AdminDashboard';
 import { AdminOrders } from './pages/admin/AdminOrders';
@@ -37,6 +39,22 @@ function App() {
   // Отслеживание оплаты по блокчейну и авто-отмена просроченных заявок
   usePaymentTracking();
 
+  // Контроль лицензии: при отзыве/истечении сайт блокируется заглушкой.
+  // При недоступности бэкенда не блокируем (locked становится true только
+  // по явному ответу сервера), чтобы не ронять сайт из-за временного сбоя.
+  const [license, setLicense] = useState<LicenseState | null>(null);
+  useEffect(() => {
+    let active = true;
+    const check = () => {
+      fetchLicenseState()
+        .then((s) => { if (active) setLicense(s); })
+        .catch(() => { /* бэкенд недоступен — не блокируем */ });
+    };
+    check();
+    const id = setInterval(check, 5 * 60 * 1000);
+    return () => { active = false; clearInterval(id); };
+  }, []);
+
   useEffect(() => {
     // Apply theme on mount
     if (theme === 'dark') {
@@ -48,6 +66,11 @@ function App() {
 
   // Check if maintenance mode is enabled and user is not admin
   const isMaintenanceMode = settings.maintenanceMode && !isAdminAuthenticated;
+
+  // Лицензия отозвана/истекла — перекрываем всё приложение заглушкой с причиной.
+  if (license?.locked) {
+    return <LicenseLockedPage state={license} />;
+  }
 
   return (
     <BrowserRouter>

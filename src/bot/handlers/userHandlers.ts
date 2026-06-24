@@ -332,7 +332,7 @@ export async function handleReviews(_message: TelegramMessage, _session: BotSess
 export async function handleSupport(_message: TelegramMessage, _session: BotSession) {
   const text = `📞 Customer Support\n\n` +
     `We're here to help! Contact us through:\n\n` +
-    `✉️ Email: support@exchangekit.io\n` +
+    `✉️ Email: support@exchangekit.cc\n` +
     `💬 Telegram: @exchangekit_support\n` +
     `📱 Phone: +1 234 567 8900\n\n` +
     `Support hours: 24/7\n` +

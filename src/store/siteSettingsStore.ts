@@ -112,7 +112,7 @@ const defaultSettings: SiteSettings = {
   showTestimonials: true,
   
   footerDescription: 'Надежный сервис обмена криптовалют и электронных денег',
-  footerEmail: 'support@exchangekit.io',
+  footerEmail: 'support@exchangekit.cc',
   footerTelegram: '@exchangekit_support',
   footerCopyright: '© 2024 ExchangeKit. Все права защищены.',
   

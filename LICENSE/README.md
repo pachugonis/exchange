@@ -1,7 +1,8 @@
 # ExchangeKit License Server
 
 Сервер лицензий ExchangeKit: валидация лицензий, привязка к домену и **раздача
-подписанных релизов** клиентским установкам. Разворачивается на **вашем** сервере
+подписанных релизов** клиентским установкам. Боевой сервер работает по адресу
+**`https://license.exchangekit.cc`**. Разворачивается на **вашем** сервере
 (не у клиента). Хранилище — JSON-файл `license-database.json`.
 
 Установщик клиента ([../INSTALL/install.sh](../INSTALL/install.sh)) активирует
@@ -28,8 +29,9 @@ curl http://localhost:3001/api/health
 
 ## Веб-админка
 
-Веб-интерфейс управления лицензиями доступен по адресу **`/admin`**
-(например, `http://localhost:3001/admin`). Вход по логину и паролю из `.env`
+Веб-интерфейс управления лицензиями доступен по адресу **`/admin`** — на боевом
+сервере это `https://license.exchangekit.cc/admin` (локально —
+`http://localhost:3001/admin`). Вход по логину и паролю из `.env`
 (`ADMIN_USERNAME`, `ADMIN_PASSWORD`).
 
 Возможности:
@@ -49,10 +51,12 @@ curl http://localhost:3001/api/health
 (pm2 больше не используется).
 
 **Проще всего — автоустановщик на домен** (ставит Node/nginx/certbot, systemd-сервис
-и reverse-proxy c HTTPS одной командой):
+и reverse-proxy c HTTPS одной командой). Боевой сервер развёрнут на
+`license.exchangekit.cc`:
 
 ```bash
-sudo bash LICENSE/install-license-server.sh
+sudo DOMAIN=license.exchangekit.cc ENABLE_SSL=y LE_EMAIL=you@example.com \
+  bash LICENSE/install-license-server.sh
 ```
 
 Подробности — [DEPLOY.md](./DEPLOY.md). Ниже — ручная установка по шагам.
@@ -89,7 +93,7 @@ curl http://127.0.0.1:3001/api/health
 ```nginx
 server {
     listen 80;
-    server_name license.yourdomain.com;
+    server_name license.exchangekit.cc;
     location / {
         proxy_pass http://127.0.0.1:3001;
         proxy_set_header Host $host;
@@ -103,7 +107,7 @@ server {
 ```bash
 sudo ln -s /etc/nginx/sites-available/license-server /etc/nginx/sites-enabled/
 sudo nginx -t && sudo systemctl restart nginx
-sudo certbot --nginx -d license.yourdomain.com
+sudo certbot --nginx -d license.exchangekit.cc
 sudo ufw allow 'Nginx Full'
 ```
 
@@ -149,7 +153,7 @@ RELEASE_SSH_TARGET=license@HOST:/opt/license-server/releases \
 
 **Создать лицензию:**
 ```bash
-curl -X POST https://license.yourdomain.com/api/admin/licenses \
+curl -X POST https://license.exchangekit.cc/api/admin/licenses \
   -H "Content-Type: application/json" \
   -H "X-Admin-Password: <ADMIN_PASSWORD>"
 ```
@@ -160,7 +164,7 @@ curl -X POST https://license.yourdomain.com/api/admin/licenses \
 
 **Метаданные последнего релиза:**
 ```bash
-curl "https://license.yourdomain.com/api/release/latest?licenseKey=LIC-...&domain=exchange.example.com&channel=stable"
+curl "https://license.exchangekit.cc/api/release/latest?licenseKey=LIC-...&domain=exchange.example.com&channel=stable"
 ```
 
 ## Лицензия

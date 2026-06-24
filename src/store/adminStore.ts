@@ -38,7 +38,7 @@ const defaultSettings: AdminSettings = {
   },
   autoConfirmThreshold: 100,
   maintenanceMode: false,
-  supportEmail: 'support@exchangekit.io',
+  supportEmail: 'support@exchangekit.cc',
   supportTelegram: '@exchangekit_support',
   // SMTP Settings
   smtpEnabled: false,
@@ -47,7 +47,7 @@ const defaultSettings: AdminSettings = {
   smtpSecure: false,
   smtpUser: '',
   smtpPassword: '',
-  smtpFromEmail: 'noreply@exchangekit.io',
+  smtpFromEmail: 'noreply@exchangekit.cc',
   smtpFromName: 'ExchangeKit',
 };
 

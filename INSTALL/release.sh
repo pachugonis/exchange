@@ -17,7 +17,12 @@
 #
 # Переменные окружения:
 #   RELEASE_PRIVATE_KEY  путь к приватному ключу (по умолч. release-keys/release-private.pem)
-#   RELEASE_SSH_TARGET   куда залить зеркало, напр. license@host:/opt/license-server/releases
+#   RELEASE_SSH_TARGET   куда залить зеркало: user@host:/path
+#                        боевой сервер: root@license.exchangekit.cc:/opt/license-server/releases
+#   RELEASE_SSH_SUDO     auto (по умолч.) — для root без sudo, иначе через `sudo rsync`.
+#                        Можно задать явно 0/1.
+#   RELEASE_OWNER        владелец файлов на сервере (по умолч. license:license) —
+#                        выставляется всегда, чтобы сервис (юзер license) их прочитал.
 #############################################################################
 set -euo pipefail
 
@@ -122,14 +127,32 @@ console.log(`  manifest: ${channel} → ${version}`);
 NODE
 ok "Зеркало обновлено: ${MIRROR_DIR}"
 
-info "6/6 Публикация на лиц-сервер…"
+info "6/6 Публикация на боевой лиц-сервер…"
 if [[ -n "${RELEASE_SSH_TARGET:-}" ]]; then
-  rsync -av "$MIRROR_DIR/" "$RELEASE_SSH_TARGET/"
-  ok "Залито на ${RELEASE_SSH_TARGET}"
+  REMOTE_HOST="${RELEASE_SSH_TARGET%%:*}"   # user@host
+  REMOTE_PATH="${RELEASE_SSH_TARGET#*:}"    # /opt/license-server/releases
+  [[ "$REMOTE_HOST" != "$RELEASE_SSH_TARGET" ]] || die "RELEASE_SSH_TARGET должен быть в формате user@host:/path"
+  REMOTE_OWNER="${RELEASE_OWNER:-license:license}"
+
+  # Под root sudo не нужен; под обычным ssh-пользователем — нужен, т.к. каталог
+  # релизов принадлежит системному юзеру license (shell=nologin).
+  REMOTE_USER="${REMOTE_HOST%@*}"
+  if [[ "${RELEASE_SSH_SUDO:-auto}" == "auto" ]]; then
+    [[ "$REMOTE_USER" == "root" ]] && RELEASE_SSH_SUDO=0 || RELEASE_SSH_SUDO=1
+  fi
+  if [[ "$RELEASE_SSH_SUDO" == "1" ]]; then SUDO="sudo "; else SUDO=""; fi
+
+  # Заливаем зеркало и ВСЕГДА возвращаем владельца на license:license,
+  # иначе сервис (работает под license) не прочитает свежий релиз.
+  ssh "$REMOTE_HOST" "${SUDO}mkdir -p '$REMOTE_PATH'"
+  rsync -av --rsync-path="${SUDO}rsync" "$MIRROR_DIR/" "$RELEASE_SSH_TARGET/"
+  ssh "$REMOTE_HOST" "${SUDO}chown -R '$REMOTE_OWNER' '$REMOTE_PATH'"
+  ok "Залито на ${RELEASE_SSH_TARGET} (владелец ${REMOTE_OWNER})"
 else
   warn "RELEASE_SSH_TARGET не задан — пропускаю заливку."
-  echo "    Залейте вручную, например:"
-  echo "    rsync -av ${MIRROR_DIR}/ license@HOST:/opt/license-server/releases/"
+  echo "    Залейте на боевой сервер так:"
+  echo "    RELEASE_SSH_TARGET=root@license.exchangekit.cc:/opt/license-server/releases \\"
+  echo "      INSTALL/release.sh ${VERSION} ${CHANNEL}"
 fi
 
 echo

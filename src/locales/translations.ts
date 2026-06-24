@@ -154,6 +154,7 @@ export const translations = {
     ru: {
       whyChooseUs: 'Почему выбирают нас',
       startExchange: 'Начать обмен',
+      adminPanel: 'Админпанель',
       newsletter: {
         title: 'Подписывайтесь на рассылку',
         description: 'Получайте новости и специальные предложения',
@@ -186,6 +187,7 @@ export const translations = {
     en: {
       whyChooseUs: 'Why Choose Us',
       startExchange: 'Start Exchange',
+      adminPanel: 'Admin Panel',
       newsletter: {
         title: 'Subscribe to Newsletter',
         description: 'Get news and special offers',

@@ -53,10 +53,10 @@ export const FAQ: React.FC = () => {
           </p>
           <div className="flex flex-wrap gap-4 justify-center">
             <a
-              href="mailto:support@exchangekit.io"
+              href="mailto:support@exchangekit.cc"
               className="text-primary-500 hover:text-primary-600 font-medium"
             >
-              support@exchangekit.io
+              support@exchangekit.cc
             </a>
             <span className="text-dark-400">•</span>
             <a

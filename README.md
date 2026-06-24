@@ -129,7 +129,7 @@ npm run dev
 
 ### Production развертывание
 
-1. Получите лицензию на https://license.exchangekit.io
+1. Получите лицензию на https://license.exchangekit.cc
 2. Настройте `.env` с вашим ключом лицензии
 3. Соберите проект: `npm run build`
 4. Разверните на вашем сервере

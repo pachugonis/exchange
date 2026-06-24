@@ -9,6 +9,7 @@ import { Testimonials, PopularDirections } from '../components/home';
 import { ExchangeSteps } from '../components/exchange';
 import { useAnnouncementStore } from '../store/announcementStore';
 import { useSiteSettingsStore } from '../store/siteSettingsStore';
+import { useAdminStore } from '../store/adminStore';
 import { useDesignVariant } from '../hooks/useDesignVariant';
 import { useTranslation } from '../hooks/useTranslation';
 import { currencies } from '../data/currencies';
@@ -16,6 +17,7 @@ import { currencies } from '../data/currencies';
 export const Home: React.FC = () => {
   const { getActiveAnnouncement } = useAnnouncementStore();
   const { settings } = useSiteSettingsStore();
+  const isAdmin = useAdminStore((state) => state.isAuthenticated);
   const designVariant = useDesignVariant();
   const { t } = useTranslation();
   const [showAnnouncement, setShowAnnouncement] = useState(true);
@@ -71,6 +73,17 @@ export const Home: React.FC = () => {
         </div>
       )}
       
+      {/* Admin quick access — visible only to authenticated admin */}
+      {isAdmin && (
+        <div className="container mx-auto px-4 pt-6 flex justify-end">
+          <Link to="/admin/dashboard">
+            <Button variant="outline" size="sm" className="gap-2">
+              <Shield className="w-4 h-4" /> {t('home.adminPanel')}
+            </Button>
+          </Link>
+        </div>
+      )}
+
       {/* Hero Section */}
       <section className="py-20 px-4">
         <div className="container mx-auto">

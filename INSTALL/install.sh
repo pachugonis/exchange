@@ -34,7 +34,7 @@ DB_USER="exchange_user"
 NODE_MAJOR=20
 
 # Адрес вашего лицензионного сервера (можно переопределить переменной окружения).
-LICENSE_SERVER_URL="${LICENSE_SERVER_URL:-https://license.exchangekit.io}"
+LICENSE_SERVER_URL="${LICENSE_SERVER_URL:-https://license.exchangekit.cc}"
 RELEASE_CHANNEL="${RELEASE_CHANNEL:-stable}"
 
 INSTALL_LOG="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/installation.log"
@@ -98,7 +98,7 @@ DOMAIN=""; ADMIN_EMAIL=""; ADMIN_PASSWORD=""; ADMIN_NAME="Administrator"
 LICENSE_KEY=""; LICENSE_EMAIL=""; LICENSE_TOKEN=""
 ENABLE_SSL="n"
 SMTP_HOST=""; SMTP_PORT="587"; SMTP_USER=""; SMTP_PASSWORD=""
-SMTP_FROM_EMAIL="noreply@exchangekit.io"; SMTP_FROM_NAME="ExchangeKit"
+SMTP_FROM_EMAIL="noreply@exchangekit.cc"; SMTP_FROM_NAME="ExchangeKit"
 ETHERSCAN_API_KEY=""
 
 collect_config() {
@@ -149,7 +149,6 @@ collect_config() {
   echo -e "${CYAN}─────────────────────────────────────────────${NC}"
   echo "Домен:        $DOMAIN"
   echo "Лицензия:     $LICENSE_KEY ($LICENSE_EMAIL)"
-  echo "Лиц-сервер:   $LICENSE_SERVER_URL"
   echo "Админ:        $ADMIN_EMAIL"
   echo "HTTPS:        $([[ "$ENABLE_SSL" == y* ]] && echo да || echo нет)"
   echo "SMTP:         $([[ -n "$SMTP_HOST" ]] && echo "$SMTP_HOST:$SMTP_PORT" || echo 'лог в консоль')"
@@ -483,6 +482,19 @@ EOF
 finish() {
   local scheme="http"
   [[ "$ENABLE_SSL" == y* ]] && scheme="https"
+
+  # Финальный рестарт API: к этому моменту .env, БД и nginx/SSL уже готовы,
+  # а сервис стартовал раньше — перезапускаем, чтобы он точно поднялся рабочим.
+  info "Перезапуск API…"
+  systemctl restart "${SERVICE_NAME}"
+  local i
+  for i in $(seq 1 20); do
+    curl -fsS "http://127.0.0.1:${API_PORT}/health" >/dev/null 2>&1 && break
+    sleep 1
+  done
+  curl -fsS "http://127.0.0.1:${API_PORT}/health" >/dev/null 2>&1 \
+    && ok "API работает" \
+    || warn "API не ответил на /health — проверьте: journalctl -u ${SERVICE_NAME} -n 50"
 
   cat > "${APP_DIR}/.credentials" <<EOF
 ExchangeKit — учётные данные администратора

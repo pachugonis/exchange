@@ -7,6 +7,7 @@ import { authRouter } from './routes/auth.ts';
 import { kycRouter } from './routes/kyc.ts';
 import { paymentsRouter } from './routes/payments.ts';
 import { systemRouter } from './routes/system.ts';
+import { startLicenseWatch, isSiteLocked, getLicenseState } from './lib/license.ts';
 
 /** Seed an admin account from env if one does not already exist. */
 async function ensureAdmin(): Promise<void> {
@@ -30,6 +31,7 @@ async function ensureAdmin(): Promise<void> {
 async function main(): Promise<void> {
   await initSchema();
   await ensureAdmin();
+  await startLicenseWatch();
 
   const app = express();
   app.set('trust proxy', 1); // correct client IPs behind a proxy (for rate limiting)
@@ -38,6 +40,21 @@ async function main(): Promise<void> {
   app.use(express.json({ limit: '12mb' }));
 
   app.get('/health', (_req, res) => res.json({ ok: true }));
+
+  // Статус лицензии для фронтенда (страница-заглушка при отзыве). Публичный,
+  // должен оставаться доступным даже когда сайт заблокирован.
+  app.get('/api/system/license', (_req, res) => res.json(getLicenseState()));
+
+  // Контроль лицензии: при отзыве/истечении блокируем весь API — сайт перестаёт
+  // работать, а фронтенд показывает причину (см. server/lib/license.ts).
+  app.use('/api', (req, res, next) => {
+    if (isSiteLocked() && req.path !== '/system/license') {
+      const s = getLicenseState();
+      return res.status(403).json({ error: 'LICENSE_LOCKED', status: s.status, message: s.message });
+    }
+    next();
+  });
+
   app.use('/api/auth', authRouter);
   app.use('/api/kyc', kycRouter);
   app.use('/api/payments', paymentsRouter);

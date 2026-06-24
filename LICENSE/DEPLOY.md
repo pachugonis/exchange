@@ -6,7 +6,8 @@
 
 Один скрипт ставит Node.js, nginx, certbot, создаёт пользователя `license`,
 копирует сервер в `/opt/license-server`, генерирует `.env` с секретами, поднимает
-systemd-сервис и nginx reverse-proxy на ваш домен с HTTPS.
+systemd-сервис и nginx reverse-proxy на ваш домен с HTTPS. Боевой сервер работает
+на домене **`license.exchangekit.cc`**.
 
 ```bash
 # на VPS, из корня репозитория (где лежит папка LICENSE)
@@ -18,12 +19,12 @@ sudo bash LICENSE/install-license-server.sh
 окружения:
 
 ```bash
-sudo DOMAIN=license.example.com ENABLE_SSL=y LE_EMAIL=you@example.com \
+sudo DOMAIN=license.exchangekit.cc ENABLE_SSL=y LE_EMAIL=you@example.com \
   bash LICENSE/install-license-server.sh
 ```
 
-После установки веб-админка доступна на `https://<домен>/admin`. Повторный запуск
-безопасен — `.env` и `license-database.json` не перезаписываются.
+После установки веб-админка доступна на `https://license.exchangekit.cc/admin`.
+Повторный запуск безопасен — `.env` и `license-database.json` не перезаписываются.
 
 ## Ручная установка за несколько минут
 
@@ -77,10 +78,16 @@ curl -X POST http://127.0.0.1:3001/api/admin/licenses \
 # один раз: ключи подписи (публичный — в install.sh/update.sh)
 INSTALL/release.sh keygen
 
-# собрать и залить релиз
-RELEASE_SSH_TARGET=license@HOST:/opt/license-server/releases \
+# собрать и залить релиз на боевой сервер license.exchangekit.cc (заходим под root).
+# Каталог релизов принадлежит системному юзеру license (nologin), поэтому скрипт
+# после заливки сам вернёт владельца на license:license.
+RELEASE_SSH_TARGET=root@license.exchangekit.cc:/opt/license-server/releases \
   INSTALL/release.sh 1.0.0 stable
 ```
+
+> Если ходите не под root, а под обычным sudo-пользователем — скрипт сам зальёт
+> через `sudo rsync` (определяется автоматически). Принудительно: `RELEASE_SSH_SUDO=0|1`.
+> Сменить владельца на сервере — `RELEASE_OWNER=user:group`.
 
 ## Полезные команды
 

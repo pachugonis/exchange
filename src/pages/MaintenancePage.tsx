@@ -44,10 +44,10 @@ export const MaintenancePage: React.FC = () => {
           
           <div className="flex flex-wrap gap-4 justify-center">
             <a
-              href="mailto:support@exchangekit.io"
+              href="mailto:support@exchangekit.cc"
               className="inline-flex items-center gap-2 px-6 py-3 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition"
             >
-              📧 support@exchangekit.io
+              📧 support@exchangekit.cc
             </a>
             
             <a

@@ -306,7 +306,7 @@ export const Contact: React.FC = () => {
             <div className="space-y-3">
               <div>
                 <p className="text-sm text-dark-500 mb-1">Email</p>
-                <p className="font-medium">support@exchangekit.io</p>
+                <p className="font-medium">support@exchangekit.cc</p>
               </div>
               <div>
                 <p className="text-sm text-dark-500 mb-1">Telegram</p>

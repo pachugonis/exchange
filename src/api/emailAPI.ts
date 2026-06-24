@@ -125,7 +125,7 @@ export const sendEmail = async (request: SendEmailRequest): Promise<{ success: b
       to: request.to,
       from: smtpSettings?.smtpEnabled 
         ? `${smtpSettings.smtpFromName} <${smtpSettings.smtpFromEmail}>`
-        : 'noreply@exchangekit.io',
+        : 'noreply@exchangekit.cc',
       subject: request.subject,
       type: request.type,
       status: 'sent',

@@ -51,7 +51,7 @@ export const config = {
     user: process.env.SMTP_USER ?? '',
     password: process.env.SMTP_PASSWORD ?? '',
     fromName: process.env.SMTP_FROM_NAME ?? 'ExchangeKit',
-    fromEmail: process.env.SMTP_FROM_EMAIL ?? 'noreply@exchangekit.io',
+    fromEmail: process.env.SMTP_FROM_EMAIL ?? 'noreply@exchangekit.cc',
   },
 
   // Optional seed admin (replaces the old hardcoded admin123).

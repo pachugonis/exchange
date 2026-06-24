@@ -72,7 +72,7 @@ collect_config() {
   [[ -f "${SOURCE_DIR}/server.mjs" ]] || die "server.mjs не найден рядом со скриптом (${SOURCE_DIR})."
 
   if [[ -z "$DOMAIN" ]]; then
-    read -rp "Домен лицензионного сервера (например license.example.com): " DOMAIN
+    read -rp "Домен лицензионного сервера (например license.exchangekit.cc): " DOMAIN
   fi
   [[ -n "$DOMAIN" ]] || die "Домен обязателен."
 
