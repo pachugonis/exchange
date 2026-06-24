@@ -104,6 +104,11 @@
     .copy { background: transparent; border: 1px solid var(--border); color: var(--muted);
       border-radius: 6px; padding: 2px 7px; font-size: 11px; }
     .copy:hover { color: var(--text); border-color: var(--accent); }
+    .iconbtn { background: transparent; border: 1px solid var(--border); color: var(--muted);
+      border-radius: 7px; padding: 6px 10px; font-size: 12px; }
+    .iconbtn:hover { color: var(--text); border-color: var(--accent); }
+    .iconbtn.danger:hover { color: var(--red); border-color: var(--red); }
+    .actions-cell { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
     .empty { text-align: center; color: var(--muted); padding: 40px; }
 
     /* toast */
@@ -186,6 +191,20 @@
       <div class="modal-actions">
         <button class="btn ghost" id="copyKeyBtn">Скопировать</button>
         <button class="btn" id="closeModalBtn">Готово</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Modal: rebind domain ===== -->
+  <div class="overlay" id="rebindModal">
+    <div class="card modal">
+      <h2>Перепривязать домен</h2>
+      <p class="muted">Текущие привязки будут сняты. Укажите новый домен или оставьте поле пустым, чтобы клиент привязал его сам при активации.</p>
+      <label for="rebindDomain">Новый домен</label>
+      <input id="rebindDomain" placeholder="example.com" autocapitalize="off" autocorrect="off" spellcheck="false" />
+      <div class="modal-actions" style="margin-top:20px">
+        <button class="btn ghost" id="rebindCancelBtn">Отмена</button>
+        <button class="btn" id="rebindSaveBtn">Сохранить</button>
       </div>
     </div>
   </div>
@@ -307,11 +326,15 @@
           <td class="muted">${fmtDate(l.issuedAt)}</td>
           <td class="muted">${l.validationCount || 0}</td>
           <td>
-            <select data-id="${l.id}" class="statusSel">
-              <option value="active" ${l.status==='active'?'selected':''}>Активна</option>
-              <option value="suspended" ${l.status==='suspended'?'selected':''}>Приостановить</option>
-              <option value="revoked" ${l.status==='revoked'?'selected':''}>Отозвать</option>
-            </select>
+            <div class="actions-cell">
+              <select data-id="${l.id}" class="statusSel">
+                <option value="active" ${l.status==='active'?'selected':''}>Активна</option>
+                <option value="suspended" ${l.status==='suspended'?'selected':''}>Приостановить</option>
+                <option value="revoked" ${l.status==='revoked'?'selected':''}>Отозвать</option>
+              </select>
+              <button class="iconbtn rebindBtn" data-id="${l.id}" title="Перепривязать домен">Домен</button>
+              <button class="iconbtn danger delBtn" data-id="${l.id}" data-key="${l.licenseKey}" title="Удалить лицензию">Удалить</button>
+            </div>
           </td>
         </tr>`;
       }).join('');
@@ -320,6 +343,10 @@
         b.addEventListener('click', () => copy(b.dataset.copy)));
       document.querySelectorAll('.statusSel').forEach(sel =>
         sel.addEventListener('change', () => changeStatus(sel.dataset.id, sel.value)));
+      document.querySelectorAll('.rebindBtn').forEach(b =>
+        b.addEventListener('click', () => openRebind(b.dataset.id)));
+      document.querySelectorAll('.delBtn').forEach(b =>
+        b.addEventListener('click', () => deleteLicense(b.dataset.id, b.dataset.key)));
     }
     $('#search').addEventListener('input', render);
 
@@ -329,6 +356,40 @@
         toast('Статус обновлён');
         await load();
       } catch (err) { toast(err.message); await load(); }
+    }
+
+    // ---------- Rebind domain ----------
+    let rebindId = null;
+    function openRebind(id) {
+      rebindId = id;
+      const lic = licenses.find(l => String(l.id) === String(id));
+      const current = lic && (lic.boundDomains || [])[0];
+      $('#rebindDomain').value = current ? current.domain : '';
+      $('#rebindModal').classList.add('show');
+      $('#rebindDomain').focus();
+    }
+    function closeRebind() { $('#rebindModal').classList.remove('show'); rebindId = null; }
+    $('#rebindCancelBtn').addEventListener('click', closeRebind);
+    $('#rebindModal').addEventListener('click', (e) => { if (e.target.id === 'rebindModal') closeRebind(); });
+    $('#rebindSaveBtn').addEventListener('click', async () => {
+      if (rebindId == null) return;
+      try {
+        const domain = $('#rebindDomain').value.trim();
+        await api(`/api/admin/licenses/${rebindId}/domain`, { method: 'PATCH', body: JSON.stringify({ domain }) });
+        toast(domain ? 'Домен перепривязан' : 'Привязки сняты');
+        closeRebind();
+        await load();
+      } catch (err) { toast(err.message); }
+    });
+
+    // ---------- Delete ----------
+    async function deleteLicense(id, key) {
+      if (!confirm(`Удалить лицензию ${key}?\n\nЭто действие необратимо: ключ, привязки доменов и журналы будут удалены.`)) return;
+      try {
+        await api(`/api/admin/licenses/${id}`, { method: 'DELETE' });
+        toast('Лицензия удалена');
+        await load();
+      } catch (err) { toast(err.message); }
     }
 
     // ---------- Generate ----------

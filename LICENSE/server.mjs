@@ -366,6 +366,64 @@ app.patch('/api/admin/licenses/:id/status', authenticateAdmin, async (req, res) 
   });
 });
 
+// Перепривязка домена из веб-админки.
+// Тело: { domain }. Если domain пустой — все привязки снимаются, и клиент
+// сможет привязать домен заново при активации. Если указан — все текущие
+// привязки деактивируются и создаётся новая на указанный домен.
+app.patch('/api/admin/licenses/:id/domain', authenticateAdmin, async (req, res) => {
+  const license = database.licenses.find(l => l.id === parseInt(req.params.id, 10));
+  if (!license) {
+    return res.status(404).json({ success: false, error: 'NOT_FOUND', message: 'License not found' });
+  }
+
+  const domain = (req.body && typeof req.body.domain === 'string') ? req.body.domain.trim().toLowerCase() : '';
+
+  // Снимаем все текущие активные привязки этой лицензии
+  for (const b of database.domainBindings) {
+    if (b.licenseId === license.id && b.isActive) b.isActive = false;
+  }
+
+  if (domain) {
+    const now = Date.now();
+    database.domainBindings.push({
+      id: database.nextId.binding++,
+      licenseId: license.id,
+      domain,
+      protocol: 'https',
+      boundAt: now,
+      lastValidated: now,
+      validationCount: 0,
+      isActive: true,
+    });
+  }
+
+  await saveDatabase();
+
+  res.json({
+    success: true,
+    license: { ...license, boundDomains: getDomainBindings(license.id) },
+    message: domain ? `Domain rebound to ${domain}` : 'Domain bindings cleared',
+  });
+});
+
+// Удаление лицензии из веб-админки вместе со всеми её привязками и журналами
+app.delete('/api/admin/licenses/:id', authenticateAdmin, async (req, res) => {
+  const id = parseInt(req.params.id, 10);
+  const index = database.licenses.findIndex(l => l.id === id);
+  if (index === -1) {
+    return res.status(404).json({ success: false, error: 'NOT_FOUND', message: 'License not found' });
+  }
+
+  database.licenses.splice(index, 1);
+  database.domainBindings = database.domainBindings.filter(b => b.licenseId !== id);
+  database.validationLogs = (database.validationLogs || []).filter(l => l.licenseId !== id);
+  database.downloadLogs = (database.downloadLogs || []).filter(l => l.licenseId !== id);
+
+  await saveDatabase();
+
+  res.json({ success: true, message: 'License deleted successfully' });
+});
+
 app.post('/api/license/activate', async (req, res) => {
   const { licenseKey, customerEmail, domain, protocol = 'https', termsAgreed } = req.body;
 
