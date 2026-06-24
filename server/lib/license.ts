@@ -10,11 +10,14 @@
  *   - suspended  → сайт работает (обновления и так блокирует лиц-сервер);
  *   - revoked    → сайт блокируется (isSiteLocked() = true), фронтенд показывает причину;
  *   - expired    → то же, что revoked;
+ *   - домен не привязан к лицензии (DOMAIN_MISMATCH) → блокируется, даже если
+ *     сама лицензия active: ключ не выдан для этого домена;
  *   - недоступен лиц-сервер → держим прошлый вердикт; если успешной проверки не было
  *     дольше LICENSE_GRACE_DAYS — блокируем (защита от обхода фаерволом),
  *     при этом кратковременные сбои сети сайт не роняют.
  *
- * Не настроено (нет LICENSE_* в .env, напр. в dev) → контроль выключен.
+ * Не настроено (нет LICENSE_* в .env) → сайт заблокирован. Лицензия обязательна:
+ * единственный способ разблокировать сайт — подтверждённая активная лицензия.
  */
 import { readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
@@ -40,20 +43,24 @@ interface State {
 }
 
 let state: State = {
-  status: CONFIGURED ? 'unknown' : 'active',
+  status: 'unknown',
   message: '',
-  lockSite: false,
+  // Лицензия обязательна: пока она не подтверждена (в т.ч. если LICENSE_* не
+  // настроены) — сайт заблокирован.
+  lockSite: true,
   lastGoodAt: 0,
   checkedAt: 0,
 };
 
 /** Человекочитаемая причина для страницы-заглушки. */
-function reasonFor(status: LicenseStatus, serverMessage: string): string {
+function reasonFor(status: LicenseStatus | 'domain', serverMessage: string): string {
   switch (status) {
     case 'revoked':
       return 'Действие лицензии прекращено. Доступ к сервису закрыт. Обратитесь к поставщику.';
     case 'expired':
       return 'Срок действия лицензии истёк. Продлите лицензию, чтобы возобновить работу.';
+    case 'domain':
+      return 'Лицензия не выдана для этого домена. Доступ к сервису закрыт. Обратитесь к поставщику.';
     default:
       return serverMessage || 'Лицензия не подтверждена.';
   }
@@ -87,17 +94,31 @@ async function refresh(): Promise<void> {
       body: JSON.stringify({ licenseKey: KEY, domain: DOMAIN }),
       signal: AbortSignal.timeout(15_000),
     });
-    const data = (await resp.json()) as { status?: LicenseStatus; error?: string; message?: string };
+    const data = (await resp.json()) as {
+      valid?: boolean;
+      status?: LicenseStatus;
+      domainMatch?: boolean;
+      error?: string;
+      message?: string;
+    };
 
     // Несуществующий ключ статуса не присылает — трактуем как отзыв.
     let status = data.status;
     if (!status && data.error === 'INVALID_KEY') status = 'revoked';
     if (!status) throw new Error('license server returned no status');
 
+    // Домен не привязан к лицензии: сам ключ может быть active, но для этого
+    // домена он не выдан — закрываем доступ (иначе чужой/неоплаченный домен
+    // работал бы по любому существующему ключу).
+    const domainMismatch =
+      data.valid === false && (data.domainMatch === false || data.error === 'DOMAIN_MISMATCH');
+
     state.status = status;
     state.lastGoodAt = Date.now();
-    state.lockSite = status === 'revoked' || status === 'expired';
-    state.message = state.lockSite ? reasonFor(status, data.message || '') : '';
+    state.lockSite = status === 'revoked' || status === 'expired' || domainMismatch;
+    state.message = state.lockSite
+      ? reasonFor(domainMismatch ? 'domain' : status, data.message || '')
+      : '';
   } catch {
     // Лиц-сервер недоступен: вердикт revoked/expired уже зафиксирован и держится.
     // Если же последний успешный контакт был давно — блокируем после grace.
@@ -109,6 +130,10 @@ async function refresh(): Promise<void> {
           `Не удалось проверить лицензию более ${GRACE_DAYS} дн. ` +
           'Проверьте доступ к лицензионному серверу.';
       }
+    } else if (state.lockSite && !state.message) {
+      // Лицензия ещё ни разу не подтверждена (первый запуск без кэша), а
+      // стартовое состояние — заблокировано. Покажем понятную причину.
+      state.message = 'Лицензия не подтверждена. Проверьте доступ к лицензионному серверу.';
     }
   } finally {
     state.checkedAt = Date.now();
@@ -119,7 +144,11 @@ async function refresh(): Promise<void> {
 /** Запустить фоновую проверку лицензии (вызывать один раз при старте). */
 export async function startLicenseWatch(): Promise<void> {
   if (!CONFIGURED) {
-    console.warn('[license] LICENSE_* не настроены — контроль лицензии выключен');
+    state.status = 'unknown';
+    state.lockSite = true;
+    state.message =
+      'Лицензия не настроена. Укажите LICENSE_SERVER_URL, LICENSE_KEY и LICENSE_DOMAIN.';
+    console.error('[license] LICENSE_* не настроены — сайт заблокирован до настройки лицензии');
     return;
   }
   await loadPersisted();
