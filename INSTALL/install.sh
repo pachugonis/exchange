@@ -100,6 +100,7 @@ ENABLE_SSL="n"
 SMTP_HOST=""; SMTP_PORT="587"; SMTP_USER=""; SMTP_PASSWORD=""
 SMTP_FROM_EMAIL="noreply@exchangekit.cc"; SMTP_FROM_NAME="ExchangeKit"
 ETHERSCAN_API_KEY=""
+AMLBOT_ACCESS_ID=""; AMLBOT_ACCESS_KEY=""
 
 collect_config() {
   phase "Шаг 1/9 — Конфигурация"
@@ -146,6 +147,14 @@ collect_config() {
   read -rp "Etherscan API key (Enter — пропустить): " ETHERSCAN_API_KEY
 
   echo
+  info "AMLBot — AML-проверка отправителей входящих транзакций (риск-скоринг)."
+  info "Ключи выдаются в кабинете AMLBot (раздел API). Без них AML-проверка отключена."
+  read -rp "AMLBot access ID (Enter — пропустить): " AMLBOT_ACCESS_ID
+  if [[ -n "$AMLBOT_ACCESS_ID" ]]; then
+    read -rsp "AMLBot access key: " AMLBOT_ACCESS_KEY; echo
+  fi
+
+  echo
   echo -e "${CYAN}─────────────────────────────────────────────${NC}"
   echo "Домен:        $DOMAIN"
   echo "Лицензия:     $LICENSE_KEY ($LICENSE_EMAIL)"
@@ -153,6 +162,7 @@ collect_config() {
   echo "HTTPS:        $([[ "$ENABLE_SSL" == y* ]] && echo да || echo нет)"
   echo "SMTP:         $([[ -n "$SMTP_HOST" ]] && echo "$SMTP_HOST:$SMTP_PORT" || echo 'лог в консоль')"
   echo "Etherscan:    $([[ -n "$ETHERSCAN_API_KEY" ]] && echo задан || echo нет)"
+  echo "AMLBot:       $([[ -n "$AMLBOT_ACCESS_ID" ]] && echo задан || echo нет)"
   echo -e "${CYAN}─────────────────────────────────────────────${NC}"
   read -rp "Продолжить установку? [Y/n]: " c; c="${c,,}"
   [[ -z "$c" || "$c" == y* ]] || die "Установка отменена."
@@ -324,6 +334,15 @@ ADMIN_NAME=${ADMIN_NAME}
 
 # Отслеживание оплаты в Ethereum (ETH/ERC20)
 ETHERSCAN_API_KEY=${ETHERSCAN_API_KEY}
+
+# AML-проверка транзакций через AMLBot (пустые ключи → проверка отключена)
+AMLBOT_ACCESS_ID=${AMLBOT_ACCESS_ID}
+AMLBOT_ACCESS_KEY=${AMLBOT_ACCESS_KEY}
+AMLBOT_BASE_URL=https://extrnlapiendpoint.silencatech.com
+AMLBOT_FLOW=fast
+AMLBOT_LOCALE=en
+AMLBOT_MEDIUM_THRESHOLD=20
+AMLBOT_HIGH_THRESHOLD=79
 
 # SMTP (пустой SMTP_HOST → письма в лог)
 SMTP_HOST=${SMTP_HOST}
