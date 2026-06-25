@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { useOrderStore } from '../store/orderStore';
 import { checkIncomingPayment } from '../api/blockchainAPI';
+import { checkOrderAml } from '../api/amlAPI';
 import { PAYMENT_CHECK_INTERVAL } from '../utils/constants';
 
 /**
@@ -19,11 +20,57 @@ export function usePaymentTracking(): void {
   // Адреса/заявки, для которых сейчас выполняется запрос к блокчейну,
   // чтобы не запускать параллельные проверки одной и той же заявки.
   const inFlight = useRef<Set<string>>(new Set());
+  // Заявки, по которым сейчас выполняется AML-проверка.
+  const amlInFlight = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     const tick = async () => {
       const { orders, expireOrder, confirmPayment } = useOrderStore.getState();
       const now = Date.now();
+
+      // AML-скоринг отправителя по заявкам, где оплата уже получена, а
+      // проверка ещё не запускалась. Высокий риск переведёт заявку в статус
+      // «проверка» (см. applyAmlResult в orderStore).
+      const amlPending = orders.filter(
+        (o) =>
+          o.fromCurrency.type === 'crypto' &&
+          o.status === 'payment_received' &&
+          (o.amlStatus === undefined || o.amlStatus === 'error')
+      );
+
+      for (const order of amlPending) {
+        if (amlInFlight.current.has(order.id)) continue;
+        amlInFlight.current.add(order.id);
+
+        const { setAmlChecking, applyAmlResult, markAmlError } = useOrderStore.getState();
+        setAmlChecking(order.id);
+
+        checkOrderAml(order)
+          .then((result) => {
+            if (result.status === 'completed') {
+              applyAmlResult(order.id, {
+                riskScore: result.riskScore,
+                riskLevel: result.riskLevel,
+                signals: result.signals,
+                uid: result.uid,
+                pdfReport: result.pdfReport,
+                checkedAt: result.checkedAt,
+              });
+            } else if (result.status === 'disabled' || result.status === 'unsupported') {
+              // AML не настроен или валюта не поддерживается — помечаем как
+              // пропущено, чтобы не опрашивать повторно.
+              useOrderStore.getState().updateOrder(order.id, { amlStatus: 'skipped' });
+            } else {
+              // error/pending — оставляем для повторной попытки на следующем тике
+              markAmlError(order.id);
+            }
+          })
+          .catch((err) => {
+            console.error('AML tracking error:', err);
+            markAmlError(order.id);
+          })
+          .finally(() => amlInFlight.current.delete(order.id));
+      }
 
       const pendingOrders = orders.filter(
         (o) => o.status === 'waiting_payment' || o.status === 'payment_pending'

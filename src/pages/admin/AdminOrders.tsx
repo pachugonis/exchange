@@ -2,16 +2,59 @@ import React, { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAdminStore } from '../../store/adminStore';
 import { useOrderStore } from '../../store/orderStore';
+import { checkOrderAml } from '../../api/amlAPI';
 import { useTranslation } from '../../hooks/useTranslation';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
-import type { Order, OrderStatus } from '../../types';
-import { Clock, CheckCircle, Search, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import type { AmlRiskLevel, Order, OrderStatus } from '../../types';
+import { Clock, CheckCircle, Search, X, ChevronLeft, ChevronRight, ShieldCheck, ShieldAlert, ExternalLink } from 'lucide-react';
 import toast from 'react-hot-toast';
+
+// Человекочитаемые названия источников средств из отчёта AMLBot.
+const AML_SIGNAL_LABELS: Record<string, string> = {
+  exchange: 'Биржа',
+  risky_exchange: 'Рисковая биржа',
+  p2p_exchange: 'P2P-биржа',
+  p2p_exchange_mlrisk_high: 'P2P (высокий риск)',
+  enforcement_action: 'Правоохранительные органы',
+  atm: 'Крипто-банкомат',
+  child_exploitation: 'Эксплуатация детей',
+  dark_market: 'Даркнет-маркет',
+  dark_service: 'Даркнет-сервис',
+  exchange_fraudulent: 'Мошенническая биржа',
+  gambling: 'Гэмблинг',
+  illegal_service: 'Нелегальный сервис',
+  liquidity_pools: 'Пулы ликвидности',
+  marketplace: 'Маркетплейс',
+  miner: 'Майнинг',
+  mixer: 'Миксер',
+  payment: 'Платёжный сервис',
+  ransom: 'Вымогательство',
+  sanctions: 'Санкции',
+  scam: 'Скам',
+  seized_assets: 'Изъятые активы',
+  stolen_coins: 'Украденные средства',
+  terrorism_financing: 'Финансирование терроризма',
+  wallet: 'Кошелёк',
+  malware: 'Вредоносное ПО',
+  other: 'Прочее',
+};
+
+const amlSignalLabel = (name: string): string =>
+  AML_SIGNAL_LABELS[name] ?? name.replace(/_/g, ' ');
+
+// Стили бейджа по уровню AML-риска.
+const AML_LEVEL_STYLE: Record<AmlRiskLevel, { label: string; classes: string }> = {
+  none: { label: 'AML: чисто', classes: 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 border-green-300 dark:border-green-700' },
+  low: { label: 'AML: низкий', classes: 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 border-green-300 dark:border-green-700' },
+  medium: { label: 'AML: средний', classes: 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 border-yellow-300 dark:border-yellow-700' },
+  high: { label: 'AML: высокий', classes: 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300 border-red-300 dark:border-red-700' },
+};
 
 export const AdminOrders: React.FC = () => {
   const { isAuthenticated } = useAdminStore();
   const { orders, updateOrderStatus } = useOrderStore();
+  const [recheckingAml, setRecheckingAml] = useState(false);
   const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<OrderStatus | 'all'>('all');
@@ -92,6 +135,38 @@ export const AdminOrders: React.FC = () => {
   const handleStatusChange = (orderId: string, newStatus: OrderStatus) => {
     updateOrderStatus(orderId, newStatus);
     toast.success(`${t('admin.orders.messages.statusUpdated')} "${getStatusText(newStatus)}"`);
+  };
+
+  // Ручная (пере)проверка AML по заявке через AMLBot.
+  const handleRecheckAml = async (order: Order) => {
+    const { setAmlChecking, applyAmlResult, markAmlError, updateOrder } = useOrderStore.getState();
+    setRecheckingAml(true);
+    setAmlChecking(order.id);
+    try {
+      const result = await checkOrderAml(order);
+      if (result.status === 'completed') {
+        applyAmlResult(order.id, {
+          riskScore: result.riskScore,
+          riskLevel: result.riskLevel,
+          signals: result.signals,
+          uid: result.uid,
+          pdfReport: result.pdfReport,
+          checkedAt: result.checkedAt,
+        });
+        toast.success(`AML: риск ${result.riskScore}% (${result.riskLevel})`);
+      } else if (result.status === 'disabled') {
+        updateOrder(order.id, { amlStatus: 'skipped' });
+        toast.error('AML-проверка не настроена на сервере (нет ключей AMLBot)');
+      } else if (result.status === 'unsupported') {
+        updateOrder(order.id, { amlStatus: 'skipped' });
+        toast.error('AML-проверка недоступна для этой валюты');
+      } else {
+        markAmlError(order.id);
+        toast.error('Не удалось выполнить AML-проверку');
+      }
+    } finally {
+      setRecheckingAml(false);
+    }
   };
 
   // Update selectedOrder when orders change
@@ -177,8 +252,25 @@ export const AdminOrders: React.FC = () => {
                         {new Date(order.createdAt).toLocaleString('ru-RU')}
                       </p>
                     </div>
-                    <div className={`px-3 py-1 rounded-full text-sm font-medium border ${getStatusBgColor(order.status)}`}>
-                      {getStatusText(order.status)}
+                    <div className="flex flex-col items-end gap-1">
+                      <div className={`px-3 py-1 rounded-full text-sm font-medium border ${getStatusBgColor(order.status)}`}>
+                        {getStatusText(order.status)}
+                      </div>
+                      {order.amlResult && (
+                        <div className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium border ${AML_LEVEL_STYLE[order.amlResult.riskLevel].classes}`}>
+                          {order.amlResult.riskLevel === 'high' || order.amlResult.riskLevel === 'medium' ? (
+                            <ShieldAlert className="w-3 h-3" />
+                          ) : (
+                            <ShieldCheck className="w-3 h-3" />
+                          )}
+                          {AML_LEVEL_STYLE[order.amlResult.riskLevel].label} · {order.amlResult.riskScore}%
+                        </div>
+                      )}
+                      {order.amlStatus === 'pending' && !order.amlResult && (
+                        <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium border bg-dark-100 dark:bg-dark-700 text-dark-500 border-dark-300 dark:border-dark-600">
+                          AML: проверка…
+                        </div>
+                      )}
                     </div>
                   </div>
                   
@@ -469,6 +561,80 @@ export const AdminOrders: React.FC = () => {
                   </div>
                 </div>
               </Card>
+
+              {/* AML Check */}
+              {(selectedOrder.amlResult || selectedOrder.amlStatus || selectedOrder.fromCurrency.type === 'crypto') && (
+                <Card>
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="font-semibold flex items-center gap-2">
+                      {selectedOrder.amlResult && (selectedOrder.amlResult.riskLevel === 'high' || selectedOrder.amlResult.riskLevel === 'medium') ? (
+                        <ShieldAlert className="w-5 h-5 text-red-500" />
+                      ) : (
+                        <ShieldCheck className="w-5 h-5 text-green-500" />
+                      )}
+                      AML-проверка (AMLBot)
+                    </h3>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleRecheckAml(selectedOrder)}
+                      disabled={recheckingAml || selectedOrder.amlStatus === 'pending'}
+                    >
+                      {recheckingAml || selectedOrder.amlStatus === 'pending'
+                        ? 'Проверка…'
+                        : selectedOrder.amlResult
+                          ? 'Перепроверить'
+                          : 'Проверить'}
+                    </Button>
+                  </div>
+
+                  {selectedOrder.amlResult ? (
+                    <div className="space-y-3 text-sm">
+                      <div className="flex items-center justify-between">
+                        <span className="text-dark-500">Уровень риска</span>
+                        <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium border ${AML_LEVEL_STYLE[selectedOrder.amlResult.riskLevel].classes}`}>
+                          {AML_LEVEL_STYLE[selectedOrder.amlResult.riskLevel].label} · {selectedOrder.amlResult.riskScore}%
+                        </span>
+                      </div>
+
+                      {selectedOrder.amlResult.signals.length > 0 && (
+                        <div>
+                          <p className="text-dark-500 mb-2">Источники средств</p>
+                          <div className="space-y-1">
+                            {selectedOrder.amlResult.signals.slice(0, 8).map((sig) => (
+                              <div key={sig.name} className="flex items-center justify-between">
+                                <span>{amlSignalLabel(sig.name)}</span>
+                                <span className="font-mono text-xs text-dark-500">{sig.share}%</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="flex items-center justify-between text-xs text-dark-500">
+                        <span>Проверено: {new Date(selectedOrder.amlResult.checkedAt).toLocaleString('ru-RU')}</span>
+                        {selectedOrder.amlResult.pdfReport && (
+                          <a
+                            href={selectedOrder.amlResult.pdfReport}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 text-primary-500 hover:underline"
+                          >
+                            PDF-отчёт <ExternalLink className="w-3 h-3" />
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-dark-500">
+                      {(selectedOrder.amlStatus === 'pending' || recheckingAml) && 'Проверка выполняется…'}
+                      {selectedOrder.amlStatus === 'error' && !recheckingAml && 'Не удалось выполнить проверку — нажмите «Проверить», чтобы повторить.'}
+                      {selectedOrder.amlStatus === 'skipped' && !recheckingAml && 'AML-проверка недоступна для этой валюты или не настроена.'}
+                      {!selectedOrder.amlStatus && !recheckingAml && 'Проверка ещё не выполнялась — нажмите «Проверить».'}
+                    </p>
+                  )}
+                </Card>
+              )}
 
               {/* Actions */}
               <div className="flex gap-3 justify-end">

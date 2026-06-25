@@ -40,6 +40,23 @@ export const config = {
   // Без ключа ETH-заявки не отслеживаются автоматически.
   etherscanApiKey: process.env.ETHERSCAN_API_KEY ?? '',
 
+  // AML-проверка входящих транзакций через AMLBot (https://amlbot.com).
+  // Без accessId/accessKey проверка отключена — заявки проходят без скоринга.
+  // Пороги риска (в процентах 0–100) определяют решение по заявке:
+  //   риск ≤ mediumThreshold              → low  (пропускаем автоматически)
+  //   mediumThreshold < риск ≤ highThreshold → medium (ручная проверка)
+  //   риск > highThreshold                → high (заморозка/ручная проверка)
+  aml: {
+    accessId: process.env.AMLBOT_ACCESS_ID ?? '',
+    accessKey: process.env.AMLBOT_ACCESS_KEY ?? '',
+    baseUrl: process.env.AMLBOT_BASE_URL ?? 'https://extrnlapiendpoint.silencatech.com',
+    // 'fast' — синхронный скоринг (рекомендуется), 'advanced' — глубокий анализ.
+    flow: process.env.AMLBOT_FLOW ?? 'fast',
+    locale: process.env.AMLBOT_LOCALE ?? 'en',
+    mediumThreshold: Number(process.env.AMLBOT_MEDIUM_THRESHOLD ?? 20),
+    highThreshold: Number(process.env.AMLBOT_HIGH_THRESHOLD ?? 79),
+  },
+
   // Public frontend URL used to build links inside emails.
   appUrl: process.env.APP_URL ?? 'http://localhost:5173',
 

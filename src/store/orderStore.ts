@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { Order, OrderStatus } from '../types';
+import type { AmlResult, Order, OrderStatus } from '../types';
 
 interface OrderState {
   orders: Order[];
@@ -10,6 +10,9 @@ interface OrderState {
   updateOrder: (id: string, updates: Partial<Order>) => void;
   cancelOrder: (id: string) => void;
   confirmPayment: (id: string, txHash: string, confirmed: boolean) => void;
+  setAmlChecking: (id: string) => void;
+  applyAmlResult: (id: string, result: AmlResult) => void;
+  markAmlError: (id: string) => void;
   expireOrder: (id: string) => void;
   getOrderById: (id: string) => Order | undefined;
   getOrdersByUserId: (userId: string) => Order[];
@@ -154,6 +157,58 @@ export const useOrderStore = create<OrderState>()(
               ],
             };
           }),
+        }));
+      },
+
+      setAmlChecking: (id) => {
+        set((state) => ({
+          orders: state.orders.map((order) =>
+            order.id === id ? { ...order, amlStatus: 'pending' } : order
+          ),
+        }));
+      },
+
+      applyAmlResult: (id, result) => {
+        set((state) => ({
+          orders: state.orders.map((order) => {
+            if (order.id !== id) return order;
+
+            // Высокий/средний риск — отправляем заявку на ручную проверку
+            // (статус «проверка»), низкий/нулевой — оставляем как есть.
+            const needsReview =
+              result.riskLevel === 'high' || result.riskLevel === 'medium';
+            const status: OrderStatus =
+              needsReview && order.status === 'payment_received'
+                ? 'verification'
+                : order.status;
+
+            const message =
+              result.riskLevel === 'high'
+                ? `AML: высокий риск ${result.riskScore}% — требуется ручная проверка`
+                : result.riskLevel === 'medium'
+                  ? `AML: средний риск ${result.riskScore}% — требуется ручная проверка`
+                  : `AML: риск ${result.riskScore}% (${result.riskLevel})`;
+
+            return {
+              ...order,
+              amlResult: result,
+              amlStatus: 'checked',
+              status,
+              updatedAt: Date.now(),
+              statusHistory:
+                status !== order.status
+                  ? [...order.statusHistory, { status, timestamp: Date.now(), message }]
+                  : order.statusHistory,
+            };
+          }),
+        }));
+      },
+
+      markAmlError: (id) => {
+        set((state) => ({
+          orders: state.orders.map((order) =>
+            order.id === id ? { ...order, amlStatus: 'error' } : order
+          ),
         }));
       },
 

@@ -6,6 +6,7 @@ import { hashPassword, newUuid } from './lib/security.ts';
 import { authRouter } from './routes/auth.ts';
 import { kycRouter } from './routes/kyc.ts';
 import { paymentsRouter } from './routes/payments.ts';
+import { amlRouter } from './routes/aml.ts';
 import { systemRouter } from './routes/system.ts';
 import { startLicenseWatch, isSiteLocked, getLicenseState } from './lib/license.ts';
 
@@ -58,6 +59,7 @@ async function main(): Promise<void> {
   app.use('/api/auth', authRouter);
   app.use('/api/kyc', kycRouter);
   app.use('/api/payments', paymentsRouter);
+  app.use('/api/aml', amlRouter);
   app.use('/api/system', systemRouter);
 
   // Centralised error handler so route handlers can stay lean.

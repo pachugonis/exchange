@@ -43,6 +43,8 @@ export interface Order {
   paymentAddress?: string; // Адрес для оплаты
   txHash?: string; // Хэш входящей транзакции, обнаруженной в блокчейне
   paidAt?: number; // Момент обнаружения оплаты в блокчейне
+  amlResult?: AmlResult; // Результат AML-проверки отправителя (AMLBot)
+  amlStatus?: 'pending' | 'checked' | 'error' | 'skipped'; // Состояние AML-проверки
   hasReview?: boolean; // Flag to track if user has left a review
   reviewId?: string; // Reference to the review if one exists
 }
@@ -51,6 +53,24 @@ export interface StatusChange {
   status: OrderStatus;
   timestamp: number;
   message?: string;
+}
+
+export type AmlRiskLevel = 'none' | 'low' | 'medium' | 'high';
+
+/** Один источник средств из отчёта AMLBot (доля в процентах). */
+export interface AmlSignal {
+  name: string;
+  share: number;
+}
+
+/** Результат AML-проверки входящей транзакции через AMLBot. */
+export interface AmlResult {
+  riskScore: number; // 0–100
+  riskLevel: AmlRiskLevel;
+  signals: AmlSignal[];
+  uid?: string; // идентификатор проверки в AMLBot
+  pdfReport?: string; // ссылка на PDF-отчёт
+  checkedAt: number;
 }
 
 export interface OrderFormData {
