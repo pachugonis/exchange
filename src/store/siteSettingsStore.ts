@@ -5,6 +5,7 @@ export interface SiteSettings {
   // Site Identity
   siteName: string;
   siteLogo: string | null;
+  siteFavicon: string | null;
   
   // Design Variant
   designVariant: 'default' | 'alternative';
@@ -75,6 +76,7 @@ interface SiteSettingsState {
 const defaultSettings: SiteSettings = {
   siteName: 'ExchangeKit',
   siteLogo: null,
+  siteFavicon: null,
   
   designVariant: 'default',
   

@@ -34,6 +34,18 @@ export const AdminSiteSettings: React.FC = () => {
     }
   };
 
+  const handleFaviconUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const favicon = event.target?.result as string;
+        setLocalSettings({ ...localSettings, siteFavicon: favicon });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleBannerImageUpload = (e: React.ChangeEvent<HTMLInputElement>, bannerId?: string) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -214,6 +226,42 @@ export const AdminSiteSettings: React.FC = () => {
                 <Button
                   variant="outline"
                   onClick={() => setLocalSettings({ ...localSettings, siteLogo: null })}
+                >
+                  {t('admin.siteSettings.identity.remove')}
+                </Button>
+              )}
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-2">{t('admin.siteSettings.identity.favicon')}</label>
+            <p className="text-xs text-dark-500 dark:text-dark-400 mb-2">{t('admin.siteSettings.identity.faviconHint')}</p>
+            {localSettings.siteFavicon && (
+              <div className="mb-2">
+                <img
+                  src={localSettings.siteFavicon}
+                  alt="Favicon"
+                  className="h-8 w-8 object-contain border border-dark-300 dark:border-dark-600 rounded"
+                />
+              </div>
+            )}
+            <div className="flex gap-2">
+              <label className="flex-1 cursor-pointer">
+                <div className="px-4 py-2 bg-dark-100 dark:bg-dark-700 border border-dark-300 dark:border-dark-600 rounded-lg hover:bg-dark-200 dark:hover:bg-dark-600 transition text-center">
+                  <ImageIcon className="w-5 h-5 inline-block mr-2" />
+                  {t('admin.siteSettings.identity.uploadFavicon')}
+                </div>
+                <input
+                  type="file"
+                  accept="image/png,image/x-icon,image/svg+xml,image/jpeg,image/webp"
+                  onChange={handleFaviconUpload}
+                  className="hidden"
+                />
+              </label>
+              {localSettings.siteFavicon && (
+                <Button
+                  variant="outline"
+                  onClick={() => setLocalSettings({ ...localSettings, siteFavicon: null })}
                 >
                   {t('admin.siteSettings.identity.remove')}
                 </Button>

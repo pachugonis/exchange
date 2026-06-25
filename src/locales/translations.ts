@@ -1659,6 +1659,9 @@ export const translations = {
           siteName: 'Название сайта',
           logo: 'Логотип',
           uploadLogo: 'Загрузить логотип',
+          favicon: 'Favicon (иконка вкладки)',
+          faviconHint: 'Рекомендуется квадратное изображение (PNG, SVG или ICO), например 32×32 или 64×64 пикселя.',
+          uploadFavicon: 'Загрузить favicon',
           remove: 'Удалить',
         },
         hero: {
@@ -2406,6 +2409,9 @@ export const translations = {
           siteName: 'Site Name',
           logo: 'Logo',
           uploadLogo: 'Upload Logo',
+          favicon: 'Favicon (tab icon)',
+          faviconHint: 'A square image is recommended (PNG, SVG or ICO), e.g. 32×32 or 64×64 pixels.',
+          uploadFavicon: 'Upload Favicon',
           remove: 'Remove',
         },
         hero: {

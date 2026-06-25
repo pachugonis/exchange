@@ -30,11 +30,13 @@ import { AdminAnnouncements } from './pages/admin/AdminAnnouncements';
 import { AdminUsers } from './pages/admin/AdminUsers';
 import { useThemeStore } from './store/themeStore';
 import { useAdminStore } from './store/adminStore';
+import { useSiteSettingsStore } from './store/siteSettingsStore';
 import { usePaymentTracking } from './hooks/usePaymentTracking';
 
 function App() {
   const { theme } = useThemeStore();
   const { settings, isAuthenticated: isAdminAuthenticated } = useAdminStore();
+  const { settings: siteSettings } = useSiteSettingsStore();
 
   // Отслеживание оплаты по блокчейну и авто-отмена просроченных заявок
   usePaymentTracking();
@@ -63,6 +65,21 @@ function App() {
       document.documentElement.classList.remove('dark');
     }
   }, [theme]);
+
+  // Применяем favicon, заданный в админке (Настройки сайта → Идентичность).
+  useEffect(() => {
+    const head = document.head;
+    let link = head.querySelector<HTMLLinkElement>('link[rel="icon"]');
+    if (siteSettings.siteFavicon) {
+      if (!link) {
+        link = document.createElement('link');
+        link.rel = 'icon';
+        head.appendChild(link);
+      }
+      link.href = siteSettings.siteFavicon;
+      link.removeAttribute('type');
+    }
+  }, [siteSettings.siteFavicon]);
 
   // Check if maintenance mode is enabled and user is not admin
   const isMaintenanceMode = settings.maintenanceMode && !isAdminAuthenticated;
