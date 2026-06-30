@@ -30,8 +30,11 @@ import { useReviewStore } from '../../store/reviewStore';
 import { useFavoriteStore } from '../../store/favoriteStore';
 import { useTranslation } from '../../hooks/useTranslation';
 import { formatDate } from '../../utils/formatters';
+import { fetchCryptoRates, calculateRate } from '../../api/cryptoAPI';
 import toast from 'react-hot-toast';
 import type { Order } from '../../types';
+
+type CryptoRates = Awaited<ReturnType<typeof fetchCryptoRates>>;
 
 export const UserDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -43,6 +46,7 @@ export const UserDashboard: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [resendingEmail, setResendingEmail] = useState(false);
   const [reviewModalOrder, setReviewModalOrder] = useState<Order | null>(null);
+  const [rates, setRates] = useState<CryptoRates | null>(null);
   const ordersPerPage = 10;
 
   useEffect(() => {
@@ -50,6 +54,12 @@ export const UserDashboard: React.FC = () => {
       navigate('/user/login');
     }
   }, [isAuthenticated, user, navigate]);
+
+  useEffect(() => {
+    fetchCryptoRates()
+      .then(setRates)
+      .catch(() => setRates(null));
+  }, []);
 
   if (!user) return null;
 
@@ -81,9 +91,16 @@ export const UserDashboard: React.FC = () => {
   const startIndex = (currentPage - 1) * ordersPerPage;
   const endIndex = startIndex + ordersPerPage;
   const paginatedOrders = userOrders.slice(startIndex, endIndex);
+  // Объём обменов считаем в долларах: переводим сумму каждого обмена
+  // из исходной валюты в USD по текущему курсу.
   const totalVolume = orders
     .filter(order => order.userId === user.id)
-    .reduce((sum, order) => sum + order.fromAmount, 0);
+    .reduce((sum, order) => {
+      const usdRate = rates
+        ? calculateRate(rates, order.fromCurrency.code, 'USD')
+        : 0;
+      return sum + order.fromAmount * usdRate;
+    }, 0);
   const registeredDays = Math.floor(
     (Date.now() - user.createdAt) / (1000 * 60 * 60 * 24)
   );

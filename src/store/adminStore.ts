@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { AdminSettings, AdminStats } from '../types/admin';
 import { authAPI } from '../api/authAPI';
+import { fetchCryptoRates, calculateRate } from '../api/cryptoAPI';
 
 interface AdminState {
   isAuthenticated: boolean;
@@ -165,17 +166,26 @@ export const useAdminStore = create<AdminState>()(
             const orders = state.orders || [];
             
             const todayStart = new Date().setHours(0, 0, 0, 0);
-            
+
+            // Объём обменов считаем в долларах: переводим сумму каждого
+            // обмена из исходной валюты в USD по текущему курсу.
+            const rates = await fetchCryptoRates().catch(() => null);
+            const orderVolumeUsd = (o: any): number => {
+              const code = o.fromCurrency?.code;
+              if (!rates || !code) return 0;
+              return (o.fromAmount || 0) * calculateRate(rates, code, 'USD');
+            };
+
             const stats: AdminStats = {
               totalOrders: orders.length,
               completedOrders: orders.filter((o: any) => o.status === 'completed').length,
-              pendingOrders: orders.filter((o: any) => 
+              pendingOrders: orders.filter((o: any) =>
                 ['waiting_payment', 'payment_pending', 'payment_received', 'verification', 'sending'].includes(o.status)
               ).length,
-              totalVolume: orders.reduce((sum: number, o: any) => sum + (o.toAmount || 0), 0),
+              totalVolume: orders.reduce((sum: number, o: any) => sum + orderVolumeUsd(o), 0),
               todayVolume: orders
                 .filter((o: any) => o.createdAt >= todayStart)
-                .reduce((sum: number, o: any) => sum + (o.toAmount || 0), 0),
+                .reduce((sum: number, o: any) => sum + orderVolumeUsd(o), 0),
               activeUsers: new Set(orders.map((o: any) => o.contactInfo?.email)).size,
             };
             
