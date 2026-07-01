@@ -100,4 +100,28 @@ export const authAPI = {
 
   verifyEmail: (token: string) =>
     request('/verify-email', { method: 'POST', body: { token } }),
+
+  // ---- Admin user management ----
+  adminListUsers: (token: string) =>
+    request<{ users: AuthUser[] }>('/admin/users', { token }),
+
+  adminUpdateUser: (
+    id: string,
+    body: {
+      name?: string;
+      email?: string;
+      phone?: string;
+      telegram?: string;
+      emailVerified?: boolean;
+      kycStatus?: 'none' | 'pending' | 'verified' | 'rejected';
+      kycLevel?: number;
+    },
+    token: string,
+  ) => request<{ user: AuthUser }>(`/admin/users/${id}`, { method: 'PATCH', body, token }),
+
+  adminBanUser: (id: string, body: { banned: boolean; reason?: string }, token: string) =>
+    request<{ user: AuthUser }>(`/admin/users/${id}/ban`, { method: 'POST', body, token }),
+
+  adminDeleteUser: (id: string, token: string) =>
+    request<{ success: boolean }>(`/admin/users/${id}`, { method: 'DELETE', token }),
 };

@@ -12,7 +12,7 @@ import {
   generateOpaqueToken,
   newUuid,
 } from '../lib/security.ts';
-import { requireAuth, type AuthedRequest } from '../middleware/auth.ts';
+import { requireAuth, requireAdmin, type AuthedRequest } from '../middleware/auth.ts';
 import { sendVerificationEmail, sendPasswordResetEmail } from '../lib/email.ts';
 
 export const authRouter = Router();
@@ -312,4 +312,93 @@ authRouter.post('/admin/login', loginLimiter, async (req, res) => {
     }
   }
   issueSession(res, user);
+});
+
+// ---- Admin user management ----
+
+// ---- GET /admin/users ---- list all users (admin)
+authRouter.get('/admin/users', requireAuth, requireAdmin, async (_req, res) => {
+  const { rows } = await pool.query<UserRow>('SELECT * FROM users ORDER BY created_at DESC');
+  res.json({ users: rows.map(toPublicUser) });
+});
+
+// ---- PATCH /admin/users/:id ---- edit a user (admin)
+authRouter.patch('/admin/users/:id', requireAuth, requireAdmin, async (req: AuthedRequest, res) => {
+  const { id } = req.params;
+  const { name, email, phone, telegram, emailVerified, kycStatus, kycLevel } = req.body ?? {};
+
+  if (email !== undefined && !isEmail(email)) {
+    return res.status(400).json({ error: 'Некорректный email' });
+  }
+  if (kycStatus !== undefined && !['none', 'pending', 'verified', 'rejected'].includes(kycStatus)) {
+    return res.status(400).json({ error: 'Некорректный статус KYC' });
+  }
+  if (kycLevel !== undefined && ![0, 1, 2, 3].includes(Number(kycLevel))) {
+    return res.status(400).json({ error: 'Некорректный уровень KYC' });
+  }
+
+  // Reject an email that already belongs to a different account.
+  if (typeof email === 'string') {
+    const existing = await findUserByEmail(email);
+    if (existing && existing.id !== id) {
+      return res.status(409).json({ error: 'Пользователь с таким email уже существует' });
+    }
+  }
+
+  const { rows } = await pool.query<UserRow>(
+    `UPDATE users SET
+       name = COALESCE($2, name),
+       email = COALESCE($3, email),
+       phone = COALESCE($4, phone),
+       telegram = COALESCE($5, telegram),
+       email_verified = COALESCE($6, email_verified),
+       kyc_status = COALESCE($7, kyc_status),
+       kyc_level = COALESCE($8, kyc_level),
+       updated_at = now()
+     WHERE id = $1 RETURNING *`,
+    [
+      id,
+      typeof name === 'string' ? name : null,
+      typeof email === 'string' ? email : null,
+      typeof phone === 'string' ? phone : null,
+      typeof telegram === 'string' ? telegram : null,
+      typeof emailVerified === 'boolean' ? emailVerified : null,
+      typeof kycStatus === 'string' ? kycStatus : null,
+      kycLevel !== undefined ? Number(kycLevel) : null,
+    ],
+  );
+  if (!rows[0]) return res.status(404).json({ error: 'Пользователь не найден' });
+  res.json({ user: toPublicUser(rows[0]) });
+});
+
+// ---- POST /admin/users/:id/ban ---- ban / unban a user (admin)
+authRouter.post('/admin/users/:id/ban', requireAuth, requireAdmin, async (req: AuthedRequest, res) => {
+  const { id } = req.params;
+  const { banned, reason } = req.body ?? {};
+
+  if (banned && (typeof reason !== 'string' || reason.trim().length === 0)) {
+    return res.status(400).json({ error: 'Укажите причину блокировки' });
+  }
+
+  const { rows } = await pool.query<UserRow>(
+    `UPDATE users SET
+       is_banned = $2,
+       ban_reason = $3,
+       updated_at = now()
+     WHERE id = $1 RETURNING *`,
+    [id, !!banned, banned ? reason.trim() : null],
+  );
+  if (!rows[0]) return res.status(404).json({ error: 'Пользователь не найден' });
+  res.json({ user: toPublicUser(rows[0]) });
+});
+
+// ---- DELETE /admin/users/:id ---- remove a user (admin)
+authRouter.delete('/admin/users/:id', requireAuth, requireAdmin, async (req: AuthedRequest, res) => {
+  const { id } = req.params;
+  if (id === req.user!.sub) {
+    return res.status(400).json({ error: 'Нельзя удалить собственную учётную запись' });
+  }
+  const { rowCount } = await pool.query('DELETE FROM users WHERE id = $1', [id]);
+  if (!rowCount) return res.status(404).json({ error: 'Пользователь не найден' });
+  res.json({ success: true });
 });

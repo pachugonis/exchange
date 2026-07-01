@@ -8,29 +8,15 @@ import { Badge } from '../../components/ui/Badge';
 import { Modal } from '../../components/ui/Modal';
 import { formatDate } from '../../utils/formatters';
 import { useTranslation } from '../../hooks/useTranslation';
+import { authAPI, type AuthUser } from '../../api/authAPI';
+import { useAdminStore } from '../../store/adminStore';
 import toast from 'react-hot-toast';
 
-interface User {
-  id: string;
-  email: string;
-  name: string;
-  phone?: string;
-  telegram?: string;
-  createdAt: number;
-  emailVerified: boolean;
-  kycStatus?: 'none' | 'pending' | 'verified' | 'rejected';
-  kycLevel?: number;
-  twoFactorEnabled?: boolean;
-  isBanned?: boolean;
-  banReason?: string;
-  bannedAt?: number;
-  bannedBy?: string;
-}
-
-const USERS_STORAGE_KEY = 'mock-users-db';
+type User = AuthUser;
 
 export const AdminUsers: React.FC = () => {
   const { t } = useTranslation();
+  const token = useAdminStore((s) => s.token);
   const [users, setUsers] = useState<User[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
@@ -40,49 +26,20 @@ export const AdminUsers: React.FC = () => {
   const [banReason, setBanReason] = useState('');
   const [editForm, setEditForm] = useState<Partial<User>>({});
 
-  // Load users from localStorage
+  // Load users from the backend
   useEffect(() => {
     loadUsers();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token]);
 
-  const loadUsers = () => {
-    try {
-      const stored = localStorage.getItem(USERS_STORAGE_KEY);
-      if (stored) {
-        const data = JSON.parse(stored);
-        const usersList = Object.values(data).map((record: any) => record.user);
-        setUsers(usersList);
-      }
-    } catch (error) {
-      console.error('Error loading users:', error);
+  const loadUsers = async () => {
+    if (!token) return;
+    const res = await authAPI.adminListUsers(token);
+    if (res.ok && Array.isArray(res.data.users)) {
+      setUsers(res.data.users);
+    } else {
+      console.error('Error loading users:', res.data.error);
       toast.error(t('admin.users.messages.loadError'));
-    }
-  };
-
-  const saveUsers = (updatedUsers: User[]) => {
-    try {
-      const stored = localStorage.getItem(USERS_STORAGE_KEY);
-      if (stored) {
-        const data = JSON.parse(stored);
-        
-        // Update users in the database structure
-        updatedUsers.forEach(user => {
-          const userRecord = data[user.email];
-          if (userRecord) {
-            data[user.email] = {
-              ...userRecord,
-              user: user,
-            };
-          }
-        });
-        
-        localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(data));
-        setUsers(updatedUsers);
-        loadUsers();
-      }
-    } catch (error) {
-      console.error('Error saving users:', error);
-      toast.error(t('admin.users.messages.saveError'));
     }
   };
 
@@ -100,16 +57,29 @@ export const AdminUsers: React.FC = () => {
     setShowEditModal(true);
   };
 
-  const handleSaveEdit = () => {
-    if (!selectedUser) return;
+  const handleSaveEdit = async () => {
+    if (!selectedUser || !token) return;
 
-    const updatedUsers = users.map(user =>
-      user.id === selectedUser.id
-        ? { ...user, ...editForm }
-        : user
+    const res = await authAPI.adminUpdateUser(
+      selectedUser.id,
+      {
+        name: editForm.name,
+        email: editForm.email,
+        phone: editForm.phone,
+        telegram: editForm.telegram,
+        emailVerified: editForm.emailVerified,
+        kycStatus: editForm.kycStatus,
+        kycLevel: editForm.kycLevel,
+      },
+      token,
     );
 
-    saveUsers(updatedUsers);
+    if (!res.ok || !res.data.user) {
+      toast.error(res.data.error || t('admin.users.messages.saveError'));
+      return;
+    }
+
+    setUsers((prev) => prev.map((u) => (u.id === selectedUser.id ? res.data.user : u)));
     toast.success(t('admin.users.messages.updated'));
     setShowEditModal(false);
     setSelectedUser(null);
@@ -120,37 +90,30 @@ export const AdminUsers: React.FC = () => {
     setShowDeleteModal(true);
   };
 
-  const confirmDelete = () => {
-    if (!selectedUser) return;
+  const confirmDelete = async () => {
+    if (!selectedUser || !token) return;
 
-    try {
-      const stored = localStorage.getItem(USERS_STORAGE_KEY);
-      if (stored) {
-        const data = JSON.parse(stored);
-        delete data[selectedUser.email];
-        localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(data));
-        
-        const updatedUsers = users.filter(u => u.id !== selectedUser.id);
-        setUsers(updatedUsers);
-        toast.success(t('admin.users.messages.deleted'));
-      }
-    } catch (error) {
-      console.error('Error deleting user:', error);
-      toast.error(t('admin.users.messages.deleteError'));
+    const res = await authAPI.adminDeleteUser(selectedUser.id, token);
+    if (!res.ok) {
+      toast.error(res.data.error || t('admin.users.messages.deleteError'));
+      return;
     }
 
+    setUsers((prev) => prev.filter((u) => u.id !== selectedUser.id));
+    toast.success(t('admin.users.messages.deleted'));
     setShowDeleteModal(false);
     setSelectedUser(null);
   };
 
-  const toggleEmailVerified = (user: User) => {
-    const updatedUsers = users.map(u =>
-      u.id === user.id
-        ? { ...u, emailVerified: !u.emailVerified }
-        : u
-    );
-    saveUsers(updatedUsers);
-    toast.success(`${t('admin.users.messages.emailVerified')} ${!user.emailVerified ? t('admin.users.messages.emailVerified') : t('admin.users.messages.emailUnverified')}`);
+  const toggleEmailVerified = async (user: User) => {
+    if (!token) return;
+    const res = await authAPI.adminUpdateUser(user.id, { emailVerified: !user.emailVerified }, token);
+    if (!res.ok || !res.data.user) {
+      toast.error(res.data.error || t('admin.users.messages.saveError'));
+      return;
+    }
+    setUsers((prev) => prev.map((u) => (u.id === user.id ? res.data.user : u)));
+    toast.success(!user.emailVerified ? t('admin.users.messages.emailVerified') : t('admin.users.messages.emailUnverified'));
   };
 
   const handleBan = (user: User) => {
@@ -159,45 +122,34 @@ export const AdminUsers: React.FC = () => {
     setShowBanModal(true);
   };
 
-  const confirmBan = () => {
-    if (!selectedUser) return;
+  const confirmBan = async () => {
+    if (!selectedUser || !token) return;
 
     if (!banReason.trim()) {
       toast.error(t('admin.users.messages.banReasonRequired'));
       return;
     }
 
-    const updatedUsers = users.map(u =>
-      u.id === selectedUser.id
-        ? {
-            ...u,
-            isBanned: true,
-            banReason: banReason.trim(),
-            bannedAt: Date.now(),
-            bannedBy: 'admin',
-          }
-        : u
-    );
-    saveUsers(updatedUsers);
+    const res = await authAPI.adminBanUser(selectedUser.id, { banned: true, reason: banReason.trim() }, token);
+    if (!res.ok || !res.data.user) {
+      toast.error(res.data.error || t('admin.users.messages.saveError'));
+      return;
+    }
+    setUsers((prev) => prev.map((u) => (u.id === selectedUser.id ? res.data.user : u)));
     toast.success(`${t('admin.users.messages.userBanned')} ${selectedUser.name} ${t('admin.users.messages.banned')}`);
     setShowBanModal(false);
     setSelectedUser(null);
     setBanReason('');
   };
 
-  const handleUnban = (user: User) => {
-    const updatedUsers = users.map(u =>
-      u.id === user.id
-        ? {
-            ...u,
-            isBanned: false,
-            banReason: undefined,
-            bannedAt: undefined,
-            bannedBy: undefined,
-          }
-        : u
-    );
-    saveUsers(updatedUsers);
+  const handleUnban = async (user: User) => {
+    if (!token) return;
+    const res = await authAPI.adminBanUser(user.id, { banned: false }, token);
+    if (!res.ok || !res.data.user) {
+      toast.error(res.data.error || t('admin.users.messages.saveError'));
+      return;
+    }
+    setUsers((prev) => prev.map((u) => (u.id === user.id ? res.data.user : u)));
     toast.success(`${t('admin.users.messages.userBanned')} ${user.name} ${t('admin.users.messages.unbanned')}`);
   };
 
@@ -364,11 +316,6 @@ export const AdminUsers: React.FC = () => {
                       {user.banReason && (
                         <p className="text-xs text-red-600 dark:text-red-400 mt-1">
                           {t('admin.users.list.banReason')} {user.banReason}
-                        </p>
-                      )}
-                      {user.bannedAt && (
-                        <p className="text-xs text-dark-500 mt-1">
-                          {t('admin.users.list.banDate')} {formatDate(user.bannedAt)}
                         </p>
                       )}
                     </div>
