@@ -1,12 +1,15 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, TrendingUp } from 'lucide-react';
 import { Card } from '../ui/Card';
 import { useTranslation } from '../../hooks/useTranslation';
 import { Badge } from '../ui/Badge';
+import { useOrderStore } from '../../store/orderStore';
+import { formatNumber } from '../../utils/formatters';
+import type { Order } from '../../types';
 
 interface Direction {
-  id: number;
+  id: string;
   from: {
     code: string;
     name: string;
@@ -22,67 +25,119 @@ interface Direction {
   popular?: boolean;
 }
 
-const popularDirections: Direction[] = [
+// Статичные направления — используются как запасной вариант, пока на площадке
+// ещё нет реальных обменов (например, сразу после установки).
+const fallbackDirections: Direction[] = [
   {
-    id: 1,
+    id: 'fb-1',
     from: { code: 'BTC', name: 'Bitcoin', icon: '₿' },
     to: { code: 'CARD_RUB', name: 'Visa/MC RUB', icon: '💳' },
-    rate: '1 BTC ≈ 9,850,000 RUB',
+    rate: '1 BTC ≈ 9 850 000 RUB',
     trend: 'up',
     popular: true,
   },
   {
-    id: 2,
+    id: 'fb-2',
     from: { code: 'USDT', name: 'Tether TRC20', icon: '₮' },
     to: { code: 'CARD_RUB', name: 'Visa/MC RUB', icon: '💳' },
-    rate: '1 USDT ≈ 101.5 RUB',
+    rate: '1 USDT ≈ 101,5 RUB',
     popular: true,
   },
   {
-    id: 3,
+    id: 'fb-3',
     from: { code: 'ETH', name: 'Ethereum', icon: 'Ξ' },
     to: { code: 'CARD_RUB', name: 'Visa/MC RUB', icon: '💳' },
-    rate: '1 ETH ≈ 375,000 RUB',
+    rate: '1 ETH ≈ 375 000 RUB',
     trend: 'up',
     popular: true,
   },
   {
-    id: 4,
+    id: 'fb-4',
     from: { code: 'BTC', name: 'Bitcoin', icon: '₿' },
     to: { code: 'USDT', name: 'Tether', icon: '₮' },
-    rate: '1 BTC ≈ 97,000 USDT',
+    rate: '1 BTC ≈ 97 000 USDT',
     trend: 'up',
-  },
-  {
-    id: 5,
-    from: { code: 'CARD_RUB', name: 'Visa/MC RUB', icon: '💳' },
-    to: { code: 'USDT', name: 'Tether TRC20', icon: '₮' },
-    rate: '100 RUB ≈ 0.98 USDT',
-  },
-  {
-    id: 6,
-    from: { code: 'ETH', name: 'Ethereum', icon: 'Ξ' },
-    to: { code: 'USDT', name: 'Tether', icon: '₮' },
-    rate: '1 ETH ≈ 3,690 USDT',
-    trend: 'up',
-  },
-  {
-    id: 7,
-    from: { code: 'PAYEER', name: 'Payeer USD', icon: 'P' },
-    to: { code: 'CARD_RUB', name: 'Visa/MC RUB', icon: '💳' },
-    rate: '1 USD ≈ 100 RUB',
-  },
-  {
-    id: 8,
-    from: { code: 'PM', name: 'Perfect Money', icon: 'PM' },
-    to: { code: 'USDT', name: 'Tether TRC20', icon: '₮' },
-    rate: '1 USD ≈ 0.995 USDT',
   },
 ];
 
+const MAX_DIRECTIONS = 8;
+
+// Форматируем курс вида «1 BTC ≈ 9 850 000 RUB», подбирая число знаков после
+// запятой в зависимости от величины курса.
+const formatRate = (fromCode: string, toCode: string, rate: number): string => {
+  if (!isFinite(rate) || rate <= 0) return '';
+  const decimals = rate >= 1000 ? 0 : rate >= 1 ? 2 : 6;
+  return `1 ${fromCode} ≈ ${formatNumber(rate, decimals)} ${toCode}`;
+};
+
+// Строим список популярных направлений из реальных заявок: группируем по паре
+// «отдал → получил», считаем частоту, самые частые показываем первыми.
+const buildDirectionsFromOrders = (orders: Order[]): Direction[] => {
+  // Учитываем только заявки, по которым была реальная оплата (не брошенные
+  // и не отменённые до оплаты).
+  const relevant = orders.filter(
+    (o) => o.status !== 'waiting_payment' && o.status !== 'cancelled'
+  );
+
+  interface Group {
+    key: string;
+    from: Order['fromCurrency'];
+    to: Order['toCurrency'];
+    count: number;
+    latest: Order;
+  }
+
+  const groups = new Map<string, Group>();
+  for (const order of relevant) {
+    if (!order.fromCurrency || !order.toCurrency) continue;
+    const key = `${order.fromCurrency.code}->${order.toCurrency.code}`;
+    const existing = groups.get(key);
+    if (existing) {
+      existing.count += 1;
+      if (order.createdAt > existing.latest.createdAt) existing.latest = order;
+    } else {
+      groups.set(key, {
+        key,
+        from: order.fromCurrency,
+        to: order.toCurrency,
+        count: 1,
+        latest: order,
+      });
+    }
+  }
+
+  const sorted = Array.from(groups.values()).sort((a, b) => {
+    if (b.count !== a.count) return b.count - a.count;
+    return b.latest.createdAt - a.latest.createdAt;
+  });
+
+  const maxCount = sorted.length > 0 ? sorted[0].count : 0;
+
+  return sorted.slice(0, MAX_DIRECTIONS).map((group) => {
+    const { from, to, latest } = group;
+    const rate =
+      latest.rate ||
+      (latest.fromAmount ? latest.toAmount / latest.fromAmount : 0);
+    return {
+      id: group.key,
+      from: { code: from.code, name: from.name, icon: from.icon },
+      to: { code: to.code, name: to.name, icon: to.icon },
+      rate: formatRate(from.code, to.code, rate),
+      // «Популярно» — направления с максимальной (и не единичной) частотой.
+      popular: group.count === maxCount && maxCount > 1,
+    };
+  });
+};
+
 export const PopularDirections: React.FC = () => {
   const { t } = useTranslation();
-  
+  const orders = useOrderStore((state) => state.orders);
+
+  const directions = useMemo(() => {
+    const fromOrders = buildDirectionsFromOrders(orders);
+    return fromOrders.length > 0 ? fromOrders : fallbackDirections;
+  }, [orders]);
+
   return (
     <section className="py-20 px-4">
       <div className="container mx-auto">
@@ -94,7 +149,7 @@ export const PopularDirections: React.FC = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {popularDirections.map((direction) => (
+          {directions.map((direction) => (
             <Link key={direction.id} to="/exchange">
               <Card className="hover:shadow-lg transition-shadow cursor-pointer h-full group">
                 <div className="flex flex-col h-full">
@@ -102,7 +157,7 @@ export const PopularDirections: React.FC = () => {
                     <div className="mb-3">
                       <Badge variant="info" className="text-xs">
                         <TrendingUp className="w-3 h-3 mr-1" />
-                        Популярно
+                        {t('home.popularDirections.popular')}
                       </Badge>
                     </div>
                   )}
