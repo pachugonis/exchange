@@ -6,6 +6,7 @@ import { useTranslation } from '../../hooks/useTranslation';
 import { Badge } from '../ui/Badge';
 import { useOrderStore } from '../../store/orderStore';
 import { formatNumber } from '../../utils/formatters';
+import { getCurrencySymbol } from '../../data/currencies';
 import type { Order } from '../../types';
 
 interface Direction {
@@ -32,7 +33,7 @@ const fallbackDirections: Direction[] = [
     id: 'fb-1',
     from: { code: 'BTC', name: 'Bitcoin', icon: '₿' },
     to: { code: 'CARD_RUB', name: 'Visa/MC RUB', icon: '💳' },
-    rate: '1 BTC ≈ 9 850 000 RUB',
+    rate: '1 BTC ≈ 9 850 000 ₽',
     trend: 'up',
     popular: true,
   },
@@ -40,14 +41,14 @@ const fallbackDirections: Direction[] = [
     id: 'fb-2',
     from: { code: 'USDT', name: 'Tether TRC20', icon: '₮' },
     to: { code: 'CARD_RUB', name: 'Visa/MC RUB', icon: '💳' },
-    rate: '1 USDT ≈ 101,5 RUB',
+    rate: '1 USDT ≈ 101,5 ₽',
     popular: true,
   },
   {
     id: 'fb-3',
     from: { code: 'ETH', name: 'Ethereum', icon: 'Ξ' },
     to: { code: 'CARD_RUB', name: 'Visa/MC RUB', icon: '💳' },
-    rate: '1 ETH ≈ 375 000 RUB',
+    rate: '1 ETH ≈ 375 000 ₽',
     trend: 'up',
     popular: true,
   },
@@ -67,7 +68,7 @@ const MAX_DIRECTIONS = 8;
 const formatRate = (fromCode: string, toCode: string, rate: number): string => {
   if (!isFinite(rate) || rate <= 0) return '';
   const decimals = rate >= 1000 ? 0 : rate >= 1 ? 2 : 6;
-  return `1 ${fromCode} ≈ ${formatNumber(rate, decimals)} ${toCode}`;
+  return `1 ${getCurrencySymbol(fromCode)} ≈ ${formatNumber(rate, decimals)} ${getCurrencySymbol(toCode)}`;
 };
 
 // Строим список популярных направлений из реальных заявок: группируем по паре
@@ -166,7 +167,7 @@ export const PopularDirections: React.FC = () => {
                     <div className="flex items-center gap-2 flex-1">
                       <span className="text-2xl">{direction.from.icon}</span>
                       <div>
-                        <div className="font-semibold text-sm">{direction.from.code}</div>
+                        <div className="font-semibold text-sm">{getCurrencySymbol(direction.from.code)}</div>
                         <div className="text-xs text-dark-500 dark:text-dark-400">
                           {direction.from.name}
                         </div>
@@ -178,7 +179,7 @@ export const PopularDirections: React.FC = () => {
                     <div className="flex items-center gap-2 flex-1">
                       <span className="text-2xl">{direction.to.icon}</span>
                       <div>
-                        <div className="font-semibold text-sm">{direction.to.code}</div>
+                        <div className="font-semibold text-sm">{getCurrencySymbol(direction.to.code)}</div>
                         <div className="text-xs text-dark-500 dark:text-dark-400">
                           {direction.to.name}
                         </div>
