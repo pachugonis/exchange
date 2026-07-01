@@ -1,6 +1,8 @@
 import React from 'react';
 import { Link, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAdminStore } from '../../store/adminStore';
+import { useOrderStore } from '../../store/orderStore';
+import { useKYCStore } from '../../store/kycStore';
 import { useThemeStore } from '../../store/themeStore';
 import { useTranslation } from '../../hooks/useTranslation';
 import { LanguageSelector } from '../ui/LanguageSelector';
@@ -10,8 +12,26 @@ export const AdminLayout: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { username, logout } = useAdminStore();
+  const orders = useOrderStore((state) => state.orders);
+  const kycData = useKYCStore((state) => state.kycData);
+  const fetchAllKYC = useKYCStore((state) => state.fetchAllKYC);
   const { theme, toggleTheme } = useThemeStore();
   const { t } = useTranslation();
+
+  // Подтягиваем KYC-заявки, чтобы счётчик был актуален на любой странице админки.
+  React.useEffect(() => {
+    fetchAllKYC();
+  }, [fetchAllKYC]);
+
+  // Новые необработанные заявки — оплаченные, ожидающие действия администратора.
+  const pendingOrdersCount = orders.filter(
+    (o) => o.status === 'payment_received' || o.status === 'verification'
+  ).length;
+
+  // Новые KYC-заявки, ожидающие проверки администратором.
+  const pendingKYCCount = Object.values(kycData).filter(
+    (k) => k.status === 'pending'
+  ).length;
 
   const handleLogout = () => {
     logout();
@@ -20,11 +40,11 @@ export const AdminLayout: React.FC = () => {
 
   const navItems = [
     { path: '/admin/dashboard', icon: LayoutDashboard, label: t('admin.navigation.dashboard') },
-    { path: '/admin/orders', icon: ShoppingCart, label: t('admin.navigation.orders') },
+    { path: '/admin/orders', icon: ShoppingCart, label: t('admin.navigation.orders'), badge: pendingOrdersCount },
     { path: '/admin/users', icon: Users, label: t('admin.navigation.users') },
     { path: '/admin/currencies', icon: DollarSign, label: t('admin.navigation.currencies') },
     { path: '/admin/promos', icon: Ticket, label: t('admin.navigation.promos') },
-    { path: '/admin/kyc', icon: Shield, label: t('admin.navigation.kyc') },
+    { path: '/admin/kyc', icon: Shield, label: t('admin.navigation.kyc'), badge: pendingKYCCount },
     { path: '/admin/content', icon: FileText, label: t('admin.navigation.content') },
     { path: '/admin/announcements', icon: Megaphone, label: t('admin.navigation.announcements') },
     { path: '/admin/newsletter', icon: Mail, label: t('admin.navigation.newsletter') },
@@ -91,8 +111,19 @@ export const AdminLayout: React.FC = () => {
                           : 'text-dark-700 dark:text-dark-300 hover:bg-dark-100 dark:hover:bg-dark-700'
                       }`}
                     >
-                      <Icon className="w-5 h-5" />
+                      <Icon className="w-5 h-5 shrink-0" />
                       <span className="font-medium">{item.label}</span>
+                      {'badge' in item && item.badge ? (
+                        <span
+                          className={`ml-auto inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 rounded-full text-xs font-bold ${
+                            isActive
+                              ? 'bg-white text-primary-600'
+                              : 'bg-red-500 text-white'
+                          }`}
+                        >
+                          {item.badge}
+                        </span>
+                      ) : null}
                     </Link>
                   );
                 })}
