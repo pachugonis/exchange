@@ -5,23 +5,37 @@ import { useOrderStore } from '../../store/orderStore';
 import { useKYCStore } from '../../store/kycStore';
 import { useThemeStore } from '../../store/themeStore';
 import { useTranslation } from '../../hooks/useTranslation';
+import { systemAPI } from '../../api/systemAPI';
 import { LanguageSelector } from '../ui/LanguageSelector';
 import { LayoutDashboard, Settings, ShoppingCart, DollarSign, LogOut, Moon, Sun, Ticket, FileText, Shield, Mail, Star, Megaphone, Users, Globe, Lock } from 'lucide-react';
 
 export const AdminLayout: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { username, logout } = useAdminStore();
+  const { username, logout, token } = useAdminStore();
   const orders = useOrderStore((state) => state.orders);
   const kycData = useKYCStore((state) => state.kycData);
   const fetchAllKYC = useKYCStore((state) => state.fetchAllKYC);
   const { theme, toggleTheme } = useThemeStore();
   const { t } = useTranslation();
+  const [updateAvailable, setUpdateAvailable] = React.useState(false);
 
   // Подтягиваем KYC-заявки, чтобы счётчик был актуален на любой странице админки.
   React.useEffect(() => {
     fetchAllKYC();
   }, [fetchAllKYC]);
+
+  // Проверяем наличие обновлений системы, чтобы подсветить пункт «Настройки».
+  React.useEffect(() => {
+    if (!token) return;
+    let cancelled = false;
+    systemAPI.checkUpdate(token).then((res) => {
+      if (!cancelled) setUpdateAvailable(res.ok && res.data.updateAvailable === true);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [token]);
 
   // Новые необработанные заявки — оплаченные, ожидающие действия администратора.
   const pendingOrdersCount = orders.filter(
@@ -50,7 +64,7 @@ export const AdminLayout: React.FC = () => {
     { path: '/admin/newsletter', icon: Mail, label: t('admin.navigation.newsletter') },
     { path: '/admin/reviews', icon: Star, label: t('admin.navigation.reviews') },
     { path: '/admin/site-settings', icon: Globe, label: t('admin.navigation.siteSettings') },
-    { path: '/admin/settings', icon: Settings, label: t('admin.navigation.settings') },
+    { path: '/admin/settings', icon: Settings, label: t('admin.navigation.settings'), dot: updateAvailable },
     { path: '/admin/security', icon: Lock, label: t('admin.navigation.security') },
   ];
 
@@ -122,6 +136,12 @@ export const AdminLayout: React.FC = () => {
                           }`}
                         >
                           {item.badge}
+                        </span>
+                      ) : null}
+                      {'dot' in item && item.dot ? (
+                        <span className="ml-auto relative flex h-2.5 w-2.5">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
+                          <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500" />
                         </span>
                       ) : null}
                     </Link>
