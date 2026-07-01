@@ -17,7 +17,7 @@ import {
   Calendar,
   Users,
   Percent,
-  DollarSign
+  RussianRuble
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import type { PromoCode } from '../../types/promo';
@@ -419,8 +419,8 @@ export const AdminPromos: React.FC = () => {
                             </>
                           ) : (
                             <>
-                              <DollarSign className="w-3 h-3" />
-                              <span>{t('admin.promos.bonus')} ${promo.bonusAmount}</span>
+                              <RussianRuble className="w-3 h-3" />
+                              <span>{t('admin.promos.bonus')} {promo.bonusAmount} ₽</span>
                             </>
                           )}
                         </div>
@@ -439,7 +439,7 @@ export const AdminPromos: React.FC = () => {
 
                       <div>
                         <div className="text-dark-500 dark:text-dark-400 text-xs mb-1">{t('admin.promos.minAmount')}</div>
-                        <div>${promo.minAmount || 0}</div>
+                        <div>{promo.minAmount || 0} ₽</div>
                       </div>
 
                       <div>
