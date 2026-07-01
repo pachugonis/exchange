@@ -6,6 +6,7 @@ import { Button } from '../components/ui/Button';
 import { useReviewStore } from '../store/reviewStore';
 import { useTranslation } from '../hooks/useTranslation';
 import { formatDate } from '../utils/formatters';
+import { getCurrencySymbol } from '../data/currencies';
 
 export const Rules: React.FC = () => {
   return (
@@ -203,14 +204,14 @@ export const Reviews: React.FC = () => {
                     <div className="mb-3 pb-3 border-b border-dark-200 dark:border-dark-700">
                       <div className="flex items-center gap-2 text-sm">
                         <span className="font-medium text-primary-600 dark:text-primary-400">
-                          {review.exchangeDirection.fromAmount} {review.exchangeDirection.fromCurrency}
+                          {review.exchangeDirection.fromAmount} {getCurrencySymbol(review.exchangeDirection.fromCurrency)}
                           {review.exchangeDirection.fromCurrencyName && (
                             <span className="text-dark-500"> ({review.exchangeDirection.fromCurrencyName})</span>
                           )}
                         </span>
                         <ArrowRight className="w-4 h-4 text-dark-400" />
                         <span className="font-medium text-primary-600 dark:text-primary-400">
-                          {review.exchangeDirection.toAmount} {review.exchangeDirection.toCurrency}
+                          {review.exchangeDirection.toAmount} {getCurrencySymbol(review.exchangeDirection.toCurrency)}
                           {review.exchangeDirection.toCurrencyName && (
                             <span className="text-dark-500"> ({review.exchangeDirection.toCurrencyName})</span>
                           )}

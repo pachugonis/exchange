@@ -716,7 +716,7 @@ export const Exchange: React.FC = () => {
         <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-6">
           <h3 className="font-semibold mb-4 text-lg">{t('exchange.wizard.paymentAddress')}</h3>
           <div className="bg-white dark:bg-dark-800 rounded-lg p-4 mb-4">
-            <p className="text-xs text-dark-500 mb-2">{t('exchange.wizard.sendAmount')} {fromAmount} {fromCurrency?.code} {t('exchange.wizard.toAddress')}</p>
+            <p className="text-xs text-dark-500 mb-2">{t('exchange.wizard.sendAmount')} {fromAmount} {fromCurrency?.symbol} {t('exchange.wizard.toAddress')}</p>
             <div className="flex items-center gap-2">
               <code className="flex-1 bg-dark-100 dark:bg-dark-900 px-3 py-2 rounded text-sm break-all">
                 {paymentAddress}
@@ -733,7 +733,7 @@ export const Exchange: React.FC = () => {
           
           <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3 mb-4">
             <p className="text-sm text-yellow-800 dark:text-yellow-200">
-              ⚠️ <strong>{t('exchange.wizard.importantNote')}</strong> {t('exchange.wizard.sendExactAmount')} {fromAmount} {fromCurrency?.code}
+              ⚠️ <strong>{t('exchange.wizard.importantNote')}</strong> {t('exchange.wizard.sendExactAmount')} {fromAmount} {fromCurrency?.symbol}
             </p>
           </div>
 
@@ -754,9 +754,9 @@ export const Exchange: React.FC = () => {
         <div className="text-left bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
           <h3 className="font-semibold mb-2">{t('exchange.wizard.nextSteps')}</h3>
           <ol className="list-decimal list-inside space-y-1 text-sm">
-            <li>{t('exchange.wizard.step1Instruction')} {fromAmount} {fromCurrency?.code} {t('exchange.wizard.toTheSpecifiedAddress')}</li>
+            <li>{t('exchange.wizard.step1Instruction')} {fromAmount} {fromCurrency?.symbol} {t('exchange.wizard.toTheSpecifiedAddress')}</li>
             <li>{t('exchange.wizard.step2Instruction')}</li>
-            <li>{t('exchange.wizard.step3Instruction')} {toAmount} {toCurrency?.code} {t('exchange.wizard.toYourWallet')}</li>
+            <li>{t('exchange.wizard.step3Instruction')} {toAmount} {toCurrency?.symbol} {t('exchange.wizard.toYourWallet')}</li>
             <li>{t('exchange.wizard.step4Instruction')}</li>
           </ol>
         </div>

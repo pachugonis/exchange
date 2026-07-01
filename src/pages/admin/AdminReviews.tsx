@@ -7,6 +7,7 @@ import { useReviewStore } from '../../store/reviewStore';
 import { useAdminStore } from '../../store/adminStore';
 import { useTranslation } from '../../hooks/useTranslation';
 import { formatDate } from '../../utils/formatters';
+import { getCurrencySymbol } from '../../data/currencies';
 import toast from 'react-hot-toast';
 
 export const AdminReviews: React.FC = () => {
@@ -134,14 +135,14 @@ export const AdminReviews: React.FC = () => {
                   <p className="text-xs text-dark-500 mb-2">{t('admin.reviews.exchangeDirection')}</p>
                   <div className="flex items-center gap-2 text-sm">
                     <span className="font-medium text-primary-600 dark:text-primary-400">
-                      {review.exchangeDirection.fromAmount} {review.exchangeDirection.fromCurrency}
+                      {review.exchangeDirection.fromAmount} {getCurrencySymbol(review.exchangeDirection.fromCurrency)}
                       {review.exchangeDirection.fromCurrencyName && (
                         <span className="text-dark-500"> ({review.exchangeDirection.fromCurrencyName})</span>
                       )}
                     </span>
                     <ArrowRight className="w-4 h-4 text-dark-400" />
                     <span className="font-medium text-primary-600 dark:text-primary-400">
-                      {review.exchangeDirection.toAmount} {review.exchangeDirection.toCurrency}
+                      {review.exchangeDirection.toAmount} {getCurrencySymbol(review.exchangeDirection.toCurrency)}
                       {review.exchangeDirection.toCurrencyName && (
                         <span className="text-dark-500"> ({review.exchangeDirection.toCurrencyName})</span>
                       )}

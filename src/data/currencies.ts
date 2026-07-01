@@ -488,6 +488,12 @@ export function getCurrencyByCode(code: string): Currency | undefined {
   return currencies.find(c => c.code === code);
 }
 
+// Возвращает читаемый символ валюты по её коду (например, CARD_RUB → ₽).
+// Если валюта не найдена, возвращает исходную строку без изменений.
+export function getCurrencySymbol(code: string): string {
+  return getCurrencyByCode(code)?.symbol || code;
+}
+
 export function getCurrencyById(id: string): Currency | undefined {
   return currencies.find(c => c.id === id);
 }
